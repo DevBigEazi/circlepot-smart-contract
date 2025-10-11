@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.27;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -11,13 +11,13 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /**
  * @title CirclePotV1
  * @dev On-chain savings circles
- * @notice Implements community savings circles with collateral-backed commitments 
+ * @notice Implements community savings circles with collateral-backed commitments
  */
-contract CirclePotV1 is 
-    Initializable, 
-    OwnableUpgradeable, 
-    ReentrancyGuardUpgradeable, 
-    UUPSUpgradeable 
+contract CirclePotV1 is
+    Initializable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    UUPSUpgradeable
 {
     using SafeERC20 for IERC20;
 
@@ -36,9 +36,21 @@ contract CirclePotV1 is
 
     // ============ Enums ============
     // Default state should be PENDING
-    enum CircleState { PENDING, CREATED, ACTIVE, COMPLETED }
-    enum Frequency { DAILY, WEEKLY, MONTHLY }
-    enum Visibility { PUBLIC, PRIVATE }
+    enum CircleState {
+        PENDING,
+        CREATED,
+        ACTIVE,
+        COMPLETED
+    }
+    enum Frequency {
+        DAILY,
+        WEEKLY,
+        MONTHLY
+    }
+    enum Visibility {
+        PUBLIC,
+        PRIVATE
+    }
 
     // ============ Structs ============
     struct Circle {
@@ -99,32 +111,44 @@ contract CirclePotV1 is
     // ============ Storage ============
     address public cUSDToken;
     address public treasury;
-    
+
     uint256 public circleCounter;
     uint256 public goalCounter;
-    
+
     mapping(uint256 => Circle) public circles;
     mapping(uint256 => mapping(address => Member)) public circleMembers;
     mapping(uint256 => address[]) public circleMemberList;
-    mapping(uint256 => mapping(uint256 => mapping(address => bool))) public roundContributions;
+    mapping(uint256 => mapping(uint256 => mapping(address => bool)))
+        public roundContributions;
     mapping(uint256 => mapping(uint256 => uint256)) public circleRoundDeadlines;
-    
+
     mapping(uint256 => PersonalGoal) public personalGoals;
     mapping(address => uint256[]) public userGoals;
-    
+
     mapping(address => uint256) public userReputation;
     mapping(address => uint256) public completedCircles;
     mapping(address => uint256) public latePayments;
-    
+
     uint256 public totalPlatformFees;
     uint256 public platformFeeBps;
 
     // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint8 version);
+    event UpgradedToFeatureCircle(
+        uint256 indexed circleId,
+        address indexed creator
+    );
+    event CircleCreated(
+        uint256 circleId,
+        address creator,
+        uint256 contributionAmount
+    );
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
-
+    error InvalidContributionAmount();
+    error InvalidMemberCount();
+    error AddressZeroNotAllowed();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -138,25 +162,23 @@ contract CirclePotV1 is
      * @param initialOwner Address of the initial owner (if zero, msg.sender remains owner)
      */
     function initialize(
-        address _cUSDToken, 
-        address _treasury, 
+        address _cUSDToken,
+        address _treasury,
         address initialOwner
-    ) 
-        public 
-        initializer 
-    {
+    ) public initializer {
         __Ownable_init(initialOwner);
         __ReentrancyGuard_init();
         __UUPSUpgradeable_init();
-        
-        if (_cUSDToken == address(0) || _treasury == address(0)) revert InvalidTreasuryAddress();
-        
+
+        if (_cUSDToken == address(0) || _treasury == address(0))
+            revert InvalidTreasuryAddress();
+
         cUSDToken = _cUSDToken;
         treasury = _treasury;
         circleCounter = 1;
         goalCounter = 1;
         platformFeeBps = PLATFORM_FEE_BPS;
-        
+
         // transfer ownership if a different initialOwner was provided
         if (initialOwner != address(0) && initialOwner != owner()) {
             _transferOwnership(initialOwner);
@@ -186,9 +208,103 @@ contract CirclePotV1 is
      * @dev Authorizes upgrade to new implementation
      * @param newImplementation Address of the new implementation contract
      */
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {
         emit ContractUpgraded(newImplementation, VERSION);
     }
 
     // ============ Circle Functions ============
+    /**
+     * @dev Create a new saving circle
+     * @param params Circle creation parameters
+     * @return Return new saving circle id created
+     */
+    function createCircle(
+        CreateCircleParams calldata params
+    ) external nonReentrant returns (uint256) {
+        if (msg.sender == address(0)) revert AddressZeroNotAllowed();
+        if (
+            params.contributionAmount < MIN_CONTRIBUTION ||
+            params.contributionAmount > MAX_CONTRIBUTION
+        ) revert InvalidContributionAmount();
+        if (params.maxMembers < MIN_MEMBERS || params.maxMembers > MAX_MEMBERS)
+            revert InvalidMemberCount();
+
+        uint256 circleId = circleCounter++;
+        uint256 collateral = _calcCollateral(
+            params.contributionAmount,
+            params.maxMembers
+        );
+        uint256 totalRequired = collateral;
+
+        // if applicable, add feature fee
+        if (params.isFeatured) {
+            totalRequired + FEATURED_CIRCLE_FEE;
+            totalPlatformFees + FEATURED_CIRCLE_FEE;
+            emit UpgradedToFeatureCircle(circleId, msg.sender);
+        }
+
+        //deposit collateral + buffer
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            totalRequired
+        );
+
+        //update circle
+        circles[circleId] = Circle({
+            circleId: circleId,
+            creator: msg.sender,
+            contributionAmount: params.contributionAmount,
+            frequency: params.frequency,
+            maxMembers: params.maxMembers,
+            currentMembers: 1,
+            currentRound: 0,
+            totalRounds: params.maxMembers,
+            state: CircleState.CREATED,
+            visibility: params.visibility,
+            createdAt: block.timestamp,
+            startedAt: 0,
+            totalPot: 0,
+            isFeatured: params.isFeatured
+        });
+
+        // update circle Membership data
+        circleMembers[circleId][msg.sender] = Member({
+            position: 1,
+            totalContributed: 0,
+            hasReceivedPayout: false,
+            isActive: true,
+            collateralLocked: collateral,
+            joinedAt: block.timestamp
+        });
+
+        // add creator to Circle Member list
+        circleMemberList[circleId].push(msg.sender);
+
+        emit CircleCreated(circleId, msg.sender, params.contributionAmount);
+
+        return circleId;
+    }
+
+    // helper functions
+    /**
+     * @dev Calculate required collateral for a circle
+     * @param amount Contribution amount per round
+     * @param members Maximum number of members
+     * @return Total required collateral amount
+     */
+
+    function _calcCollateral(
+        uint256 amount,
+        uint256 members
+    ) internal pure returns (uint256) {
+        uint256 totalCommitment = amount * members;
+
+        // Buffer cover all potential late fees (1% of the contributions amount per round)
+        uint256 lateBuffer = (totalCommitment * LATE_FEE_BPS) / 10000;
+
+        return totalCommitment + lateBuffer;
+    }
 }

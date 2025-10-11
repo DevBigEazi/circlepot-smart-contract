@@ -6,6 +6,12 @@ optimizer = true
 optimizer_runs = 200
 via_ir = true
 
+[rpc_endpoints]
+celo-sepolia = "https://forno.celo-sepolia.celo-testnet.org"
+celo = "https://forno.celo.org"
 
+[etherscan]
+celo-sepolia = { key = "${CELOSCAN_API_KEY}", url = "https://celo-sepolia.blockscout.com/api"}
+celo = { key = "${CELOSCAN_API_KEY}", url = "https://api.celoscan.io/api"}
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

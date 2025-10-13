@@ -66,7 +66,6 @@ contract CirclePotV1 is
         uint256 createdAt;
         uint256 startedAt;
         uint256 totalPot;
-        bool isFeatured;
     }
 
     struct Member {
@@ -138,6 +137,7 @@ contract CirclePotV1 is
         address creator,
         uint256 contributionAmount
     );
+    event CircleJoined(uint256 indexed circleId, address indexed member);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -148,6 +148,9 @@ contract CirclePotV1 is
     error OnlyCreator();
     error CircleNotExist();
     error SameVisibility();
+    error CircleNotOpen();
+    error CircleFull();
+    error AlreadyJoined();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -265,13 +268,12 @@ contract CirclePotV1 is
             visibility: params.visibility,
             createdAt: block.timestamp,
             startedAt: 0,
-            totalPot: 0,
-            isFeatured: params.isFeatured
+            totalPot: 0
         });
 
         // update circle Membership data
         circleMembers[circleId][msg.sender] = Member({
-            position: 1,
+            position: 0, // will be assigned no 1 when circle starts
             totalContributed: 0,
             hasReceivedPayout: false,
             isActive: true,
@@ -313,6 +315,41 @@ contract CirclePotV1 is
         emit VisibilityUpdated(_circleId, msg.sender);
     }
 
+    /** 
+     * @dev Allow a user to join an existing circle
+     * @param _circleId Circle ID to join 
+     */
+    function joinCircle(uint256 _circleId) external nonReentrant {
+        if (_circleId == 0 || _circleId >= circleCounter) revert InvalidCircle();
+
+        Circle storage c = circles[_circleId];
+        // allow to join only created circle
+        if (c.state != CircleState.CREATED) revert CircleNotOpen();
+        if (c.currentMembers == c.maxMembers) revert CircleFull();
+        if (circleMembers[_circleId][msg.sender].isActive) revert AlreadyJoined();
+
+        uint256 collateral = _calcCollateral(c.contributionAmount, c.maxMembers);
+
+        // Desposit collateral and join the circle
+        IERC20(cUSDToken).safeTransferFrom(msg.sender, address(this), collateral);
+
+        // update circle Membership data
+        circleMembers[_circleId][msg.sender] = Member({
+            position: 0, // will be assigned when circle starts
+            totalContributed: 0,
+            hasReceivedPayout: false,
+            isActive: true,
+            collateralLocked: collateral,
+            joinedAt: block.timestamp
+        });
+
+        circleMemberList[_circleId].push(msg.sender);
+
+        c.currentMembers++;
+
+        emit CircleJoined(_circleId, msg.sender);
+    }
+
     // helper functions
     /**
      * @dev Calculate required collateral for a circle
@@ -323,7 +360,7 @@ contract CirclePotV1 is
     function _calcCollateral(
         uint256 amount,
         uint256 members
-    ) internal pure returns (uint256) {
+    ) private pure returns (uint256) {
         uint256 totalCommitment = amount * members;
 
         // Buffer cover all potential late fees (1% of the contributions amount per round)

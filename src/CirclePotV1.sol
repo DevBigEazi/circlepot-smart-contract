@@ -132,10 +132,7 @@ contract CirclePotV1 is
 
     // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint8 version);
-    event VisibilityUpdated(
-        uint256 indexed circleId,
-        address indexed creator
-    );
+    event VisibilityUpdated(uint256 indexed circleId, address indexed creator);
     event CircleCreated(
         uint256 circleId,
         address creator,
@@ -288,6 +285,32 @@ contract CirclePotV1 is
         emit CircleCreated(circleId, msg.sender, params.contributionAmount);
 
         return circleId;
+    }
+
+    /**
+     * @dev Update the circle visibility (private/public)
+     * @param _circleId Circle ID
+     * @param _newVisibility New visibility setting
+     */
+    function updateCircleVisibility(
+        uint256 _circleId,
+        Visibility _newVisibility
+    ) external nonReentrant {
+        if (_circleId == 0 || _circleId >= circleCounter)
+            revert InvalidCircle();
+
+        Circle storage c = circles[_circleId];
+        if (c.creator != msg.sender) revert OnlyCreator();
+        if (c.state != CircleState.CREATED) revert CircleNotExist();
+        if (c.visibility == _newVisibility) revert SameVisibility();
+
+        // charge $0.50 visibility update fee
+        IERC20(cUSDToken).safeTransferFrom(msg.sender, address(this), VISIBILITY_UPDATE_FEE);
+        totalPlatformFees += VISIBILITY_UPDATE_FEE;
+
+        c.visibility = _newVisibility;
+
+        emit VisibilityUpdated(_circleId, msg.sender);
     }
 
     // helper functions

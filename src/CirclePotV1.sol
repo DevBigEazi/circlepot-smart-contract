@@ -31,8 +31,7 @@ contract CirclePotV1 is
     uint256 public constant MIN_CONTRIBUTION = 1e18;
     uint256 public constant MIN_MEMBERS = 5;
     uint256 public constant MAX_MEMBERS = 20;
-    uint256 public constant FEATURED_CIRCLE_FEE = 1e18; // $1
-    uint256 public constant VISIBILITY_UPDATE_FEE = 0.1e18; // $0.10
+    uint256 public constant VISIBILITY_UPDATE_FEE = 0.5e18; // $0.50
 
     // ============ Enums ============
     // Default state should be PENDING
@@ -48,8 +47,8 @@ contract CirclePotV1 is
         MONTHLY
     }
     enum Visibility {
-        PUBLIC,
-        PRIVATE
+        PRIVATE,
+        PUBLIC
     }
 
     // ============ Structs ============
@@ -97,7 +96,6 @@ contract CirclePotV1 is
         Frequency frequency;
         uint256 maxMembers;
         Visibility visibility;
-        bool isFeatured;
     }
 
     struct CreateGoalParams {
@@ -134,7 +132,7 @@ contract CirclePotV1 is
 
     // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint8 version);
-    event UpgradedToFeatureCircle(
+    event VisibilityUpdated(
         uint256 indexed circleId,
         address indexed creator
     );
@@ -149,6 +147,10 @@ contract CirclePotV1 is
     error InvalidContributionAmount();
     error InvalidMemberCount();
     error AddressZeroNotAllowed();
+    error InvalidCircle();
+    error OnlyCreator();
+    error CircleNotExist();
+    error SameVisibility();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -238,11 +240,11 @@ contract CirclePotV1 is
         );
         uint256 totalRequired = collateral;
 
-        // if applicable, add feature fee
-        if (params.isFeatured) {
-            totalRequired + FEATURED_CIRCLE_FEE;
-            totalPlatformFees + FEATURED_CIRCLE_FEE;
-            emit UpgradedToFeatureCircle(circleId, msg.sender);
+        // // if applicable, add visibilty fee( by default, the visibility is private but user can create a circle with public visibility by paying $0.5 one time fee)
+        if (params.visibility == Visibility.PUBLIC) {
+            totalRequired + VISIBILITY_UPDATE_FEE;
+            totalPlatformFees + VISIBILITY_UPDATE_FEE;
+            emit VisibilityUpdated(circleId, msg.sender);
         }
 
         //deposit collateral + buffer
@@ -295,7 +297,6 @@ contract CirclePotV1 is
      * @param members Maximum number of members
      * @return Total required collateral amount
      */
-
     function _calcCollateral(
         uint256 amount,
         uint256 members

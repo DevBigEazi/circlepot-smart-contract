@@ -138,6 +138,15 @@ contract CirclePotV1 is
         uint256 contributionAmount
     );
     event CircleJoined(uint256 indexed circleId, address indexed member);
+    event CircleStarted(uint256 indexed circleId, uint256 startedAt);
+    event PayoutDistributed(
+        uint256 indexed circleId,
+        uint256 indexed round,
+        address indexed recipient,
+        uint256 amount
+    );
+    event CircleCompleted(uint256 indexed circleId);
+    event PositionAssigned(uint256 circledId, address member, uint256 position);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -151,6 +160,8 @@ contract CirclePotV1 is
     error CircleNotOpen();
     error CircleFull();
     error AlreadyJoined();
+    error MinMembersNotReached();
+    error UltimatumNotReached();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -307,7 +318,11 @@ contract CirclePotV1 is
         if (c.visibility == _newVisibility) revert SameVisibility();
 
         // charge $0.50 visibility update fee
-        IERC20(cUSDToken).safeTransferFrom(msg.sender, address(this), VISIBILITY_UPDATE_FEE);
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            VISIBILITY_UPDATE_FEE
+        );
         totalPlatformFees += VISIBILITY_UPDATE_FEE;
 
         c.visibility = _newVisibility;
@@ -315,23 +330,32 @@ contract CirclePotV1 is
         emit VisibilityUpdated(_circleId, msg.sender);
     }
 
-    /** 
+    /**
      * @dev Allow a user to join an existing circle
-     * @param _circleId Circle ID to join 
+     * @param _circleId Circle ID to join
      */
     function joinCircle(uint256 _circleId) external nonReentrant {
-        if (_circleId == 0 || _circleId >= circleCounter) revert InvalidCircle();
+        if (_circleId == 0 || _circleId >= circleCounter)
+            revert InvalidCircle();
 
         Circle storage c = circles[_circleId];
         // allow to join only created circle
         if (c.state != CircleState.CREATED) revert CircleNotOpen();
         if (c.currentMembers == c.maxMembers) revert CircleFull();
-        if (circleMembers[_circleId][msg.sender].isActive) revert AlreadyJoined();
+        if (circleMembers[_circleId][msg.sender].isActive)
+            revert AlreadyJoined();
 
-        uint256 collateral = _calcCollateral(c.contributionAmount, c.maxMembers);
+        uint256 collateral = _calcCollateral(
+            c.contributionAmount,
+            c.maxMembers
+        );
 
         // Desposit collateral and join the circle
-        IERC20(cUSDToken).safeTransferFrom(msg.sender, address(this), collateral);
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            collateral
+        );
 
         // update circle Membership data
         circleMembers[_circleId][msg.sender] = Member({
@@ -348,7 +372,34 @@ contract CirclePotV1 is
         c.currentMembers++;
 
         emit CircleJoined(_circleId, msg.sender);
+
+        // if max mebers reached, auto start the circle
+        if (c.currentMembers == c.maxMembers) {
+            _startCircleInternal(_circleId);
+            emit CircleStarted(_circleId, block.timestamp);
+        }
     }
+
+    /**
+     * @dev Start circle mannually by only the creator after ultimatum and 60% threshold reached
+     * @param _circleId Circle ID to start
+     */
+     function startCircle(uint256 _circleId) external {
+        if (_circleId == 0 || _circleId >= circleCounter) revert InvalidCircle();
+
+        Circle storage c = circles[_circleId];
+        if (c.creator != msg.sender) revert OnlyCreator();
+        if (c.state != CircleState.CREATED) revert CircleNotOpen();
+
+        // check 60% min threshold
+        if (c.currentMembers < (c.maxMembers * 60 / 100)) revert MinMembersNotReached();
+
+        // check if ultimatum period has passed
+        uint256 ultimatumPeriod = _ultimatum(c.frequency);
+        if (block.timestamp <= c.createdAt + ultimatumPeriod) revert UltimatumNotReached();
+
+        _startCircleInternal(_circleId);
+     }
 
     // helper functions
     /**
@@ -367,5 +418,181 @@ contract CirclePotV1 is
         uint256 lateBuffer = (totalCommitment * LATE_FEE_BPS) / 10000;
 
         return totalCommitment + lateBuffer;
+    }
+
+    /**
+     * @dev Internal function start a circle( to be called by both manual and auto-start)
+     * @param _circleId Circle ID to start
+     */
+    function _startCircleInternal(uint256 _circleId) private {
+        Circle storage c = circles[_circleId];
+
+        _assignPosition(_circleId);
+
+        c.state = CircleState.ACTIVE;
+        c.startedAt = block.timestamp;
+        c.currentRound = 1;
+
+        circleRoundDeadlines[_circleId][1] = _nextDeadline(c.frequency, block.timestamp);
+
+        emit CircleStarted(_circleId, block.timestamp);
+
+        _payoutRound(_circleId, 1);
+    }
+
+    /**
+     * @dev Assign positions to all members base on reputation when circle starts
+     * @param cid Circle ID
+     */
+    function _assignPosition(uint256 cid) private {
+        Circle storage c = circles[cid];
+        address[] storage mlist = circleMemberList[cid];
+
+        // creator always get first position
+        circleMembers[cid][c.creator].position = 1;
+        emit PositionAssigned(cid, c.creator, 1);
+
+        // array of non-creator members with thier reputation score
+        uint256 memberCount = mlist.length -1; // exclude the creator
+        address[] memory members = new address[](memberCount);
+        uint256[] memory reputationScores = new uint256[](memberCount);
+
+        uint256 idxCounter = 0;
+
+        for (uint256 i = 0; i < mlist.length; i++) {
+            if (mlist[i] != c.creator) {
+                members[idxCounter] = mlist[i];
+                // calculate the reputation score(number of completed ccirle worth more)
+                reputationScores[idxCounter] = userReputation[mlist[i]] + (completedCircles[mlist[i]] * 10);
+                idxCounter++;
+            }
+        }
+
+        // Sort members by reputation (descending) using bubble sort (Higher rep gets more advantages)
+        for (uint256 i = 0; i < memberCount; i++) {
+            for (uint256 j = i + 1; j < memberCount; j++) {
+                if (reputationScores[j] > reputationScores[i]) {
+                    // swap reputation scores
+                    uint256 tempScore = reputationScores[i];
+                    reputationScores[i] = reputationScores[j];
+                    reputationScores[j] = tempScore;
+                }
+            }
+        }
+
+        // Assign position through N based on sorted reputation
+        for (uint256 i = 0; i < memberCount; i++) {
+            uint256 position = i + 2; // positions start at 2 (creator has 1)
+            circleMembers[cid][members[i]].position = position;
+            
+            emit PositionAssigned(cid, members[i], position);
+        }
+    }
+
+    /**
+     * @dev calculate next deadline base on frequency
+     */
+    function _nextDeadline(
+        Frequency f,
+        uint256 from
+    ) private pure returns (uint256) {
+        if (f == Frequency.DAILY) return from + 1 days;
+        if (f == Frequency.WEEKLY) return from + 7 days;
+        return from + 30 days;
+    }
+
+    /**
+     * @dev Processes payout for a round
+     */
+
+    function _payoutRound(uint256 cid, uint256 round) private {
+        Circle storage c = circles[cid];
+        address recip = _getByPos(cid, round);
+
+        if (recip == address(0)) return;
+
+        Member storage m = circleMembers[cid][recip];
+        if (m.hasReceivedPayout) return;
+
+        uint amt = c.totalPot;
+
+        if (recip != c.creator) {
+            uint256 fee = (amt * platformFeeBps) / 10000;
+            amt -= fee;
+            totalPlatformFees += fee;
+        }
+
+        IERC20(cUSDToken).safeTransfer(recip, amt);
+        m.hasReceivedPayout = true;
+        c.totalPot = 0;
+
+        userReputation[recip] += 5;
+        completedCircles[recip]++;
+
+        emit PayoutDistributed(cid, round, recip, amt);
+
+        _progressNextRound(c, cid, round);
+    }
+
+    /**
+     * @dev Advance round or finalize the circle
+     */
+    function _progressNextRound(
+        Circle storage c,
+        uint256 cid,
+        uint256 round
+    ) private {
+        if (round < c.totalRounds) {
+            c.currentRound = round + 1;
+            circleRoundDeadlines[cid][round] = _nextDeadline(
+                c.frequency,
+                block.timestamp
+            );
+        } else {
+            c.state = CircleState.COMPLETED;
+            _releaseAllCollateral(cid);
+            emit CircleCompleted(cid);
+        }
+    }
+
+    /**
+     * @dev Release all collateral at circle completion
+     */
+    function _releaseAllCollateral(uint256 cid) private {
+        address[] storage mlist = circleMemberList[cid];
+
+        for (uint256 i = 0; i < mlist.length; i++) {
+            Member storage m = circleMembers[cid][mlist[i]];
+
+            if (m.isActive && m.collateralLocked > 0) {
+                uint256 amt = m.collateralLocked;
+                m.collateralLocked = 0;
+                IERC20(cUSDToken).safeTransfer(mlist[i], amt);
+            }
+        }
+    }
+
+    /**
+     * @dev Gets member address by position
+     */
+    function _getByPos(
+        uint256 cid,
+        uint256 pos
+    ) private view returns (address) {
+        address[] storage mlist = circleMemberList[cid];
+
+        for (uint256 i = 0; i < mlist.length; i++) {
+            if (circleMembers[cid][mlist[i]].position == pos) return mlist[i];
+        }
+
+        return address(0);
+    }
+
+    /**
+     * @dev Returns ultimatum period based on frequency
+     */
+    function _ultimatum(Frequency f) private pure returns(uint256) {
+        if (f == Frequency.DAILY || f == Frequency.WEEKLY) return 7 days;
+        return 14 days;
     }
 }

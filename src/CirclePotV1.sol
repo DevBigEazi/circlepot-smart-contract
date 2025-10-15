@@ -11,7 +11,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /**
  * @title CirclePotV1
  * @dev On-chain savings circles
- * @notice Implements community savings circles with collateral-backed commitments
+ * @notice Implements individual savings and community savings circles with collateral-backed commitments, voting,and invitations 
  */
 contract CirclePotV1 is
     Initializable,
@@ -141,6 +141,9 @@ contract CirclePotV1 is
     mapping(uint256 => Vote) public circleVotes;
     mapping(uint256 => mapping(address => VoteChoice)) public memberVotes;
 
+    // Invitation storage for private circles
+    mapping(uint256 => mapping(address => bool)) public circleInvitations;
+
     // Personal goals related storage
     mapping(uint256 => PersonalGoal) public personalGoals;
     mapping(address => uint256[]) public userGoals;
@@ -185,6 +188,7 @@ contract CirclePotV1 is
         uint256 indexed votingEndTime
     );
     event VoteCast(uint256 indexed circleId, address indexed voter, VoteChoice choice);
+    event MemberInvited(uint256 indexed circleId, address indexed _invitee);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -208,6 +212,8 @@ contract CirclePotV1 is
     error VotingNotActive();
     error VotingPeriodEnded();
     error AlreadyVoted();
+    error CircleNotPrivate();
+    error NotInvited();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -377,6 +383,27 @@ contract CirclePotV1 is
     }
 
     /**
+     * @dev Invite members to a private circle (only creator)
+     * @param _circleId Circle ID
+     * @param _invitees Array of addresses to invite
+     */
+     function inviteMembers(uint256 _circleId, address[] calldata _invitees) external {
+        if (_circleId == 0 || _circleId >= circleCounter)
+            revert InvalidCircle();
+
+        Circle storage c = circles[_circleId];
+        if (c.creator != msg.sender) revert OnlyCreator();
+        if (c.visibility != Visibility.PRIVATE) revert CircleNotPrivate();
+        if (c.state != CircleState.CREATED) revert CircleNotOpen();
+
+        for (uint256 i = 0; i < _invitees.length; i++) {
+            circleInvitations[_circleId][_invitees[i]] = true;
+
+            emit MemberInvited(_circleId, _invitees[i]);
+        }
+     }
+
+    /**
      * @dev Allow a user to join an existing circle
      * @param _circleId Circle ID to join
      */
@@ -390,6 +417,11 @@ contract CirclePotV1 is
         if (c.currentMembers == c.maxMembers) revert CircleFull();
         if (circleMembers[_circleId][msg.sender].isActive)
             revert AlreadyJoined();
+
+        // check invitation for private circles
+        if (c.visibility == Visibility.PRIVATE) {
+            if (!circleInvitations[_circleId][msg.sender]) revert NotInvited();
+        }
 
         uint256 collateral = _calcCollateral(
             c.contributionAmount,
@@ -423,7 +455,7 @@ contract CirclePotV1 is
         if (c.currentMembers == c.maxMembers) {
             _startCircleInternal(_circleId);
             emit CircleStarted(_circleId, block.timestamp);
-        }
+        } 
     }
 
     /**

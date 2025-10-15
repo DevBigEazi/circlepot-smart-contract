@@ -189,6 +189,7 @@ contract CirclePotV1 is
     );
     event VoteCast(uint256 indexed circleId, address indexed voter, VoteChoice choice);
     event MemberInvited(uint256 indexed circleId, address indexed _invitee);
+    event VoteExecuted(uint256 indexed circleId, bool circleStarted, uint256 startVoteCount, uint256 withdrawVoteCount);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -212,6 +213,7 @@ contract CirclePotV1 is
     error VotingNotActive();
     error VotingPeriodEnded();
     error AlreadyVoted();
+    error VoteAlreadyExecuted();
     error CircleNotPrivate();
     error NotInvited();
 
@@ -527,6 +529,42 @@ contract CirclePotV1 is
 
         emit VoteCast(_circleId, msg.sender, _choice);
      }
+
+     /**
+      * @dev execute vote result after voting period ends
+      * @param _circleId Circle ID
+      */
+      function executeVote(uint256 _circleId) external {
+        if (_circleId == 0 || _circleId >= circleCounter) revert InvalidCircle();
+
+        Circle storage c = circles[_circleId];
+        if (c.state != CircleState.VOTING) revert VotingNotActive();
+
+        Vote storage vote = circleVotes[_circleId];
+        if (!vote.votingActive) revert VotingNotActive();
+        if (block.timestamp <= vote.votingEndTime) revert VotingStillActive();
+        if (vote.voteExecuted) revert VoteAlreadyExecuted();
+
+        vote.votingActive = false;
+        vote.voteExecuted = true;
+
+        uint8 totalVotes = vote.startVoteCount + vote.withdrawVoteCount;
+        uint256 startPercentage = totalVotes > 0 ? (vote.startVoteCount * 10000) / totalVotes: 0;
+
+        bool shouldStart = startPercentage >= START_VOTE_THRESHOLD;
+
+        if (shouldStart) {
+            // 51% voted to start - initiate circle
+            c.state = CircleState.CREATED; // Reset to created b4 starting
+            _startCircleInternal(_circleId);
+
+            emit VoteExecuted(_circleId, true, vote.startVoteCount, vote.withdrawVoteCount);
+        } else {
+            // Less than 51% voted to start - allow withdrawals
+            c.state = CircleState.CREATED; 
+            emit VoteExecuted(_circleId, true, vote.startVoteCount, vote.withdrawVoteCount);
+        }
+      }
 
     /**
      * @dev Each member can withdraw their collateral if after the ultimum, circle did not start

@@ -782,7 +782,7 @@ contract CirclePotV1 is
 
         uint256 idxCounter = 0;
 
-        for (uint256 i = 0; i < mlist.length; i++) {
+        for (uint8 i = 0; i < mlist.length; i++) {
             if (mlist[i] != c.creator) {
                 members[idxCounter] = mlist[i];
                 // calculate the reputation score(number of completed ccirle worth more)
@@ -794,8 +794,8 @@ contract CirclePotV1 is
         }
 
         // Sort members by reputation (descending) using bubble sort (Higher rep gets more advantages)
-        for (uint256 i = 0; i < memberCount; i++) {
-            for (uint256 j = i + 1; j < memberCount; j++) {
+        for (uint8 i = 0; i < memberCount; i++) {
+            for (uint8 j = i + 1; j < memberCount; j++) {
                 if (reputationScores[j] > reputationScores[i]) {
                     // swap reputation scores
                     uint256 tempScore = reputationScores[i];
@@ -885,7 +885,7 @@ contract CirclePotV1 is
     function _releaseAllCollateral(uint256 cid) private {
         address[] storage mlist = circleMemberList[cid];
 
-        for (uint256 i = 0; i < mlist.length; i++) {
+        for (uint8 i = 0; i < mlist.length; i++) {
             Member storage m = circleMembers[cid][mlist[i]];
 
             if (m.isActive && m.collateralLocked > 0) {
@@ -951,7 +951,7 @@ contract CirclePotV1 is
         if (payCount == c.currentMembers) _payoutRound(cid, c.currentRound);
     }
 
-     /**
+    /**
      * @dev Return grace period by frequency
      */
     function _getGracePeriod(Frequency f) public pure returns (uint256) {
@@ -959,7 +959,7 @@ contract CirclePotV1 is
         return 48 hours;
     }
 
-    // Getter/view functions for saving circle
+    // ============ Getter/View Functions ============
     /**
      * @dev Gets member address by position
      */
@@ -969,7 +969,7 @@ contract CirclePotV1 is
     ) private view returns (address) {
         address[] storage mlist = circleMemberList[cid];
 
-        for (uint256 i = 0; i < mlist.length; i++) {
+        for (uint8 i = 0; i < mlist.length; i++) {
             if (circleMembers[cid][mlist[i]].position == pos) return mlist[i];
         }
 
@@ -999,4 +999,183 @@ contract CirclePotV1 is
     }
 
     
+    /**
+     * @dev Return voting info for a circle
+     */
+    function getVoteInfo(
+        uint256 _circleId
+    )
+        public
+        view
+        returns (
+            uint256 votingEndTime,
+            uint8 startVoteCount,
+            uint8 withdrawVoteCount,
+            bool votingActive,
+            bool voteExecuted,
+            VoteChoice userVote
+        )
+    {
+        Vote storage vote = circleVotes[_circleId];
+
+        return (
+            vote.votingEndTime,
+            vote.startVoteCount,
+            vote.withdrawVoteCount,
+            vote.votingActive,
+            vote.voteExecuted,
+            memberVotes[_circleId][msg.sender]
+        );
+    }
+
+    /**
+     * @dev Check if address is invited to a private circle
+     */
+    function isInvited(
+        uint256 _circleId,
+        address _user
+    ) external view returns (bool) {
+        return circleInvitations[_circleId][_user];
+    }
+
+    /**
+     * @dev Return detailed circle information
+     */
+    function getCircleDetails(
+        uint256 _circleId
+    )
+        external
+        view
+        returns (
+            Circle memory circle,
+            uint256 membersJoined,
+            uint256 currentDeadline,
+            bool canStart
+        )
+    {
+        circle = circles[_circleId];
+        membersJoined = circle.currentMembers;
+
+        if (circle.state == CircleState.ACTIVE) {
+            currentDeadline = circleRoundDeadlines[_circleId][
+                circle.currentRound
+            ];
+        }
+
+        canStart = circle.currentMembers >= (circle.maxMembers * 60) / 100;
+
+        return (circle, membersJoined, currentDeadline, canStart);
+    }
+
+    /**
+     * @dev Retunrs all circles a user is part of
+     */
+    function getUserCircles(
+        address _user
+    ) external view returns (uint256[] memory) {
+        uint256 count = 0;
+
+        for (uint256 i = 1; i < circleCounter; i++) {
+            if (circleMembers[i][_user].isActive) {
+                count++;
+            }
+        }
+
+        uint256[] memory userCircles = new uint256[](count);
+        uint256 idx = 0;
+
+        for (uint256 i = 1; i < circleCounter; i++) {
+            if (circleMembers[i][_user].isActive) {
+                userCircles[idx] = 1;
+
+                idx++;
+            }
+        }
+
+        return userCircles;
+    }
+
+    /**
+     * @dev Get member info for a specific circle
+     */
+    function getMemberInfo(
+        uint256 _circleId,
+        address _member
+    )
+        external
+        view
+        returns (
+            Member memory memberInfo,
+            bool hasContributedThisRound,
+            uint256 nextDeadline
+        )
+    {
+        memberInfo = circleMembers[_circleId][_member];
+        Circle storage c = circles[_circleId];
+
+        if (c.state == CircleState.ACTIVE) {
+            hasContributedThisRound = roundContributions[_circleId][
+                c.currentRound
+            ][_member];
+            nextDeadline = circleRoundDeadlines[_circleId][c.currentRound];
+        }
+
+        return (memberInfo, hasContributedThisRound, nextDeadline);
+    }
+
+        /**
+     * @dev Return progress info for a circle
+     */
+    function getCircleProgress(uint256 _circleId) external view returns(
+        uint8 currentRound,
+        uint8 totalRounds,
+        uint256 contributionsThisRound,
+        uint8 totalMembers
+    ) {
+        Circle storage c = circles[_circleId];
+        currentRound = c.currentRound;
+        totalRounds = c.totalRounds;
+        totalMembers = c.currentMembers;
+
+        if (c.state == CircleState.ACTIVE) {
+            address[] storage mlist = circleMemberList[_circleId];
+            for (uint8 i = 0; i < mlist.length; i++) {
+                if (roundContributions[_circleId][c.currentRound][mlist[i]]) {
+                    contributionsThisRound++;
+                }
+            }
+        }
+        return (currentRound, totalRounds, contributionsThisRound, totalMembers);
+    }
+
+    /**
+     * @dev Returns user's reputation data 
+     */
+    function getUserReputation(address _user) external view returns (
+        uint256 reputation,
+        uint256 circlesCompleted,
+        uint256 latePaymentsCount
+    ) {
+        return (
+            userReputation[_user],
+            completedCircles[_user],
+            latePayments[_user]
+        );
+    }
+
+    /**
+     * @dev Returns all members of a circle
+     */
+    function getCircleMembers(uint256 _circleId) external view returns (
+        address[] memory
+    ) {
+        return circleMemberList[_circleId];
+    }
+
+    /**
+     * @dev returns contract version
+     */
+    function version() external pure returns (string memory) {
+        return "1.0.0";
+    }
 }

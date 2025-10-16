@@ -782,7 +782,7 @@ contract CirclePotV1 is
 
         uint256 idxCounter = 0;
 
-        for (uint256 i = 0; i < mlist.length; i++) {
+        for (uint8 i = 0; i < mlist.length; i++) {
             if (mlist[i] != c.creator) {
                 members[idxCounter] = mlist[i];
                 // calculate the reputation score(number of completed ccirle worth more)
@@ -794,8 +794,8 @@ contract CirclePotV1 is
         }
 
         // Sort members by reputation (descending) using bubble sort (Higher rep gets more advantages)
-        for (uint256 i = 0; i < memberCount; i++) {
-            for (uint256 j = i + 1; j < memberCount; j++) {
+        for (uint8 i = 0; i < memberCount; i++) {
+            for (uint8 j = i + 1; j < memberCount; j++) {
                 if (reputationScores[j] > reputationScores[i]) {
                     // swap reputation scores
                     uint256 tempScore = reputationScores[i];
@@ -885,7 +885,7 @@ contract CirclePotV1 is
     function _releaseAllCollateral(uint256 cid) private {
         address[] storage mlist = circleMemberList[cid];
 
-        for (uint256 i = 0; i < mlist.length; i++) {
+        for (uint8 i = 0; i < mlist.length; i++) {
             Member storage m = circleMembers[cid][mlist[i]];
 
             if (m.isActive && m.collateralLocked > 0) {
@@ -951,7 +951,7 @@ contract CirclePotV1 is
         if (payCount == c.currentMembers) _payoutRound(cid, c.currentRound);
     }
 
-     /**
+    /**
      * @dev Return grace period by frequency
      */
     function _getGracePeriod(Frequency f) public pure returns (uint256) {
@@ -959,7 +959,7 @@ contract CirclePotV1 is
         return 48 hours;
     }
 
-    // Getter/view functions for saving circle
+    // ============ Getter/View Functions ============
     /**
      * @dev Gets member address by position
      */
@@ -969,7 +969,7 @@ contract CirclePotV1 is
     ) private view returns (address) {
         address[] storage mlist = circleMemberList[cid];
 
-        for (uint256 i = 0; i < mlist.length; i++) {
+        for (uint8 i = 0; i < mlist.length; i++) {
             if (circleMembers[cid][mlist[i]].position == pos) return mlist[i];
         }
 
@@ -998,5 +998,4 @@ contract CirclePotV1 is
         return startPercentage < START_VOTE_THRESHOLD;
     }
 
-    
 }

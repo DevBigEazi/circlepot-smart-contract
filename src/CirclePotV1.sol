@@ -29,8 +29,8 @@ contract CirclePotV1 is
     uint256 public constant LATE_FEE_BPS = 100; // 1%
     uint256 public constant MAX_CONTRIBUTION = 5000e18;
     uint256 public constant MIN_CONTRIBUTION = 1e18;
-    uint8   public constant MIN_MEMBERS = 5;
-    uint8   public constant MAX_MEMBERS = 20;
+    uint8 public constant MIN_MEMBERS = 5;
+    uint8 public constant MAX_MEMBERS = 20;
     uint256 public constant VISIBILITY_UPDATE_FEE = 0.5e18; // $0.50
     uint256 public constant VOTING_PERIOD = 2 days; // VOTING LAST 3 DAYS
     uint256 public constant START_VOTE_THRESHOLD = 5100; //51% IN BASIS POINTS
@@ -199,6 +199,18 @@ contract CirclePotV1 is
         uint256 startVoteCount,
         uint256 withdrawVoteCount
     );
+    event ContributionMade(
+        uint256 indexed circleId,
+        uint8 round,
+        address member,
+        uint256 indexed amount
+    );
+    event LatePayment(
+        uint256 indexed circleId,
+        uint8 round,
+        address member,
+        uint256 indexed fee
+    );
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -226,6 +238,7 @@ contract CirclePotV1 is
     error CircleNotPrivate();
     error NotInvited();
     error CircleNotActive();
+    error AlreadyContributed();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -647,7 +660,7 @@ contract CirclePotV1 is
         Circle storage c = circles[_circleId];
         if (c.creator != msg.sender) revert OnlyCreator();
         if (c.state != CircleState.CREATED) revert CircleNotOpen();
- 
+
         // check 60% min threshold
         if (c.currentMembers < ((c.maxMembers * 60) / 100))
             revert MinMembersNotReached();
@@ -658,6 +671,54 @@ contract CirclePotV1 is
             revert UltimatumNotReached();
 
         _startCircleInternal(_circleId);
+    }
+
+    /**
+     * @dev Member contribute to the current round
+     * @param _circleId Circle ID
+     */
+    function contribute(uint256 _circleId) external {
+        if (_circleId == 0 || _circleId >= circleCounter)
+            revert InvalidCircle();
+
+        Circle storage c = circles[_circleId];
+        if (c.state != CircleState.ACTIVE) revert CircleNotActive();
+
+        Member storage m = circleMembers[_circleId][msg.sender];
+        if (!m.isActive) revert NotActiveMember();
+
+        uint8 round = c.currentRound;
+        if (roundContributions[_circleId][round][msg.sender])
+            revert AlreadyContributed();
+
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            c.contributionAmount
+        );
+
+        uint256 deadline = circleRoundDeadlines[_circleId][round];
+        uint256 gracePeriod = _getGracePeriod(c.frequency);
+        uint256 graceDeadline = deadline + gracePeriod;
+
+        bool afterGrace = block.timestamp > graceDeadline;
+
+        if (afterGrace) {
+            _handleLate(_circleId, round, c.contributionAmount);
+        } else {
+            c.totalPot += c.contributionAmount;
+            m.totalContributed += c.contributionAmount;
+        }
+
+        roundContributions[_circleId][round][msg.sender] = true;
+        emit ContributionMade(
+            _circleId,
+            round,
+            msg.sender,
+            c.contributionAmount
+        );
+
+        _checkComplete(_circleId);
     }
 
     // helper functions
@@ -843,6 +904,61 @@ contract CirclePotV1 is
         return 14 days;
     }
 
+    /**
+     * @dev Handles late payment with collateral deduction
+     */
+    function _handleLate(uint256 cid, uint8 round, uint256 amt) private {
+        uint256 fee = (amt * LATE_FEE_BPS) / 10000;
+
+        Member storage m = circleMembers[cid][msg.sender];
+        uint256 deduction = amt + fee;
+        if (m.collateralLocked > deduction) {
+            m.collateralLocked -= deduction;
+        } else {
+            m.collateralLocked = 0;
+        }
+
+        circles[cid].totalPot += amt;
+        totalPlatformFees += fee;
+
+        userReputation[msg.sender] = userReputation[msg.sender] > 5
+            ? userReputation[msg.sender] - 5
+            : 0;
+        latePayments[msg.sender]++;
+
+        emit LatePayment(cid, round, msg.sender, fee);
+    }
+
+    /**
+     * @dev Checks if round is complete and trigger payout
+     */
+    function _checkComplete(uint256 cid) private {
+        Circle storage c = circles[cid];
+        address[] storage mlist = circleMemberList[cid];
+        uint80 payCount = 0;
+
+        for (uint8 i = 0; i < mlist.length; i++) {
+            address addr = mlist[i];
+            //only count active members who have paid
+            if (
+                circleMembers[cid][addr].isActive &&
+                roundContributions[cid][c.currentRound][addr]
+            ) {
+                payCount++;
+            }
+        }
+
+        if (payCount == c.currentMembers) _payoutRound(cid, c.currentRound);
+    }
+
+     /**
+     * @dev Return grace period by frequency
+     */
+    function _getGracePeriod(Frequency f) public pure returns (uint256) {
+        if (f == Frequency.DAILY) return 0;
+        return 48 hours;
+    }
+
     // Getter/view functions for saving circle
     /**
      * @dev Gets member address by position
@@ -882,5 +998,5 @@ contract CirclePotV1 is
         return startPercentage < START_VOTE_THRESHOLD;
     }
 
-
+    
 }

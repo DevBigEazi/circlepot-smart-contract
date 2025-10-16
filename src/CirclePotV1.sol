@@ -11,7 +11,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /**
  * @title CirclePotV1
  * @dev On-chain savings circles
- * @notice Implements individual savings and community savings circles with collateral-backed commitments, voting,and invitations 
+ * @notice Implements individual savings and community savings circles with collateral-backed commitments, voting,and invitations
  */
 contract CirclePotV1 is
     Initializable,
@@ -29,8 +29,8 @@ contract CirclePotV1 is
     uint256 public constant LATE_FEE_BPS = 100; // 1%
     uint256 public constant MAX_CONTRIBUTION = 5000e18;
     uint256 public constant MIN_CONTRIBUTION = 1e18;
-    uint256 public constant MIN_MEMBERS = 5;
-    uint256 public constant MAX_MEMBERS = 20;
+    uint8 public constant MIN_MEMBERS = 5;
+    uint8 public constant MAX_MEMBERS = 20;
     uint256 public constant VISIBILITY_UPDATE_FEE = 0.5e18; // $0.50
     uint256 public constant VOTING_PERIOD = 2 days; // VOTING LAST 3 DAYS
     uint256 public constant START_VOTE_THRESHOLD = 5100; //51% IN BASIS POINTS
@@ -65,10 +65,10 @@ contract CirclePotV1 is
         address creator;
         uint256 contributionAmount;
         Frequency frequency;
-        uint256 maxMembers;
-        uint256 currentMembers;
-        uint256 currentRound;
-        uint256 totalRounds;
+        uint8 maxMembers;
+        uint8 currentMembers;
+        uint8 currentRound;
+        uint8 totalRounds;
         CircleState state;
         Visibility visibility;
         uint256 createdAt;
@@ -77,7 +77,7 @@ contract CirclePotV1 is
     }
 
     struct Member {
-        uint256 position;
+        uint8 position;
         uint256 totalContributed;
         bool hasReceivedPayout;
         bool isActive;
@@ -101,7 +101,7 @@ contract CirclePotV1 is
     struct CreateCircleParams {
         uint256 contributionAmount;
         Frequency frequency;
-        uint256 maxMembers;
+        uint8 maxMembers;
         Visibility visibility;
     }
 
@@ -133,7 +133,7 @@ contract CirclePotV1 is
     mapping(uint256 => Circle) public circles;
     mapping(uint256 => mapping(address => Member)) public circleMembers;
     mapping(uint256 => address[]) public circleMemberList;
-    mapping(uint256 => mapping(uint256 => mapping(address => bool)))
+    mapping(uint256 => mapping(uint8 => mapping(address => bool)))
         public roundContributions;
     mapping(uint256 => mapping(uint256 => uint256)) public circleRoundDeadlines;
 
@@ -187,9 +187,30 @@ contract CirclePotV1 is
         uint256 indexed circleId,
         uint256 indexed votingEndTime
     );
-    event VoteCast(uint256 indexed circleId, address indexed voter, VoteChoice choice);
+    event VoteCast(
+        uint256 indexed circleId,
+        address indexed voter,
+        VoteChoice choice
+    );
     event MemberInvited(uint256 indexed circleId, address indexed _invitee);
-    event VoteExecuted(uint256 indexed circleId, bool circleStarted, uint256 startVoteCount, uint256 withdrawVoteCount);
+    event VoteExecuted(
+        uint256 indexed circleId,
+        bool circleStarted,
+        uint256 startVoteCount,
+        uint256 withdrawVoteCount
+    );
+    event ContributionMade(
+        uint256 indexed circleId,
+        uint8 round,
+        address member,
+        uint256 indexed amount
+    );
+    event LatePayment(
+        uint256 indexed circleId,
+        uint8 round,
+        address member,
+        uint256 indexed fee
+    );
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -216,6 +237,8 @@ contract CirclePotV1 is
     error VoteAlreadyExecuted();
     error CircleNotPrivate();
     error NotInvited();
+    error CircleNotActive();
+    error AlreadyContributed();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -389,7 +412,10 @@ contract CirclePotV1 is
      * @param _circleId Circle ID
      * @param _invitees Array of addresses to invite
      */
-     function inviteMembers(uint256 _circleId, address[] calldata _invitees) external {
+    function inviteMembers(
+        uint256 _circleId,
+        address[] calldata _invitees
+    ) external {
         if (_circleId == 0 || _circleId >= circleCounter)
             revert InvalidCircle();
 
@@ -403,7 +429,7 @@ contract CirclePotV1 is
 
             emit MemberInvited(_circleId, _invitees[i]);
         }
-     }
+    }
 
     /**
      * @dev Allow a user to join an existing circle
@@ -457,7 +483,7 @@ contract CirclePotV1 is
         if (c.currentMembers == c.maxMembers) {
             _startCircleInternal(_circleId);
             emit CircleStarted(_circleId, block.timestamp);
-        } 
+        }
     }
 
     /**
@@ -465,7 +491,8 @@ contract CirclePotV1 is
      * @param _circleId Circle ID
      */
     function initiateVoting(uint256 _circleId) external {
-        if (_circleId == 0 || _circleId >= circleCounter) revert InvalidCircle();
+        if (_circleId == 0 || _circleId >= circleCounter)
+            revert InvalidCircle();
 
         Circle storage c = circles[_circleId];
         if (c.state != CircleState.CREATED) revert CircleNotOpen();
@@ -502,8 +529,9 @@ contract CirclePotV1 is
      * @param _circleId Circle ID
      * @param _choice Vote choice for the members (START or WITHDRAW)
      */
-     function castVote(uint256 _circleId, VoteChoice _choice) external {
-        if (_circleId == 0 || _circleId >= circleCounter) revert InvalidCircle();
+    function castVote(uint256 _circleId, VoteChoice _choice) external {
+        if (_circleId == 0 || _circleId >= circleCounter)
+            revert InvalidCircle();
         if (_choice == VoteChoice.NONE) revert InvalidVoteChoice();
 
         Circle storage c = circles[_circleId];
@@ -518,7 +546,7 @@ contract CirclePotV1 is
 
         VoteChoice previousVote = memberVotes[_circleId][msg.sender];
         if (previousVote != VoteChoice.NONE) revert AlreadyVoted();
- 
+
         memberVotes[_circleId][msg.sender] = _choice;
 
         if (_choice == VoteChoice.START) {
@@ -528,14 +556,15 @@ contract CirclePotV1 is
         }
 
         emit VoteCast(_circleId, msg.sender, _choice);
-     }
+    }
 
-     /**
-      * @dev execute vote result after voting period ends
-      * @param _circleId Circle ID
-      */
-      function executeVote(uint256 _circleId) external {
-        if (_circleId == 0 || _circleId >= circleCounter) revert InvalidCircle();
+    /**
+     * @dev execute vote result after voting period ends
+     * @param _circleId Circle ID
+     */
+    function executeVote(uint256 _circleId) external {
+        if (_circleId == 0 || _circleId >= circleCounter)
+            revert InvalidCircle();
 
         Circle storage c = circles[_circleId];
         if (c.state != CircleState.VOTING) revert VotingNotActive();
@@ -549,7 +578,9 @@ contract CirclePotV1 is
         vote.voteExecuted = true;
 
         uint8 totalVotes = vote.startVoteCount + vote.withdrawVoteCount;
-        uint256 startPercentage = totalVotes > 0 ? (vote.startVoteCount * 10000) / totalVotes: 0;
+        uint256 startPercentage = totalVotes > 0
+            ? (vote.startVoteCount * 10000) / totalVotes
+            : 0;
 
         bool shouldStart = startPercentage >= START_VOTE_THRESHOLD;
 
@@ -558,13 +589,23 @@ contract CirclePotV1 is
             c.state = CircleState.CREATED; // Reset to created b4 starting
             _startCircleInternal(_circleId);
 
-            emit VoteExecuted(_circleId, true, vote.startVoteCount, vote.withdrawVoteCount);
+            emit VoteExecuted(
+                _circleId,
+                true,
+                vote.startVoteCount,
+                vote.withdrawVoteCount
+            );
         } else {
             // Less than 51% voted to start - allow withdrawals
-            c.state = CircleState.CREATED; 
-            emit VoteExecuted(_circleId, true, vote.startVoteCount, vote.withdrawVoteCount);
+            c.state = CircleState.CREATED;
+            emit VoteExecuted(
+                _circleId,
+                true,
+                vote.startVoteCount,
+                vote.withdrawVoteCount
+            );
         }
-      }
+    }
 
     /**
      * @dev Each member can withdraw their collateral if after the ultimum, circle did not start
@@ -630,6 +671,54 @@ contract CirclePotV1 is
             revert UltimatumNotReached();
 
         _startCircleInternal(_circleId);
+    }
+
+    /**
+     * @dev Member contribute to the current round
+     * @param _circleId Circle ID
+     */
+    function contribute(uint256 _circleId) external {
+        if (_circleId == 0 || _circleId >= circleCounter)
+            revert InvalidCircle();
+
+        Circle storage c = circles[_circleId];
+        if (c.state != CircleState.ACTIVE) revert CircleNotActive();
+
+        Member storage m = circleMembers[_circleId][msg.sender];
+        if (!m.isActive) revert NotActiveMember();
+
+        uint8 round = c.currentRound;
+        if (roundContributions[_circleId][round][msg.sender])
+            revert AlreadyContributed();
+
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            c.contributionAmount
+        );
+
+        uint256 deadline = circleRoundDeadlines[_circleId][round];
+        uint256 gracePeriod = _getGracePeriod(c.frequency);
+        uint256 graceDeadline = deadline + gracePeriod;
+
+        bool afterGrace = block.timestamp > graceDeadline;
+
+        if (afterGrace) {
+            _handleLate(_circleId, round, c.contributionAmount);
+        } else {
+            c.totalPot += c.contributionAmount;
+            m.totalContributed += c.contributionAmount;
+        }
+
+        roundContributions[_circleId][round][msg.sender] = true;
+        emit ContributionMade(
+            _circleId,
+            round,
+            msg.sender,
+            c.contributionAmount
+        );
+
+        _checkComplete(_circleId);
     }
 
     // helper functions
@@ -717,8 +806,8 @@ contract CirclePotV1 is
         }
 
         // Assign position through N based on sorted reputation
-        for (uint256 i = 0; i < memberCount; i++) {
-            uint256 position = i + 2; // positions start at 2 (creator has 1)
+        for (uint8 i = 0; i < memberCount; i++) {
+            uint8 position = i + 2; // positions start at 2 (creator has 1)
             circleMembers[cid][members[i]].position = position;
 
             emit PositionAssigned(cid, members[i], position);
@@ -740,7 +829,7 @@ contract CirclePotV1 is
     /**
      * @dev Processes payout for a round
      */
-    function _payoutRound(uint256 cid, uint256 round) private {
+    function _payoutRound(uint256 cid, uint8 round) private {
         Circle storage c = circles[cid];
         address recip = _getByPos(cid, round);
 
@@ -775,7 +864,7 @@ contract CirclePotV1 is
     function _progressNextRound(
         Circle storage c,
         uint256 cid,
-        uint256 round
+        uint8 round
     ) private {
         if (round < c.totalRounds) {
             c.currentRound = round + 1;
@@ -808,6 +897,70 @@ contract CirclePotV1 is
     }
 
     /**
+     * @dev Returns ultimatum period based on frequency
+     */
+    function _ultimatum(Frequency f) private pure returns (uint256) {
+        if (f == Frequency.DAILY || f == Frequency.WEEKLY) return 7 days;
+        return 14 days;
+    }
+
+    /**
+     * @dev Handles late payment with collateral deduction
+     */
+    function _handleLate(uint256 cid, uint8 round, uint256 amt) private {
+        uint256 fee = (amt * LATE_FEE_BPS) / 10000;
+
+        Member storage m = circleMembers[cid][msg.sender];
+        uint256 deduction = amt + fee;
+        if (m.collateralLocked > deduction) {
+            m.collateralLocked -= deduction;
+        } else {
+            m.collateralLocked = 0;
+        }
+
+        circles[cid].totalPot += amt;
+        totalPlatformFees += fee;
+
+        userReputation[msg.sender] = userReputation[msg.sender] > 5
+            ? userReputation[msg.sender] - 5
+            : 0;
+        latePayments[msg.sender]++;
+
+        emit LatePayment(cid, round, msg.sender, fee);
+    }
+
+    /**
+     * @dev Checks if round is complete and trigger payout
+     */
+    function _checkComplete(uint256 cid) private {
+        Circle storage c = circles[cid];
+        address[] storage mlist = circleMemberList[cid];
+        uint80 payCount = 0;
+
+        for (uint8 i = 0; i < mlist.length; i++) {
+            address addr = mlist[i];
+            //only count active members who have paid
+            if (
+                circleMembers[cid][addr].isActive &&
+                roundContributions[cid][c.currentRound][addr]
+            ) {
+                payCount++;
+            }
+        }
+
+        if (payCount == c.currentMembers) _payoutRound(cid, c.currentRound);
+    }
+
+     /**
+     * @dev Return grace period by frequency
+     */
+    function _getGracePeriod(Frequency f) public pure returns (uint256) {
+        if (f == Frequency.DAILY) return 0;
+        return 48 hours;
+    }
+
+    // Getter/view functions for saving circle
+    /**
      * @dev Gets member address by position
      */
     function _getByPos(
@@ -821,14 +974,6 @@ contract CirclePotV1 is
         }
 
         return address(0);
-    }
-
-    /**
-     * @dev Returns ultimatum period based on frequency
-     */
-    function _ultimatum(Frequency f) private pure returns (uint256) {
-        if (f == Frequency.DAILY || f == Frequency.WEEKLY) return 7 days;
-        return 14 days;
     }
 
     /**
@@ -852,4 +997,6 @@ contract CirclePotV1 is
 
         return startPercentage < START_VOTE_THRESHOLD;
     }
+
+    
 }

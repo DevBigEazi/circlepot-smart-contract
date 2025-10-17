@@ -1356,6 +1356,13 @@ contract CirclePotV1 is
     }
 
     /**
+     * @dev Returns all goals for a user
+     */
+    function getUserGoals(address _user) external view returns(uint256[] memory) {
+        return userGoals[_user];
+    }
+
+    /**
      * @dev returns contract version
      */
     function version() external pure returns (string memory) {

@@ -223,7 +223,12 @@ contract CirclePotV1 is
         address indexed owner,
         uint256 amount
     );
-    event GoalWithdrawn(uint256 indexed goalId, address indexed owner, uint256 _amount, uint256 penalty);
+    event GoalWithdrawn(
+        uint256 indexed goalId,
+        address indexed owner,
+        uint256 _amount,
+        uint256 penalty
+    );
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -924,31 +929,6 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Handles late payment with collateral deduction
-     */
-    function _handleLate(uint256 cid, uint8 round, uint256 amt) private {
-        uint256 fee = (amt * LATE_FEE_BPS) / 10000;
-
-        Member storage m = circleMembers[cid][msg.sender];
-        uint256 deduction = amt + fee;
-        if (m.collateralLocked > deduction) {
-            m.collateralLocked -= deduction;
-        } else {
-            m.collateralLocked = 0;
-        }
-
-        circles[cid].totalPot += amt;
-        totalPlatformFees += fee;
-
-        userReputation[msg.sender] = userReputation[msg.sender] > 5
-            ? userReputation[msg.sender] - 5
-            : 0;
-        latePayments[msg.sender]++;
-
-        emit LatePayment(cid, round, msg.sender, fee);
-    }
-
-    /**
      * @dev Checks if round is complete and trigger payout
      */
     function _checkComplete(uint256 cid) private {
@@ -968,14 +948,6 @@ contract CirclePotV1 is
         }
 
         if (payCount == c.currentMembers) _payoutRound(cid, c.currentRound);
-    }
-
-    /**
-     * @dev Return grace period by frequency
-     */
-    function _getGracePeriod(Frequency f) public pure returns (uint256) {
-        if (f == Frequency.DAILY) return 0;
-        return 48 hours;
     }
 
     /**
@@ -1078,7 +1050,10 @@ contract CirclePotV1 is
      * @param _goalId Goal ID
      * @param _amount Amount to withdraw
      */
-    function withdrawFromGoal(uint256 _goalId, uint256 _amount) external nonReentrant {
+    function withdrawFromGoal(
+        uint256 _goalId,
+        uint256 _amount
+    ) external nonReentrant {
         if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
 
         PersonalGoal storage g = personalGoals[_goalId];
@@ -1095,7 +1070,7 @@ contract CirclePotV1 is
         IERC20(cUSDToken).safeTransfer(msg.sender, net);
         totalPlatformFees += penalty;
 
-         userReputation[msg.sender] = userReputation[msg.sender] > 5
+        userReputation[msg.sender] = userReputation[msg.sender] > 5
             ? userReputation[msg.sender] - 5
             : 0;
 
@@ -1110,7 +1085,7 @@ contract CirclePotV1 is
      */
     function CompleteGoal(uint256 _goalId) external nonReentrant {
         if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
-        
+
         PersonalGoal storage g = personalGoals[_goalId];
         if (g.owner != msg.sender) revert NotGoalOwner();
         if (!g.isActive) revert GoalNotActive();
@@ -1124,6 +1099,72 @@ contract CirclePotV1 is
         userReputation[msg.sender] += 10;
 
         emit GoalCompleted(_goalId, msg.sender);
+    }
+
+    // ============Admin Functions ============
+    /**
+     * @dev Withdraw accumulated platform fees to treasury
+     */
+    function withdrawPlatformFees() external onlyOwner {
+        uint256 amt = totalPlatformFees;
+        totalPlatformFees = 0;
+        IERC20(cUSDToken).safeTransfer(treasury, amt);
+    }
+
+    /**
+     * @dev Update treasury address
+     */
+    function updateTreasury(address _new) external onlyOwner {
+        if (_new == address(0)) revert InvalidTreasuryAddress();
+        treasury = _new;
+    }
+
+    /**
+     * @dev Updates platform fee in basis points (max is 1% = 100pts)
+     */
+    function setPlatformFeeBps(uint256 _newBps) external onlyOwner {
+        require(_newBps <= 100, "fee too high");
+        platformFeeBps = _newBps;
+    }
+
+    /**
+     * @dev returns contract version
+     */
+    function version() external pure returns (string memory) {
+        return "1.0.0";
+    }
+
+    /**
+     * @dev Return grace period by frequency
+     */
+    function _getGracePeriod(Frequency f) public pure returns (uint256) {
+        if (f == Frequency.DAILY) return 0;
+        return 48 hours;
+    }
+
+    /**
+     * @dev Handles late payment with collateral deduction
+     */
+    function _handleLate(uint256 cid, uint8 round, uint256 amt) private {
+        uint256 fee = (amt * LATE_FEE_BPS) / 10000;
+
+        Member storage m = circleMembers[cid][msg.sender];
+        uint256 deduction = amt + fee;
+        if (m.collateralLocked > deduction) {
+            m.collateralLocked -= deduction;
+        } else {
+            m.collateralLocked = 0;
+        }
+
+        circles[cid].totalPot += amt;
+        totalPlatformFees += fee;
+
+        userReputation[msg.sender] = userReputation[msg.sender] > 5
+            ? userReputation[msg.sender] - 5
+            : 0;
+        latePayments[msg.sender]++;
+
+        emit LatePayment(cid, round, msg.sender, fee);
     }
 
     // ============ Getter/View Functions ============
@@ -1358,14 +1399,9 @@ contract CirclePotV1 is
     /**
      * @dev Returns all goals for a user
      */
-    function getUserGoals(address _user) external view returns(uint256[] memory) {
+    function getUserGoals(
+        address _user
+    ) external view returns (uint256[] memory) {
         return userGoals[_user];
-    }
-
-    /**
-     * @dev returns contract version
-     */
-    function version() external pure returns (string memory) {
-        return "1.0.0";
     }
 }

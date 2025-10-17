@@ -1095,9 +1095,35 @@ contract CirclePotV1 is
         IERC20(cUSDToken).safeTransfer(msg.sender, net);
         totalPlatformFees += penalty;
 
+         userReputation[msg.sender] = userReputation[msg.sender] > 5
+            ? userReputation[msg.sender] - 5
+            : 0;
+
         emit GoalWithdrawn(_goalId, msg.sender, _amount, penalty);
 
         if (g.currentAmount == 0) g.isActive = false;
+    }
+
+    /**
+     * @dev Complete a goal and withdraw full amount
+     * @param _goalId Goal ID
+     */
+    function CompleteGoal(uint256 _goalId) external nonReentrant {
+        if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
+        
+        PersonalGoal storage g = personalGoals[_goalId];
+        if (g.owner != msg.sender) revert NotGoalOwner();
+        if (!g.isActive) revert GoalNotActive();
+        if (g.currentAmount < g.targetAmount) revert InsufficientBalance();
+
+        uint256 amt = g.currentAmount;
+        g.isActive = false;
+        g.currentAmount = 0;
+
+        IERC20(cUSDToken).safeTransfer(msg.sender, amt);
+        userReputation[msg.sender] += 10;
+
+        emit GoalCompleted(_goalId, msg.sender);
     }
 
     // ============ Getter/View Functions ============

@@ -223,6 +223,7 @@ contract CirclePotV1 is
         address indexed owner,
         uint256 amount
     );
+    event GoalWithdrawn(uint256 indexed goalId, address indexed owner, uint256 _amount, uint256 penalty);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -256,6 +257,7 @@ contract CirclePotV1 is
     error InvalidSavingGoal();
     error NotGoalOwner();
     error GoalNotActive();
+    error InsufficientBalance();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -985,6 +987,17 @@ contract CirclePotV1 is
         return 30 days;
     }
 
+    /**
+     * @dev Calculate penalty basis points base on progress percentage
+     */
+    function _penaltyBps(uint256 prog) private pure returns (uint256) {
+        if (prog < 2500) return 100; // 1.0%
+        if (prog < 5000) return 60; // 0.6%
+        if (prog < 7500) return 30; // 0.3%
+        if (prog < 10000) return 10; // 0.1%
+        return 0;
+    }
+
     // ============ Personal Saving Goals Functions ============
     /**
      * @dev Create a personal savings goal
@@ -1030,7 +1043,7 @@ contract CirclePotV1 is
      * @dev Contribute to a personal goal
      * @param _goalId Goal ID
      */
-    function ContributeToGoal(uint256 _goalId) external {
+    function ContributeToGoal(uint256 _goalId) external nonReentrant {
         if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
 
         PersonalGoal storage g = personalGoals[_goalId];
@@ -1059,7 +1072,34 @@ contract CirclePotV1 is
             emit GoalCompleted(_goalId, msg.sender);
         }
     }
-    
+
+    /**
+     * @dev Withdraw from a personaly goal (with penalty)
+     * @param _goalId Goal ID
+     * @param _amount Amount to withdraw
+     */
+    function withdrawFromGoal(uint256 _goalId, uint256 _amount) external nonReentrant {
+        if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
+
+        PersonalGoal storage g = personalGoals[_goalId];
+        if (g.owner != msg.sender) revert NotGoalOwner();
+        if (!g.isActive) revert GoalNotActive();
+        if (_amount > g.currentAmount) revert InsufficientBalance();
+
+        uint256 progress = (g.currentAmount * 10000) / g.targetAmount; // progress in percent
+        uint256 penaltyBps = _penaltyBps(progress);
+        uint256 penalty = (_amount * penaltyBps) / 10000;
+        uint256 net = _amount - penalty;
+
+        g.currentAmount -= _amount;
+        IERC20(cUSDToken).safeTransfer(msg.sender, net);
+        totalPlatformFees += penalty;
+
+        emit GoalWithdrawn(_goalId, msg.sender, _amount, penalty);
+
+        if (g.currentAmount == 0) g.isActive = false;
+    }
+
     // ============ Getter/View Functions ============
     /**
      * @dev Gets member address by position

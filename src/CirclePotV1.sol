@@ -211,7 +211,18 @@ contract CirclePotV1 is
         address member,
         uint256 indexed fee
     );
-    event PersonalGoalCreated(uint256 indexed goalId, address indexed owner, string name, uint256 indexed targetAmount);
+    event PersonalGoalCreated(
+        uint256 indexed goalId,
+        address indexed owner,
+        string name,
+        uint256 indexed amount
+    );
+    event GoalCompleted(uint256 indexed goalId, address indexed owner);
+    event GoalContribution(
+        uint256 indexed goalId,
+        address indexed owner,
+        uint256 amount
+    );
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -242,6 +253,9 @@ contract CirclePotV1 is
     error AlreadyContributed();
     error InvalidGoalAmount();
     error InvalidDeadline();
+    error InvalidSavingGoal();
+    error NotGoalOwner();
+    error GoalNotActive();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -962,6 +976,15 @@ contract CirclePotV1 is
         return 48 hours;
     }
 
+    /**
+     * @dev Convert frequency to seconds
+     */
+    function _freqSeconds(Frequency f) private pure returns (uint256) {
+        if (f == Frequency.DAILY) return 1 days;
+        if (f == Frequency.WEEKLY) return 7 days;
+        return 30 days;
+    }
+
     // ============ Personal Saving Goals Functions ============
     /**
      * @dev Create a personal savings goal
@@ -993,11 +1016,50 @@ contract CirclePotV1 is
 
         userGoals[msg.sender].push(gid);
 
-        emit PersonalGoalCreated(gid, msg.sender, params.name, params.targetAmount);
+        emit PersonalGoalCreated(
+            gid,
+            msg.sender,
+            params.name,
+            params.targetAmount
+        );
 
         return gid;
     }
 
+    /**
+     * @dev Contribute to a personal goal
+     * @param _goalId Goal ID
+     */
+    function ContributeToGoal(uint256 _goalId) external {
+        if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
+
+        PersonalGoal storage g = personalGoals[_goalId];
+        if (g.owner != msg.sender) revert NotGoalOwner();
+        if (!g.isActive) revert GoalNotActive();
+
+        if (g.lastContributionAt > 0) {
+            uint256 interval = _freqSeconds(g.frequency);
+            if (block.timestamp > g.lastContributionAt + interval)
+                revert AlreadyContributed();
+        }
+
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            g.contributionAmount
+        );
+
+        g.currentAmount += g.contributionAmount;
+        g.lastContributionAt = block.timestamp;
+
+        emit GoalContribution(_goalId, msg.sender, g.contributionAmount);
+
+        if (g.currentAmount >= g.targetAmount) {
+            userReputation[msg.sender] += 10;
+            emit GoalCompleted(_goalId, msg.sender);
+        }
+    }
+    
     // ============ Getter/View Functions ============
     /**
      * @dev Gets member address by position

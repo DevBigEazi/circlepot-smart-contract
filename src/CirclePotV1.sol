@@ -211,6 +211,7 @@ contract CirclePotV1 is
         address member,
         uint256 indexed fee
     );
+    event PersonalGoalCreated(uint256 indexed goalId, address indexed owner, string name, uint256 indexed targetAmount);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -239,6 +240,8 @@ contract CirclePotV1 is
     error NotInvited();
     error CircleNotActive();
     error AlreadyContributed();
+    error InvalidGoalAmount();
+    error InvalidDeadline();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -959,6 +962,42 @@ contract CirclePotV1 is
         return 48 hours;
     }
 
+    // ============ Personal Saving Goals Functions ============
+    /**
+     * @dev Create a personal savings goal
+     * @param params Goal creation parameters
+     * @return goalId The ID of the newly created goal
+     */
+    function createPersonalGoal(
+        CreateGoalParams calldata params
+    ) external returns (uint256) {
+        if (params.targetAmount < 10e18 || params.targetAmount > 50000e18)
+            revert InvalidGoalAmount();
+        if (params.contributionAmount == 0) revert InvalidContributionAmount();
+        if (params.deadline <= block.timestamp) revert InvalidDeadline();
+
+        uint256 gid = goalCounter++;
+
+        personalGoals[gid] = PersonalGoal({
+            owner: msg.sender,
+            name: params.name,
+            targetAmount: params.targetAmount,
+            currentAmount: 0,
+            contributionAmount: params.contributionAmount,
+            frequency: params.frequency,
+            deadline: params.deadline,
+            createdAt: block.timestamp,
+            isActive: true,
+            lastContributionAt: 0
+        });
+
+        userGoals[msg.sender].push(gid);
+
+        emit PersonalGoalCreated(gid, msg.sender, params.name, params.targetAmount);
+
+        return gid;
+    }
+
     // ============ Getter/View Functions ============
     /**
      * @dev Gets member address by position
@@ -998,7 +1037,6 @@ contract CirclePotV1 is
         return startPercentage < START_VOTE_THRESHOLD;
     }
 
-    
     /**
      * @dev Return voting info for a circle
      */
@@ -1123,15 +1161,21 @@ contract CirclePotV1 is
         return (memberInfo, hasContributedThisRound, nextDeadline);
     }
 
-        /**
+    /**
      * @dev Return progress info for a circle
      */
-    function getCircleProgress(uint256 _circleId) external view returns(
-        uint8 currentRound,
-        uint8 totalRounds,
-        uint256 contributionsThisRound,
-        uint8 totalMembers
-    ) {
+    function getCircleProgress(
+        uint256 _circleId
+    )
+        external
+        view
+        returns (
+            uint8 currentRound,
+            uint8 totalRounds,
+            uint256 contributionsThisRound,
+            uint8 totalMembers
+        )
+    {
         Circle storage c = circles[_circleId];
         currentRound = c.currentRound;
         totalRounds = c.totalRounds;
@@ -1145,17 +1189,28 @@ contract CirclePotV1 is
                 }
             }
         }
-        return (currentRound, totalRounds, contributionsThisRound, totalMembers);
+        return (
+            currentRound,
+            totalRounds,
+            contributionsThisRound,
+            totalMembers
+        );
     }
 
     /**
-     * @dev Returns user's reputation data 
+     * @dev Returns user's reputation data
      */
-    function getUserReputation(address _user) external view returns (
-        uint256 reputation,
-        uint256 circlesCompleted,
-        uint256 latePaymentsCount
-    ) {
+    function getUserReputation(
+        address _user
+    )
+        external
+        view
+        returns (
+            uint256 reputation,
+            uint256 circlesCompleted,
+            uint256 latePaymentsCount
+        )
+    {
         return (
             userReputation[_user],
             completedCircles[_user],
@@ -1166,9 +1221,9 @@ contract CirclePotV1 is
     /**
      * @dev Returns all members of a circle
      */
-    function getCircleMembers(uint256 _circleId) external view returns (
-        address[] memory
-    ) {
+    function getCircleMembers(
+        uint256 _circleId
+    ) external view returns (address[] memory) {
         return circleMemberList[_circleId];
     }
 

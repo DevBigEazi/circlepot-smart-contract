@@ -22,15 +22,15 @@ contract CirclePotV1 is
     using SafeERC20 for IERC20;
 
     // ============ Version ============
-    uint8 public constant VERSION = 1;
+    uint256 public constant VERSION = 1;
 
     // ============ Constants ============
     uint256 public constant PLATFORM_FEE_BPS = 20; // 0.2%
     uint256 public constant LATE_FEE_BPS = 100; // 1%
     uint256 public constant MAX_CONTRIBUTION = 5000e18;
     uint256 public constant MIN_CONTRIBUTION = 1e18;
-    uint8 public constant MIN_MEMBERS = 5;
-    uint8 public constant MAX_MEMBERS = 20;
+    uint256 public constant MIN_MEMBERS = 5;
+    uint256 public constant MAX_MEMBERS = 20;
     uint256 public constant VISIBILITY_UPDATE_FEE = 0.5e18; // $0.50
     uint256 public constant VOTING_PERIOD = 2 days; // VOTING LAST 3 DAYS
     uint256 public constant START_VOTE_THRESHOLD = 5100; //51% IN BASIS POINTS
@@ -65,10 +65,10 @@ contract CirclePotV1 is
         address creator;
         uint256 contributionAmount;
         Frequency frequency;
-        uint8 maxMembers;
-        uint8 currentMembers;
-        uint8 currentRound;
-        uint8 totalRounds;
+        uint256 maxMembers;
+        uint256 currentMembers;
+        uint256 currentRound;
+        uint256 totalRounds;
         CircleState state;
         Visibility visibility;
         uint256 createdAt;
@@ -77,7 +77,7 @@ contract CirclePotV1 is
     }
 
     struct Member {
-        uint8 position;
+        uint256 position;
         uint256 totalContributed;
         bool hasReceivedPayout;
         bool isActive;
@@ -101,7 +101,7 @@ contract CirclePotV1 is
     struct CreateCircleParams {
         uint256 contributionAmount;
         Frequency frequency;
-        uint8 maxMembers;
+        uint256 maxMembers;
         Visibility visibility;
     }
 
@@ -116,8 +116,8 @@ contract CirclePotV1 is
     struct Vote {
         uint256 votingStartTime;
         uint256 votingEndTime;
-        uint8 startVoteCount;
-        uint8 withdrawVoteCount;
+        uint256 startVoteCount;
+        uint256 withdrawVoteCount;
         bool votingActive;
         bool voteExecuted;
     }
@@ -133,7 +133,7 @@ contract CirclePotV1 is
     mapping(uint256 => Circle) public circles;
     mapping(uint256 => mapping(address => Member)) public circleMembers;
     mapping(uint256 => address[]) public circleMemberList;
-    mapping(uint256 => mapping(uint8 => mapping(address => bool)))
+    mapping(uint256 => mapping(uint256 => mapping(address => bool)))
         public roundContributions;
     mapping(uint256 => mapping(uint256 => uint256)) public circleRoundDeadlines;
 
@@ -157,7 +157,7 @@ contract CirclePotV1 is
     uint256 public platformFeeBps;
 
     // ============ Events ============
-    event ContractUpgraded(address indexed newImplementation, uint8 version);
+    event ContractUpgraded(address indexed newImplementation, uint256 version);
     event VisibilityUpdated(uint256 indexed circleId, address indexed creator);
     event CircleCreated(
         uint256 circleId,
@@ -201,13 +201,13 @@ contract CirclePotV1 is
     );
     event ContributionMade(
         uint256 indexed circleId,
-        uint8 round,
+        uint256 round,
         address member,
         uint256 indexed amount
     );
     event LatePayment(
         uint256 indexed circleId,
-        uint8 round,
+        uint256 round,
         address member,
         uint256 indexed fee
     );
@@ -240,7 +240,6 @@ contract CirclePotV1 is
     error CircleNotExist();
     error SameVisibility();
     error CircleNotOpen();
-    error CircleFull();
     error AlreadyJoined();
     error MinMembersNotReached();
     error UltimatumNotReached();
@@ -354,8 +353,8 @@ contract CirclePotV1 is
 
         // // if applicable, add visibilty fee( by default, the visibility is private but user can create a circle with public visibility by paying $0.5 one time fee)
         if (params.visibility == Visibility.PUBLIC) {
-            totalRequired + VISIBILITY_UPDATE_FEE;
-            totalPlatformFees + VISIBILITY_UPDATE_FEE;
+            totalRequired += VISIBILITY_UPDATE_FEE;
+            totalPlatformFees += VISIBILITY_UPDATE_FEE;
             emit VisibilityUpdated(circleId, msg.sender);
         }
 
@@ -446,7 +445,7 @@ contract CirclePotV1 is
         Circle storage c = circles[_circleId];
         if (c.creator != msg.sender) revert OnlyCreator();
         if (c.visibility != Visibility.PRIVATE) revert CircleNotPrivate();
-        if (c.state != CircleState.CREATED) revert CircleNotOpen();
+        if (c.state != CircleState.CREATED) revert InvalidCircle();
 
         for (uint256 i = 0; i < _invitees.length; i++) {
             circleInvitations[_circleId][_invitees[i]] = true;
@@ -464,11 +463,11 @@ contract CirclePotV1 is
             revert InvalidCircle();
 
         Circle storage c = circles[_circleId];
-        // allow to join only created circle
-        if (c.state != CircleState.CREATED) revert CircleNotOpen();
-        if (c.currentMembers == c.maxMembers) revert CircleFull();
+        if (c.currentMembers == c.maxMembers) revert CircleNotOpen();
         if (circleMembers[_circleId][msg.sender].isActive)
             revert AlreadyJoined();
+        // allow to join only created circle
+        if (c.state != CircleState.CREATED) revert InvalidCircle();
 
         // check invitation for private circles
         if (c.visibility == Visibility.PRIVATE) {
@@ -519,7 +518,7 @@ contract CirclePotV1 is
             revert InvalidCircle();
 
         Circle storage c = circles[_circleId];
-        if (c.state != CircleState.CREATED) revert CircleNotOpen();
+        if (c.state != CircleState.CREATED) revert InvalidCircle();
 
         // chect the 60% min threshold
         if (c.currentMembers < (c.maxMembers * 60) / 100)
@@ -527,7 +526,7 @@ contract CirclePotV1 is
 
         // check ultimatum period if it has passed
         uint256 ultimatumPeriod = _ultimatum(c.frequency);
-        if (block.timestamp >= c.createdAt + ultimatumPeriod)
+        if (block.timestamp < c.createdAt + ultimatumPeriod)
             revert UltimatumNotReached();
 
         // check if voting is already initiated
@@ -601,7 +600,7 @@ contract CirclePotV1 is
         vote.votingActive = false;
         vote.voteExecuted = true;
 
-        uint8 totalVotes = vote.startVoteCount + vote.withdrawVoteCount;
+        uint256 totalVotes = vote.startVoteCount + vote.withdrawVoteCount;
         uint256 startPercentage = totalVotes > 0
             ? (vote.startVoteCount * 10000) / totalVotes
             : 0;
@@ -640,7 +639,7 @@ contract CirclePotV1 is
             revert InvalidCircle();
 
         Circle storage c = circles[_circleId];
-        if (c.state != CircleState.CREATED) revert CircleNotOpen();
+        if (c.state != CircleState.CREATED) revert InvalidCircle();
 
         Member storage m = circleMembers[_circleId][msg.sender];
         if (!m.isActive) revert NotActiveMember();
@@ -683,7 +682,7 @@ contract CirclePotV1 is
 
         Circle storage c = circles[_circleId];
         if (c.creator != msg.sender) revert OnlyCreator();
-        if (c.state != CircleState.CREATED) revert CircleNotOpen();
+        if (c.state != CircleState.CREATED) revert InvalidCircle();
 
         // check 60% min threshold
         if (c.currentMembers < ((c.maxMembers * 60) / 100))
@@ -711,7 +710,7 @@ contract CirclePotV1 is
         Member storage m = circleMembers[_circleId][msg.sender];
         if (!m.isActive) revert NotActiveMember();
 
-        uint8 round = c.currentRound;
+        uint256 round = c.currentRound;
         if (roundContributions[_circleId][round][msg.sender])
             revert AlreadyContributed();
 
@@ -783,8 +782,6 @@ contract CirclePotV1 is
         );
 
         emit CircleStarted(_circleId, block.timestamp);
-
-        _payoutRound(_circleId, 1);
     }
 
     /**
@@ -806,7 +803,7 @@ contract CirclePotV1 is
 
         uint256 idxCounter = 0;
 
-        for (uint8 i = 0; i < mlist.length; i++) {
+        for (uint256 i = 0; i < mlist.length; i++) {
             if (mlist[i] != c.creator) {
                 members[idxCounter] = mlist[i];
                 // calculate the reputation score(number of completed ccirle worth more)
@@ -817,21 +814,26 @@ contract CirclePotV1 is
             }
         }
 
-        // Sort members by reputation (descending) using bubble sort (Higher rep gets more advantages)
-        for (uint8 i = 0; i < memberCount; i++) {
-            for (uint8 j = i + 1; j < memberCount; j++) {
+            // Sort members by reputation (descending) using bubble sort (Higher rep gets more advantages)
+            for (uint256 i = 0; i < memberCount; i++) {
+            for (uint256 j = i + 1; j < memberCount; j++) {
                 if (reputationScores[j] > reputationScores[i]) {
-                    // swap reputation scores
+                    // Swap reputation scores
                     uint256 tempScore = reputationScores[i];
                     reputationScores[i] = reputationScores[j];
                     reputationScores[j] = tempScore;
+                    
+                    // Also swap member addresses
+                    address tempAddr = members[i];
+                    members[i] = members[j];
+                    members[j] = tempAddr;
                 }
             }
         }
 
         // Assign position through N based on sorted reputation
-        for (uint8 i = 0; i < memberCount; i++) {
-            uint8 position = i + 2; // positions start at 2 (creator has 1)
+        for (uint256 i = 0; i < memberCount; i++) {
+            uint256 position = i + 2; // positions start at 2 (creator has 1)
             circleMembers[cid][members[i]].position = position;
 
             emit PositionAssigned(cid, members[i], position);
@@ -853,7 +855,7 @@ contract CirclePotV1 is
     /**
      * @dev Processes payout for a round
      */
-    function _payoutRound(uint256 cid, uint8 round) private {
+    function _payoutRound(uint256 cid, uint256 round) private {
         Circle storage c = circles[cid];
         address recip = _getByPos(cid, round);
 
@@ -888,7 +890,7 @@ contract CirclePotV1 is
     function _progressNextRound(
         Circle storage c,
         uint256 cid,
-        uint8 round
+        uint256 round
     ) private {
         if (round < c.totalRounds) {
             c.currentRound = round + 1;
@@ -909,7 +911,7 @@ contract CirclePotV1 is
     function _releaseAllCollateral(uint256 cid) private {
         address[] storage mlist = circleMemberList[cid];
 
-        for (uint8 i = 0; i < mlist.length; i++) {
+        for (uint256 i = 0; i < mlist.length; i++) {
             Member storage m = circleMembers[cid][mlist[i]];
 
             if (m.isActive && m.collateralLocked > 0) {
@@ -934,9 +936,9 @@ contract CirclePotV1 is
     function _checkComplete(uint256 cid) private {
         Circle storage c = circles[cid];
         address[] storage mlist = circleMemberList[cid];
-        uint80 payCount = 0;
+        uint256 payCount = 0;
 
-        for (uint8 i = 0; i < mlist.length; i++) {
+        for (uint256 i = 0; i < mlist.length; i++) {
             address addr = mlist[i];
             //only count active members who have paid
             if (
@@ -1016,35 +1018,36 @@ contract CirclePotV1 is
      * @param _goalId Goal ID
      */
     function ContributeToGoal(uint256 _goalId) external nonReentrant {
-        if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
+    if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
 
-        PersonalGoal storage g = personalGoals[_goalId];
-        if (g.owner != msg.sender) revert NotGoalOwner();
-        if (!g.isActive) revert GoalNotActive();
+    PersonalGoal storage g = personalGoals[_goalId];
+    if (g.owner != msg.sender) revert NotGoalOwner();
+    if (!g.isActive) revert GoalNotActive();
 
-        if (g.lastContributionAt > 0) {
-            uint256 interval = _freqSeconds(g.frequency);
-            if (block.timestamp > g.lastContributionAt + interval)
-                revert AlreadyContributed();
-        }
-
-        IERC20(cUSDToken).safeTransferFrom(
-            msg.sender,
-            address(this),
-            g.contributionAmount
-        );
-
-        g.currentAmount += g.contributionAmount;
-        g.lastContributionAt = block.timestamp;
-
-        emit GoalContribution(_goalId, msg.sender, g.contributionAmount);
-
-        if (g.currentAmount >= g.targetAmount) {
-            userReputation[msg.sender] += 10;
-            emit GoalCompleted(_goalId, msg.sender);
+    if (g.lastContributionAt > 0) {
+        uint256 interval = _freqSeconds(g.frequency);
+        // Revert if insufficient time has passed since last contribution
+        if (block.timestamp < g.lastContributionAt + interval) {
+            revert AlreadyContributed();
         }
     }
 
+    IERC20(cUSDToken).safeTransferFrom(
+        msg.sender,
+        address(this),
+        g.contributionAmount
+    );
+
+    g.currentAmount += g.contributionAmount;
+    g.lastContributionAt = block.timestamp;
+
+    emit GoalContribution(_goalId, msg.sender, g.contributionAmount);
+
+    if (g.currentAmount >= g.targetAmount) {
+        userReputation[msg.sender] += 10;
+        emit GoalCompleted(_goalId, msg.sender);
+    }
+}
     /**
      * @dev Withdraw from a personaly goal (with penalty)
      * @param _goalId Goal ID
@@ -1145,7 +1148,7 @@ contract CirclePotV1 is
     /**
      * @dev Handles late payment with collateral deduction
      */
-    function _handleLate(uint256 cid, uint8 round, uint256 amt) private {
+    function _handleLate(uint256 cid, uint256 round, uint256 amt) private {
         uint256 fee = (amt * LATE_FEE_BPS) / 10000;
 
         Member storage m = circleMembers[cid][msg.sender];
@@ -1177,7 +1180,7 @@ contract CirclePotV1 is
     ) private view returns (address) {
         address[] storage mlist = circleMemberList[cid];
 
-        for (uint8 i = 0; i < mlist.length; i++) {
+        for (uint256 i = 0; i < mlist.length; i++) {
             if (circleMembers[cid][mlist[i]].position == pos) return mlist[i];
         }
 
@@ -1198,7 +1201,7 @@ contract CirclePotV1 is
         if (!vote.voteExecuted) return false;
         if (c.state == CircleState.ACTIVE) return false;
 
-        uint8 totalVotes = vote.startVoteCount + vote.withdrawVoteCount;
+        uint256 totalVotes = vote.startVoteCount + vote.withdrawVoteCount;
         uint256 startPercentage = totalVotes > 0
             ? (vote.startVoteCount * 10000) / totalVotes
             : 0;
@@ -1216,8 +1219,8 @@ contract CirclePotV1 is
         view
         returns (
             uint256 votingEndTime,
-            uint8 startVoteCount,
-            uint8 withdrawVoteCount,
+            uint256 startVoteCount,
+            uint256 withdrawVoteCount,
             bool votingActive,
             bool voteExecuted,
             VoteChoice userVote
@@ -1293,7 +1296,7 @@ contract CirclePotV1 is
 
         for (uint256 i = 1; i < circleCounter; i++) {
             if (circleMembers[i][_user].isActive) {
-                userCircles[idx] = 1;
+                userCircles[idx] = i;
 
                 idx++;
             }
@@ -1339,10 +1342,10 @@ contract CirclePotV1 is
         external
         view
         returns (
-            uint8 currentRound,
-            uint8 totalRounds,
+            uint256 currentRound,
+            uint256 totalRounds,
             uint256 contributionsThisRound,
-            uint8 totalMembers
+            uint256 totalMembers
         )
     {
         Circle storage c = circles[_circleId];
@@ -1352,7 +1355,7 @@ contract CirclePotV1 is
 
         if (c.state == CircleState.ACTIVE) {
             address[] storage mlist = circleMemberList[_circleId];
-            for (uint8 i = 0; i < mlist.length; i++) {
+            for (uint256 i = 0; i < mlist.length; i++) {
                 if (roundContributions[_circleId][c.currentRound][mlist[i]]) {
                     contributionsThisRound++;
                 }

@@ -132,4 +132,156 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         );
         assertTrue(m.isActive);
     }
+
+    function test_CastVote_RevertInvalidVoteChoice() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.warp(block.timestamp + 15 days);
+        vm.prank(alice);
+        circleSavings.initiateVoting(cid);
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.InvalidVoteChoice.selector);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.NONE);
+    }
+
+    function test_CastVote_RevertAlreadyVoted() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.warp(block.timestamp + 15 days);
+        vm.prank(alice);
+        circleSavings.initiateVoting(cid);
+        vm.prank(alice);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.AlreadyVoted.selector);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.WITHDRAW);
+    }
+
+    function test_ExecuteVote_RevertVotingStillActive() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.warp(block.timestamp + 15 days);
+        vm.prank(alice);
+        circleSavings.initiateVoting(cid);
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.VotingStillActive.selector);
+        circleSavings.executeVote(cid);
+    }
+
+    function test_ExecuteVote_RevertVoteAlreadyExecuted() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.warp(block.timestamp + 15 days);
+        vm.prank(alice);
+        circleSavings.initiateVoting(cid);
+        vm.prank(alice);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+        vm.warp(block.timestamp + 3 days);
+        vm.prank(alice);
+        circleSavings.executeVote(cid);
+        // After execution, circle is ACTIVE so VotingNotActive error expected
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.VotingNotActive.selector);
+        circleSavings.executeVote(cid);
+    }
+
+    function test_WithdrawCollateral_UltimatumPath() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.warp(block.timestamp + 8 days);
+        uint256 balBefore = cUSD.balanceOf(alice);
+        vm.prank(alice);
+        circleSavings.WithdrawCollateral(cid);
+        uint256 balAfter = cUSD.balanceOf(alice);
+        assertGt(balAfter, balBefore);
+    }
+
+    function test_StartCircle_ManualStart() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.warp(block.timestamp + 8 days);
+        vm.prank(alice);
+        circleSavings.startCircle(cid);
+        (CircleSavingsV1.Circle memory c, , , ) = circleSavings.getCircleDetails(cid);
+        assertEq(uint256(c.state), uint256(CircleSavingsV1.CircleState.ACTIVE));
+    }
+
+    function test_UpdateReputationContract() public {
+        vm.prank(testOwner);
+        vm.expectRevert(CircleSavingsV1.AddressZeroNotAllowed.selector);
+        circleSavings.updateReputationContract(address(0));
+    }
+
+    function test_CastVote_RevertVotingPeriodEnded() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.warp(block.timestamp + 15 days);
+        vm.prank(alice);
+        circleSavings.initiateVoting(cid);
+        vm.warp(block.timestamp + 3 days);
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.VotingPeriodEnded.selector);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+    }
+
+    function test_CastVote_RevertNotActiveMember() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.warp(block.timestamp + 15 days);
+        vm.prank(alice);
+        circleSavings.initiateVoting(cid);
+        vm.prank(david);
+        vm.expectRevert(CircleSavingsV1.NotActiveMember.selector);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+    }
+
+    function test_WithdrawCollateral_RevertUltimatumNotPassed() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.UltimatumNotPassed.selector);
+        circleSavings.WithdrawCollateral(cid);
+    }
+
+    function test_StartCircle_RevertNotCreator() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(charlie);
+        circleSavings.joinCircle(cid);
+        vm.warp(block.timestamp + 8 days);
+        vm.prank(bob);
+        vm.expectRevert(CircleSavingsV1.OnlyCreator.selector);
+        circleSavings.startCircle(cid);
+    }
+
+    function test_JoinCircle_RevertCircleNotOpen() public {
+        uint256 cid = _createAndStartCircle();
+        vm.prank(frank);
+        vm.expectRevert(CircleSavingsV1.CircleNotOpen.selector);
+        circleSavings.joinCircle(cid);
+    }
 }

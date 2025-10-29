@@ -168,4 +168,51 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         // Should have cumulative reputation from both goals (20 + 20)
         assertEq(reputation.getReputation(alice), 40);
     }
+
+    function testCreateGoal_MonthlyFrequency() public {
+        vm.prank(alice);
+        uint256 gid = personalSavings.createPersonalGoal(
+            PersonalSavingsV1.CreateGoalParams({
+                name: "Monthly Goal",
+                targetAmount: 200e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavingsV1.Frequency.MONTHLY,
+                deadline: block.timestamp + 365 days
+            })
+        );
+        // Goal created with MONTHLY frequency - verify by making contributions
+        vm.startPrank(alice);
+        personalSavings.ContributeToGoal(gid);
+        vm.warp(block.timestamp + 31 days);
+        personalSavings.ContributeToGoal(gid);
+        vm.stopPrank();
+    }
+
+    function testWithdraw_HighProgressPenalty() public {
+        vm.prank(alice);
+        uint256 gid = personalSavings.createPersonalGoal(
+            PersonalSavingsV1.CreateGoalParams({
+                name: "High Progress",
+                targetAmount: 200e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days
+            })
+        );
+        vm.startPrank(alice);
+        personalSavings.ContributeToGoal(gid);
+        uint256 t = block.timestamp;
+        t += 7 days + 1;
+        vm.warp(t);
+        personalSavings.ContributeToGoal(gid);
+        t += 7 days + 1;
+        vm.warp(t);
+        personalSavings.ContributeToGoal(gid);
+        // Now at 75% progress - penalty should apply
+        uint256 balBefore = cUSD.balanceOf(alice);
+        personalSavings.withdrawFromGoal(gid, 50e18);
+        uint256 balAfter = cUSD.balanceOf(alice);
+        assertLt(balAfter - balBefore, 50e18); // penalty applied
+        vm.stopPrank();
+    }
 }

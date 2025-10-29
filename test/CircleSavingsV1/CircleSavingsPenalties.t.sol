@@ -87,4 +87,99 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         assertEq(completed, 1);
         assertTrue(rep >= 5);
     }
+
+    function test_RoundAdvanceWithReputation() public {
+        uint256 cid = _createAndStartCircle();
+
+        // Complete round 1
+        vm.prank(alice);
+        circleSavings.contribute(cid);
+        vm.prank(bob);
+        circleSavings.contribute(cid);
+        vm.prank(charlie);
+        circleSavings.contribute(cid);
+        vm.prank(david);
+        circleSavings.contribute(cid);
+        vm.prank(eve);
+        circleSavings.contribute(cid);
+
+        // Check that round advanced
+        (CircleSavingsV1.Circle memory c, , , ) = circleSavings
+            .getCircleDetails(cid);
+        assertEq(c.currentRound, 2);
+
+        // Check that first position holder got reputation increase
+        uint256 rep = reputation.getReputation(alice);
+        assertGt(rep, 0);
+    }
+
+    function test_Payout_CreatorReceivesFullAmount() public {
+        uint256 cid = _createAndStartCircle();
+        uint256 balBefore = cUSD.balanceOf(alice);
+        vm.prank(alice);
+        circleSavings.contribute(cid);
+        vm.prank(bob);
+        circleSavings.contribute(cid);
+        vm.prank(charlie);
+        circleSavings.contribute(cid);
+        vm.prank(david);
+        circleSavings.contribute(cid);
+        vm.prank(eve);
+        circleSavings.contribute(cid);
+        uint256 balAfter = cUSD.balanceOf(alice);
+        assertGt(balAfter, balBefore);
+    }
+
+    function test_Payout_NonCreatorWithPlatformFee() public {
+        uint256 cid = _createAndStartCircle();
+        // Complete round 1 (alice gets payout)
+        vm.prank(alice);
+        circleSavings.contribute(cid);
+        vm.prank(bob);
+        circleSavings.contribute(cid);
+        vm.prank(charlie);
+        circleSavings.contribute(cid);
+        vm.prank(david);
+        circleSavings.contribute(cid);
+        vm.prank(eve);
+        circleSavings.contribute(cid);
+        // Round 2 - bob gets payout (non-creator, fee applies)
+        uint256 balBefore = cUSD.balanceOf(bob);
+        vm.prank(alice);
+        circleSavings.contribute(cid);
+        vm.prank(bob);
+        circleSavings.contribute(cid);
+        vm.prank(charlie);
+        circleSavings.contribute(cid);
+        vm.prank(david);
+        circleSavings.contribute(cid);
+        vm.prank(eve);
+        circleSavings.contribute(cid);
+        uint256 balAfter = cUSD.balanceOf(bob);
+        assertGt(balAfter, balBefore);
+        // Payout should be less than full 500e18 due to 1% fee
+        assertLt(balAfter - balBefore, 500e18);
+    }
+
+    function test_CircleCompletion_CollateralReleased() public {
+        uint256 cid = _createAndStartCircle();
+        uint256 balBefore = cUSD.balanceOf(alice);
+        // Complete all 5 rounds
+        for (uint256 round = 0; round < 5; round++) {
+            vm.prank(alice);
+            circleSavings.contribute(cid);
+            vm.prank(bob);
+            circleSavings.contribute(cid);
+            vm.prank(charlie);
+            circleSavings.contribute(cid);
+            vm.prank(david);
+            circleSavings.contribute(cid);
+            vm.prank(eve);
+            circleSavings.contribute(cid);
+            vm.warp(block.timestamp + 7 days);
+        }
+        // Alice should receive collateral back
+        uint256 balAfter = cUSD.balanceOf(alice);
+        assertGt(balAfter, balBefore);
+    }
 }

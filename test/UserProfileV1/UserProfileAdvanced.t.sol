@@ -67,4 +67,64 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         bool available = userProfile.isUsernameAvailable("someoneelse");
         assertTrue(available);
     }
+
+    function test_GetAddressByUsername_RevertProfileDoesNotExist() public {
+        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        userProfile.getAddressByUsername("nonexistent");
+    }
+
+    function test_IsUsernameAvailable_ReturnsFalse() public {
+        vm.prank(alice);
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
+        bool available = userProfile.isUsernameAvailable("alice");
+        assertFalse(available);
+    }
+
+    function test_UpdatePhoto_Only() public {
+        vm.prank(alice);
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
+        vm.warp(block.timestamp + 31 days);
+        vm.prank(alice);
+        userProfile.updatePhoto("ipfs://newphoto");
+        UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
+        assertEq(p.profilePhoto, "ipfs://newphoto");
+        assertEq(p.username, "alice");
+    }
+
+    function test_CreateProfile_RevertProfileAlreadyExists() public {
+        vm.prank(alice);
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
+        vm.prank(alice);
+        vm.expectRevert(UserProfileV1.ProfileAlreadyExists.selector);
+        userProfile.createProfile("alice2@example.com", "alice2", "ipfs://p2");
+    }
+
+    function test_UpdateUsername_RevertEmptyUsername() public {
+        vm.prank(alice);
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
+        vm.warp(block.timestamp + 31 days);
+        vm.prank(alice);
+        vm.expectRevert(UserProfileV1.EmptyUsername.selector);
+        userProfile.updateUsername("");
+    }
+
+    function test_UpdatePhoto_RevertEmptyPhoto() public {
+        vm.prank(alice);
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
+        vm.warp(block.timestamp + 31 days);
+        vm.prank(alice);
+        vm.expectRevert(UserProfileV1.EmptyPhoto.selector);
+        userProfile.updatePhoto("");
+    }
+
+    function test_GetProfile_RevertProfileDoesNotExist() public {
+        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        userProfile.getProfile(bob);
+    }
+
+    function test_UpdateProfile_RevertProfileDoesNotExist() public {
+        vm.prank(bob);
+        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        userProfile.updateProfile("newname", "ipfs://new");
+    }
 }

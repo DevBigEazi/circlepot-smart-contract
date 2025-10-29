@@ -25,24 +25,55 @@ contract UserProfileV1BasicTests is UserProfileV1Setup {
 
     function testUpdateUsernameAndPhoto() public {
         vm.prank(alice);
-        userProfile.createProfile(
-            "alice@example.com",
-            "alice",
-            "ipfs://photo1"
-        );
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
 
-        // Update username first
-        vm.warp(block.timestamp + 1); // small time advance for first update
+        // Fast-forward time to bypass cooldowns
+        vm.warp(block.timestamp + 31 days);
+
         vm.prank(alice);
-        userProfile.updateUsername("alice2");
+        userProfile.updateUsername("aliceupdated");
 
-        // Wait past cooldown period
+        vm.warp(block.timestamp + 31 days);
+
+        vm.prank(alice);
+        userProfile.updatePhoto("ipfs://newphoto");
+
+        UserProfileV1.UserProfile memory profile = userProfile.getProfile(
+            alice
+        );
+        assertEq(profile.username, "aliceupdated");
+        assertEq(profile.profilePhoto, "ipfs://newphoto");
+    }
+
+    function testUpdateProfile_UsernameOnly() public {
+        vm.prank(alice);
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);
-        userProfile.updatePhoto("ipfs://photo2");
+        userProfile.updateProfile("alice2", "");
+        UserProfileV1.UserProfile memory profile = userProfile.getProfile(alice);
+        assertEq(profile.username, "alice2");
+    }
 
-        UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
-        assertEq(p.username, "alice2");
-        assertEq(p.profilePhoto, "ipfs://photo2");
+    function testUpdateProfile_PhotoOnly() public {
+        vm.prank(alice);
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
+        vm.warp(block.timestamp + 31 days);
+        vm.prank(alice);
+        userProfile.updateProfile("", "ipfs://newphoto");
+        UserProfileV1.UserProfile memory profile = userProfile.getProfile(alice);
+        assertEq(profile.profilePhoto, "ipfs://newphoto");
+    }
+
+    function testUpdatePhoto_CooldownNotMet() public {
+        vm.prank(alice);
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
+        vm.warp(block.timestamp + 31 days);
+        vm.prank(alice);
+        userProfile.updatePhoto("ipfs://p2");
+        vm.warp(block.timestamp + 15 days);
+        vm.prank(alice);
+        vm.expectRevert(UserProfileV1.UsernameUpdateCooldownNotMet.selector);
+        userProfile.updatePhoto("ipfs://p3");
     }
 }

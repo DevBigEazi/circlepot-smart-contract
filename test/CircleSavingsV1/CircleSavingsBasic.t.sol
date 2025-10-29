@@ -90,4 +90,114 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         assertEq(uint256(c.state), uint256(CircleSavingsV1.CircleState.ACTIVE));
         assertEq(c.currentRound, 1);
     }
+
+    function test_UpdateCircleVisibility_RevertSameVisibility() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(alice);
+        circleSavings.updateCircleVisibility(cid, CircleSavingsV1.Visibility.PRIVATE);
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.SameVisibility.selector);
+        circleSavings.updateCircleVisibility(cid, CircleSavingsV1.Visibility.PRIVATE);
+    }
+
+    function test_UpdateCircleVisibility_RevertNotCreator() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        vm.expectRevert(CircleSavingsV1.OnlyCreator.selector);
+        circleSavings.updateCircleVisibility(cid, CircleSavingsV1.Visibility.PRIVATE);
+    }
+
+    function test_InviteMembers_RevertCircleNotPrivate() public {
+        uint256 cid = _createDefaultCircle(alice);
+        address[] memory invitees = new address[](1);
+        invitees[0] = bob;
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.CircleNotPrivate.selector);
+        circleSavings.inviteMembers(cid, invitees);
+    }
+
+    function test_JoinCircle_RevertNotInvited() public {
+        vm.prank(alice);
+        uint256 cid = circleSavings.createCircle(
+            CircleSavingsV1.CreateCircleParams({
+                contributionAmount: 100e18,
+                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                maxMembers: 5,
+                visibility: CircleSavingsV1.Visibility.PRIVATE
+            })
+        );
+        address[] memory invitees = new address[](1);
+        invitees[0] = charlie;
+        vm.prank(alice);
+        circleSavings.inviteMembers(cid, invitees);
+        vm.prank(bob);
+        vm.expectRevert(CircleSavingsV1.NotInvited.selector);
+        circleSavings.joinCircle(cid);
+    }
+
+    function test_JoinCircle_RevertAlreadyJoined() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        vm.prank(bob);
+        vm.expectRevert(CircleSavingsV1.AlreadyJoined.selector);
+        circleSavings.joinCircle(cid);
+    }
+
+    function test_Contribute_RevertCircleNotActive() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.CircleNotActive.selector);
+        circleSavings.contribute(cid);
+    }
+
+    function test_Contribute_RevertAlreadyContributed() public {
+        uint256 cid = _createAndStartCircle();
+        vm.prank(alice);
+        circleSavings.contribute(cid);
+        vm.prank(alice);
+        vm.expectRevert(CircleSavingsV1.AlreadyContributed.selector);
+        circleSavings.contribute(cid);
+    }
+
+    function test_CreateCircle_DailyFrequency() public {
+        vm.prank(alice);
+        uint256 cid = circleSavings.createCircle(
+            CircleSavingsV1.CreateCircleParams({
+                contributionAmount: 100e18,
+                frequency: CircleSavingsV1.Frequency.DAILY,
+                maxMembers: 5,
+                visibility: CircleSavingsV1.Visibility.PUBLIC
+            })
+        );
+        (CircleSavingsV1.Circle memory c, , , ) = circleSavings.getCircleDetails(cid);
+        assertEq(uint256(c.frequency), uint256(CircleSavingsV1.Frequency.DAILY));
+    }
+
+    function test_CreateCircle_MonthlyFrequency() public {
+        vm.prank(alice);
+        uint256 cid = circleSavings.createCircle(
+            CircleSavingsV1.CreateCircleParams({
+                contributionAmount: 100e18,
+                frequency: CircleSavingsV1.Frequency.MONTHLY,
+                maxMembers: 5,
+                visibility: CircleSavingsV1.Visibility.PUBLIC
+            })
+        );
+        (CircleSavingsV1.Circle memory c, , , ) = circleSavings.getCircleDetails(cid);
+        assertEq(uint256(c.frequency), uint256(CircleSavingsV1.Frequency.MONTHLY));
+    }
+
+    function test_Initialize_RevertZeroAddresses() public {
+        CircleSavingsV1 impl = new CircleSavingsV1();
+        vm.expectRevert();
+        impl.initialize(address(0), testTreasury, address(reputation), testOwner);
+    }
+
+    function test_Upgrade_UpdatesAddresses() public {
+        address newToken = makeAddr("newToken");
+        vm.prank(testOwner);
+        circleSavings.upgrade(newToken, address(0), address(0), 2);
+        assertEq(circleSavings.cUSDToken(), newToken);
+    }
 }

@@ -18,45 +18,6 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         userProfile.createProfile("bob@example.com", "alice", "ipfs://p2");
     }
 
-    function test_UpdateUsernameCooldownRevert() public {
-        vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
-
-        // Set initial timestamp to when profile was created
-        uint256 creationTime = block.timestamp;
-
-        // Update username first time
-        vm.prank(alice);
-        userProfile.updateUsername("alice2");
-
-        // Try to update again before cooldown period is over
-        vm.warp(creationTime + 15 days); // Only wait 15 days (cooldown is 30 days)
-
-        vm.prank(alice);
-        vm.expectRevert(UserProfileV1.UsernameUpdateCooldownNotMet.selector);
-        userProfile.updateUsername("alice3");
-
-        // Verify we can update after cooldown period
-        vm.warp(creationTime + 31 days);
-        vm.prank(alice);
-        userProfile.updateUsername("alice3");
-    }
-
-    function test_UpdateProfileBothFields() public {
-        vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
-
-        // warp past cooldown for username and photo
-        vm.warp(block.timestamp + 31 days);
-
-        vm.prank(alice);
-        userProfile.updateProfile("alice2", "ipfs://p2");
-
-        UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
-        assertEq(p.username, "alice2");
-        assertEq(p.profilePhoto, "ipfs://p2");
-    }
-
     function test_GetAddressByUsernameAndAvailability() public {
         vm.prank(alice);
         userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
@@ -99,15 +60,6 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         userProfile.createProfile("alice2@example.com", "alice2", "ipfs://p2");
     }
 
-    function test_UpdateUsername_RevertEmptyUsername() public {
-        vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
-        vm.warp(block.timestamp + 31 days);
-        vm.prank(alice);
-        vm.expectRevert(UserProfileV1.EmptyUsername.selector);
-        userProfile.updateUsername("");
-    }
-
     function test_UpdatePhoto_RevertEmptyPhoto() public {
         vm.prank(alice);
         userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
@@ -122,9 +74,21 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         userProfile.getProfile(bob);
     }
 
-    function test_UpdateProfile_RevertProfileDoesNotExist() public {
+    function test_CreateProfile_EmptyFields() public {
+        vm.prank(alice);
+        vm.expectRevert(UserProfileV1.EmptyEmail.selector);
+        userProfile.createProfile("", "alice", "ipfs://p1");
+    }
+
+    function test_CreateProfile_EmptyUsername() public {
+        vm.prank(alice);
+        vm.expectRevert(UserProfileV1.EmptyUsername.selector);
+        userProfile.createProfile("alice@example.com", "", "ipfs://p1");
+    }
+
+    function test_UpdatePhoto_RevertProfileDoesNotExist() public {
         vm.prank(bob);
         vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
-        userProfile.updateProfile("newname", "ipfs://new");
+        userProfile.updatePhoto("ipfs://new");
     }
 }

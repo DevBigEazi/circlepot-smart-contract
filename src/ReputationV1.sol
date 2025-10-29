@@ -81,7 +81,8 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _version Reinitializer version number
      */
     function upgrade(uint8 _version) public reinitializer(_version) onlyOwner {
-        // Add any upgrade logic here if needed
+        // Version 1 - no upgrade logic needed yet
+        // Future versions will add initialization logic here
     }
 
     /**

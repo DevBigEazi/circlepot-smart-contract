@@ -215,4 +215,40 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         assertLt(balAfter - balBefore, 50e18); // penalty applied
         vm.stopPrank();
     }
+
+    function testGetUserGoals() public {
+        uint256 gid1 = _createDefaultGoal(alice);
+        vm.prank(alice);
+        uint256 gid2 = personalSavings.createPersonalGoal(
+            PersonalSavingsV1.CreateGoalParams({
+                name: "Goal 2",
+                targetAmount: 100e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days
+            })
+        );
+        uint256[] memory goals = personalSavings.getUserGoals(alice);
+        assertEq(goals.length, 2);
+        assertEq(goals[0], gid1);
+        assertEq(goals[1], gid2);
+    }
+
+    function testContribute_DailyFrequency() public {
+        vm.prank(alice);
+        uint256 gid = personalSavings.createPersonalGoal(
+            PersonalSavingsV1.CreateGoalParams({
+                name: "Daily",
+                targetAmount: 100e18,
+                contributionAmount: 10e18,
+                frequency: PersonalSavingsV1.Frequency.DAILY,
+                deadline: block.timestamp + 365 days
+            })
+        );
+        vm.startPrank(alice);
+        personalSavings.ContributeToGoal(gid);
+        vm.warp(block.timestamp + 1 days + 1);
+        personalSavings.ContributeToGoal(gid);
+        vm.stopPrank();
+    }
 }

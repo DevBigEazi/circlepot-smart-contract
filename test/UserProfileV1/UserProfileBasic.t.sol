@@ -23,48 +23,6 @@ contract UserProfileV1BasicTests is UserProfileV1Setup {
         assertEq(p.username, "alice");
     }
 
-    function testUpdateUsernameAndPhoto() public {
-        vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
-
-        // Fast-forward time to bypass cooldowns
-        vm.warp(block.timestamp + 31 days);
-
-        vm.prank(alice);
-        userProfile.updateUsername("aliceupdated");
-
-        vm.warp(block.timestamp + 31 days);
-
-        vm.prank(alice);
-        userProfile.updatePhoto("ipfs://newphoto");
-
-        UserProfileV1.UserProfile memory profile = userProfile.getProfile(
-            alice
-        );
-        assertEq(profile.username, "aliceupdated");
-        assertEq(profile.profilePhoto, "ipfs://newphoto");
-    }
-
-    function testUpdateProfile_UsernameOnly() public {
-        vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
-        vm.warp(block.timestamp + 31 days);
-        vm.prank(alice);
-        userProfile.updateProfile("alice2", "");
-        UserProfileV1.UserProfile memory profile = userProfile.getProfile(alice);
-        assertEq(profile.username, "alice2");
-    }
-
-    function testUpdateProfile_PhotoOnly() public {
-        vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
-        vm.warp(block.timestamp + 31 days);
-        vm.prank(alice);
-        userProfile.updateProfile("", "ipfs://newphoto");
-        UserProfileV1.UserProfile memory profile = userProfile.getProfile(alice);
-        assertEq(profile.profilePhoto, "ipfs://newphoto");
-    }
-
     function testUpdatePhoto_CooldownNotMet() public {
         vm.prank(alice);
         userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
@@ -73,7 +31,7 @@ contract UserProfileV1BasicTests is UserProfileV1Setup {
         userProfile.updatePhoto("ipfs://p2");
         vm.warp(block.timestamp + 15 days);
         vm.prank(alice);
-        vm.expectRevert(UserProfileV1.UsernameUpdateCooldownNotMet.selector);
+        vm.expectRevert(UserProfileV1.PhotoUpdateCooldownNotMet.selector);
         userProfile.updatePhoto("ipfs://p3");
     }
 }

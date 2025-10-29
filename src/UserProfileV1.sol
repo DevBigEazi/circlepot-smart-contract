@@ -15,7 +15,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint256 public constant VERSION = 1;
 
     // ============ Constants ============
-    uint256 public constant USERNAME_UPDATE_COOLDOWN = 30 days; // 1 month
+    uint256 public constant PHOTO_UPDATE_COOLDOWN = 30 days; // 1 month
 
     // ============ Structs ============
     struct UserProfile {
@@ -23,7 +23,6 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         string email;
         string username;
         string profilePhoto; // IPFS hash or URL
-        uint256 lastUsernameUpdate;
         uint256 lastPhotoUpdate;
         uint256 createdAt;
     }
@@ -38,18 +37,13 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
     event ProfileCreated(address indexed user, string email, string username);
-    event UsernameUpdated(
-        address indexed user,
-        string oldUsername,
-        string newUsername
-    );
     event PhotoUpdated(address indexed user, string photo);
 
     // ============ Errors ============
     error ProfileAlreadyExists();
     error ProfileDoesNotExist();
     error UsernameAlreadyTaken();
-    error UsernameUpdateCooldownNotMet();
+    error PhotoUpdateCooldownNotMet();
     error OnlyProfileOwner();
     error EmptyUsername();
     error EmptyEmail();
@@ -79,7 +73,8 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _version Reinitializer version number
      */
     function upgrade(uint8 _version) public reinitializer(_version) onlyOwner {
-        // Add any upgrade logic here if needed
+        // Version 1 - no upgrade logic needed yet
+        // Future versions will add initialization logic here
     }
 
     /**
@@ -120,7 +115,6 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             email: _email,
             username: _username,
             profilePhoto: _profilePhoto,
-            lastUsernameUpdate: 0,
             lastPhotoUpdate: 0,
             createdAt: block.timestamp
         });
@@ -133,7 +127,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * @dev Update profile photo only (email is permanent, cannot be changed)
+     * @dev Update profile photo only (email and username are permanent, cannot be changed)
      * Note: Photo updates are restricted to once per month
      * @param _profilePhoto New profile photo IPFS hash or URL
      */
@@ -145,8 +139,8 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         // Check cooldown period
         uint256 timeSinceLastUpdate = block.timestamp - profile.lastPhotoUpdate;
-        if (timeSinceLastUpdate < USERNAME_UPDATE_COOLDOWN) {
-            revert UsernameUpdateCooldownNotMet();
+        if (timeSinceLastUpdate < PHOTO_UPDATE_COOLDOWN) {
+            revert PhotoUpdateCooldownNotMet();
         }
 
         profile.profilePhoto = _profilePhoto;
@@ -155,106 +149,6 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit PhotoUpdated(msg.sender, _profilePhoto);
     }
 
-    /**
-     * @dev Update username (can only be done once per month)
-     * @param _newUsername New username
-     */
-    function updateUsername(string calldata _newUsername) external {
-        if (!hasProfile[msg.sender]) revert ProfileDoesNotExist();
-        if (bytes(_newUsername).length == 0) revert EmptyUsername();
-
-        // Check if username is already taken
-        if (
-            usernameToAddress[_newUsername] != address(0) &&
-            usernameToAddress[_newUsername] != msg.sender
-        ) {
-            revert UsernameAlreadyTaken();
-        }
-
-        UserProfile storage profile = profiles[msg.sender];
-
-        // Check cooldown period (skip if this is first update)
-        if (profile.lastUsernameUpdate != 0) {
-            uint256 timeSinceLastUpdate = block.timestamp -
-                profile.lastUsernameUpdate;
-            if (timeSinceLastUpdate < USERNAME_UPDATE_COOLDOWN) {
-                revert UsernameUpdateCooldownNotMet();
-            }
-        }
-
-        string memory oldUsername = profile.username;
-
-        // Free the old username
-        usernameToAddress[oldUsername] = address(0);
-
-        // Set the new username
-        profile.username = _newUsername;
-        usernameToAddress[_newUsername] = msg.sender;
-        profile.lastUsernameUpdate = block.timestamp;
-
-        emit UsernameUpdated(msg.sender, oldUsername, _newUsername);
-    }
-
-    /**
-     * @dev Update both username and profile photo at once. At least one must be provided.
-     * @param _newUsername New username (optional, pass empty string to skip)
-     * @param _newPhoto New profile photo IPFS hash or URL (optional, pass empty string to skip)
-     */
-    function updateProfile(
-        string calldata _newUsername,
-        string calldata _newPhoto
-    ) external {
-        if (!hasProfile[msg.sender]) revert ProfileDoesNotExist();
-        if (bytes(_newUsername).length == 0 && bytes(_newPhoto).length == 0)
-            revert EmptyUsername();
-
-        UserProfile storage profile = profiles[msg.sender];
-
-        // Handle username update if provided
-        if (bytes(_newUsername).length > 0) {
-            // Check if username is already taken
-            if (
-                usernameToAddress[_newUsername] != address(0) &&
-                usernameToAddress[_newUsername] != msg.sender
-            ) {
-                revert UsernameAlreadyTaken();
-            }
-
-            // Check username cooldown period
-            uint256 timeSinceLastUsernameUpdate = block.timestamp -
-                profile.lastUsernameUpdate;
-            if (timeSinceLastUsernameUpdate < USERNAME_UPDATE_COOLDOWN) {
-                revert UsernameUpdateCooldownNotMet();
-            }
-
-            string memory oldUsername = profile.username;
-
-            // Free the old username
-            usernameToAddress[oldUsername] = address(0);
-
-            // Set the new username
-            profile.username = _newUsername;
-            usernameToAddress[_newUsername] = msg.sender;
-            profile.lastUsernameUpdate = block.timestamp;
-
-            emit UsernameUpdated(msg.sender, oldUsername, _newUsername);
-        }
-
-        // Handle photo update if provided
-        if (bytes(_newPhoto).length > 0) {
-            // Check photo cooldown period
-            uint256 timeSinceLastPhotoUpdate = block.timestamp -
-                profile.lastPhotoUpdate;
-            if (timeSinceLastPhotoUpdate < USERNAME_UPDATE_COOLDOWN) {
-                revert UsernameUpdateCooldownNotMet();
-            }
-
-            profile.profilePhoto = _newPhoto;
-            profile.lastPhotoUpdate = block.timestamp;
-
-            emit PhotoUpdated(msg.sender, _newPhoto);
-        }
-    }
 
     // ============ View Functions ============
 
@@ -301,27 +195,6 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      */
     function hasUserProfile(address _user) external view returns (bool) {
         return hasProfile[_user];
-    }
-
-    /**
-     * @dev Get time until user can update username again
-     * @param _user User address
-     * @return Time in seconds until next update allowed
-     */
-    function getUsernameUpdateCooldownRemaining(
-        address _user
-    ) external view returns (uint256) {
-        if (!hasProfile[_user]) revert ProfileDoesNotExist();
-
-        UserProfile storage profile = profiles[_user];
-        uint256 timeSinceLastUpdate = block.timestamp -
-            profile.lastUsernameUpdate;
-
-        if (timeSinceLastUpdate >= USERNAME_UPDATE_COOLDOWN) {
-            return 0;
-        }
-
-        return USERNAME_UPDATE_COOLDOWN - timeSinceLastUpdate;
     }
 
     /**

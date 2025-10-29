@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
 import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
 
 contract CircleSavingsReputationTests is CircleSavingsV1Setup {
@@ -166,5 +167,21 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
             aliceRep,
             "Platform fee withdrawal should not affect reputation"
         );
+    }
+
+    function test_GetMemberInfo() public {
+        uint256 cid = _createAndStartCircle();
+        (CircleSavingsV1.Member memory m, bool hasContributed, uint256 nextDeadline) = circleSavings.getMemberInfo(cid, alice);
+        assertTrue(m.isActive);
+        assertEq(m.position, 1);
+        assertGt(nextDeadline, 0);
+        assertFalse(hasContributed);
+    }
+
+    function test_GetCircleMembers() public {
+        uint256 cid = _createAndStartCircle();
+        address[] memory members = circleSavings.getCircleMembers(cid);
+        assertEq(members.length, 5);
+        assertEq(members[0], alice);
     }
 }

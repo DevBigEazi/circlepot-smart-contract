@@ -200,4 +200,36 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         circleSavings.upgrade(newToken, address(0), address(0), 2);
         assertEq(circleSavings.cUSDToken(), newToken);
     }
+
+    function test_CreateCircle_PublicVisibility() public {
+        vm.prank(alice);
+        uint256 cid = circleSavings.createCircle(
+            CircleSavingsV1.CreateCircleParams({
+                contributionAmount: 100e18,
+                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                maxMembers: 5,
+                visibility: CircleSavingsV1.Visibility.PUBLIC
+            })
+        );
+        (CircleSavingsV1.Circle memory c, , , ) = circleSavings.getCircleDetails(cid);
+        assertEq(uint256(c.visibility), uint256(CircleSavingsV1.Visibility.PUBLIC));
+    }
+
+    function test_GetCircleDetails() public {
+        uint256 cid = _createDefaultCircle(alice);
+        (CircleSavingsV1.Circle memory c, uint256 membersJoined, uint256 currentDeadline, bool canStart) = circleSavings.getCircleDetails(cid);
+        assertEq(c.creator, alice);
+        assertEq(membersJoined, 1);
+        assertEq(currentDeadline, 0);
+        assertFalse(canStart);
+    }
+
+    function test_JoinCircle_SuccessPublic() public {
+        uint256 cid = _createDefaultCircle(alice);
+        vm.prank(bob);
+        circleSavings.joinCircle(cid);
+        (CircleSavingsV1.Member memory m, bool hasContributed, ) = circleSavings.getMemberInfo(cid, bob);
+        assertTrue(m.isActive);
+        assertFalse(hasContributed);
+    }
 }

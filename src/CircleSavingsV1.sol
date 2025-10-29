@@ -7,13 +7,14 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IReputation} from "./interfaces/IReputation.sol";
 
 /**
- * @title CirclePotV1
- * @dev On-chain savings circles
- * @notice Implements individual savings and community savings circles with collateral-backed commitments, voting,and invitations
+ * @title CircleSavingsV1
+ * @dev On-chain savings circles with centralized reputation management
+ * @notice Implements community savings circles with collateral-backed commitments, voting, and invitations
  */
-contract CirclePotV1 is
+contract CircleSavingsV1 is
     Initializable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -32,11 +33,10 @@ contract CirclePotV1 is
     uint256 public constant MIN_MEMBERS = 5;
     uint256 public constant MAX_MEMBERS = 20;
     uint256 public constant VISIBILITY_UPDATE_FEE = 0.5e18; // $0.50
-    uint256 public constant VOTING_PERIOD = 2 days; // VOTING LAST 3 DAYS
+    uint256 public constant VOTING_PERIOD = 2 days;
     uint256 public constant START_VOTE_THRESHOLD = 5100; //51% IN BASIS POINTS
 
     // ============ Enums ============
-    // Default state should be PENDING
     enum CircleState {
         PENDING,
         CREATED,
@@ -85,32 +85,11 @@ contract CirclePotV1 is
         uint256 joinedAt;
     }
 
-    struct PersonalGoal {
-        address owner;
-        string name;
-        uint256 targetAmount;
-        uint256 currentAmount;
-        uint256 contributionAmount;
-        Frequency frequency;
-        uint256 deadline;
-        uint256 createdAt;
-        bool isActive;
-        uint256 lastContributionAt;
-    }
-
     struct CreateCircleParams {
         uint256 contributionAmount;
         Frequency frequency;
         uint256 maxMembers;
         Visibility visibility;
-    }
-
-    struct CreateGoalParams {
-        string name;
-        uint256 targetAmount;
-        uint256 contributionAmount;
-        Frequency frequency;
-        uint256 deadline;
     }
 
     struct Vote {
@@ -125,9 +104,9 @@ contract CirclePotV1 is
     // ============ Storage ============
     address public cUSDToken;
     address public treasury;
+    address public reputationContract;
 
     uint256 public circleCounter;
-    uint256 public goalCounter;
 
     // Circle related storage
     mapping(uint256 => Circle) public circles;
@@ -143,15 +122,6 @@ contract CirclePotV1 is
 
     // Invitation storage for private circles
     mapping(uint256 => mapping(address => bool)) public circleInvitations;
-
-    // Personal goals related storage
-    mapping(uint256 => PersonalGoal) public personalGoals;
-    mapping(address => uint256[]) public userGoals;
-
-    // Reputations related storage
-    mapping(address => uint256) public userReputation;
-    mapping(address => uint256) public completedCircles;
-    mapping(address => uint256) public latePayments;
 
     uint256 public totalPlatformFees;
     uint256 public platformFeeBps;
@@ -211,24 +181,7 @@ contract CirclePotV1 is
         address member,
         uint256 indexed fee
     );
-    event PersonalGoalCreated(
-        uint256 indexed goalId,
-        address indexed owner,
-        string name,
-        uint256 indexed amount
-    );
-    event GoalCompleted(uint256 indexed goalId, address indexed owner);
-    event GoalContribution(
-        uint256 indexed goalId,
-        address indexed owner,
-        uint256 amount
-    );
-    event GoalWithdrawn(
-        uint256 indexed goalId,
-        address indexed owner,
-        uint256 _amount,
-        uint256 penalty
-    );
+    event ReputationContractUpdated(address indexed newContract);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -256,12 +209,6 @@ contract CirclePotV1 is
     error NotInvited();
     error CircleNotActive();
     error AlreadyContributed();
-    error InvalidGoalAmount();
-    error InvalidDeadline();
-    error InvalidSavingGoal();
-    error NotGoalOwner();
-    error GoalNotActive();
-    error InsufficientBalance();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -272,27 +219,31 @@ contract CirclePotV1 is
      * @dev Initializes the contract with initial parameters
      * @param _cUSDToken Address of the cUSD token contract
      * @param _treasury Address of the treasury for platform fees
+     * @param _reputationContract Address of the reputation contract
      * @param initialOwner Address of the initial owner (if zero, msg.sender remains owner)
      */
     function initialize(
         address _cUSDToken,
         address _treasury,
+        address _reputationContract,
         address initialOwner
     ) public initializer {
         __Ownable_init(initialOwner);
         __ReentrancyGuard_init();
         __UUPSUpgradeable_init();
 
-        if (_cUSDToken == address(0) || _treasury == address(0))
-            revert InvalidTreasuryAddress();
+        if (
+            _cUSDToken == address(0) ||
+            _treasury == address(0) ||
+            _reputationContract == address(0)
+        ) revert InvalidTreasuryAddress();
 
         cUSDToken = _cUSDToken;
         treasury = _treasury;
+        reputationContract = _reputationContract;
         circleCounter = 1;
-        goalCounter = 1;
         platformFeeBps = PLATFORM_FEE_BPS;
 
-        // transfer ownership if a different initialOwner was provided
         if (initialOwner != address(0) && initialOwner != owner()) {
             _transferOwnership(initialOwner);
         }
@@ -302,11 +253,13 @@ contract CirclePotV1 is
      * @dev Function for upgrading the contract to a new version (reinitializer)
      * @param _cUSDToken Address of cUSD token (if changed)
      * @param _treasury Address of treasury (if changed)
+     * @param _reputationContract Address of reputation contract (if changed)
      * @param _version Reinitializer version number
      */
     function upgrade(
         address _cUSDToken,
         address _treasury,
+        address _reputationContract,
         uint8 _version
     ) public reinitializer(_version) onlyOwner {
         if (_cUSDToken != address(0)) {
@@ -314,6 +267,9 @@ contract CirclePotV1 is
         }
         if (_treasury != address(0)) {
             treasury = _treasury;
+        }
+        if (_reputationContract != address(0)) {
+            reputationContract = _reputationContract;
         }
     }
 
@@ -325,6 +281,19 @@ contract CirclePotV1 is
         address newImplementation
     ) internal override onlyOwner {
         emit ContractUpgraded(newImplementation, VERSION);
+    }
+
+    /**
+     * @dev Update reputation contract address (admin only)
+     * @param _newReputationContract New reputation contract address
+     */
+    function updateReputationContract(
+        address _newReputationContract
+    ) external onlyOwner {
+        if (_newReputationContract == address(0))
+            revert AddressZeroNotAllowed();
+        reputationContract = _newReputationContract;
+        emit ReputationContractUpdated(_newReputationContract);
     }
 
     // ============ Circle Functions ============
@@ -351,21 +320,18 @@ contract CirclePotV1 is
         );
         uint256 totalRequired = collateral;
 
-        // // if applicable, add visibilty fee( by default, the visibility is private but user can create a circle with public visibility by paying $0.5 one time fee)
         if (params.visibility == Visibility.PUBLIC) {
             totalRequired += VISIBILITY_UPDATE_FEE;
             totalPlatformFees += VISIBILITY_UPDATE_FEE;
             emit VisibilityUpdated(circleId, msg.sender);
         }
 
-        //deposit collateral + buffer
         IERC20(cUSDToken).safeTransferFrom(
             msg.sender,
             address(this),
             totalRequired
         );
 
-        //update circle
         circles[circleId] = Circle({
             circleId: circleId,
             creator: msg.sender,
@@ -382,9 +348,8 @@ contract CirclePotV1 is
             totalPot: 0
         });
 
-        // update circle Membership data
         circleMembers[circleId][msg.sender] = Member({
-            position: 0, // will be assigned no 1 when circle starts
+            position: 0,
             totalContributed: 0,
             hasReceivedPayout: false,
             isActive: true,
@@ -392,7 +357,6 @@ contract CirclePotV1 is
             joinedAt: block.timestamp
         });
 
-        // add creator to Circle Member list
         circleMemberList[circleId].push(msg.sender);
 
         emit CircleCreated(circleId, msg.sender, params.contributionAmount);
@@ -417,7 +381,6 @@ contract CirclePotV1 is
         if (c.state != CircleState.CREATED) revert CircleNotExist();
         if (c.visibility == _newVisibility) revert SameVisibility();
 
-        // charge $0.50 visibility update fee
         IERC20(cUSDToken).safeTransferFrom(
             msg.sender,
             address(this),
@@ -449,7 +412,6 @@ contract CirclePotV1 is
 
         for (uint256 i = 0; i < _invitees.length; i++) {
             circleInvitations[_circleId][_invitees[i]] = true;
-
             emit MemberInvited(_circleId, _invitees[i]);
         }
     }
@@ -466,10 +428,8 @@ contract CirclePotV1 is
         if (c.currentMembers == c.maxMembers) revert CircleNotOpen();
         if (circleMembers[_circleId][msg.sender].isActive)
             revert AlreadyJoined();
-        // allow to join only created circle
         if (c.state != CircleState.CREATED) revert InvalidCircle();
 
-        // check invitation for private circles
         if (c.visibility == Visibility.PRIVATE) {
             if (!circleInvitations[_circleId][msg.sender]) revert NotInvited();
         }
@@ -479,16 +439,14 @@ contract CirclePotV1 is
             c.maxMembers
         );
 
-        // Desposit collateral and join the circle
         IERC20(cUSDToken).safeTransferFrom(
             msg.sender,
             address(this),
             collateral
         );
 
-        // update circle Membership data
         circleMembers[_circleId][msg.sender] = Member({
-            position: 0, // will be assigned when circle starts
+            position: 0,
             totalContributed: 0,
             hasReceivedPayout: false,
             isActive: true,
@@ -502,7 +460,6 @@ contract CirclePotV1 is
 
         emit CircleJoined(_circleId, msg.sender);
 
-        // if max mebers reached, auto start the circle
         if (c.currentMembers == c.maxMembers) {
             _startCircleInternal(_circleId);
             emit CircleStarted(_circleId, block.timestamp);
@@ -520,21 +477,17 @@ contract CirclePotV1 is
         Circle storage c = circles[_circleId];
         if (c.state != CircleState.CREATED) revert InvalidCircle();
 
-        // chect the 60% min threshold
         if (c.currentMembers < (c.maxMembers * 60) / 100)
             revert MinMembersNotReached();
 
-        // check ultimatum period if it has passed
         uint256 ultimatumPeriod = _ultimatum(c.frequency);
         if (block.timestamp < c.createdAt + ultimatumPeriod)
             revert UltimatumNotReached();
 
-        // check if voting is already initiated
         Vote storage vote = circleVotes[_circleId];
         if (vote.votingActive) revert VotingStillActive();
         if (vote.voteExecuted) revert VotingAlreadyExecuted();
 
-        // initialize voting
         vote.votingStartTime = block.timestamp;
         vote.votingEndTime = block.timestamp + VOTING_PERIOD;
         vote.startVoteCount = 0;
@@ -608,8 +561,7 @@ contract CirclePotV1 is
         bool shouldStart = startPercentage >= START_VOTE_THRESHOLD;
 
         if (shouldStart) {
-            // 51% voted to start - initiate circle
-            c.state = CircleState.CREATED; // Reset to created b4 starting
+            c.state = CircleState.CREATED;
             _startCircleInternal(_circleId);
 
             emit VoteExecuted(
@@ -619,11 +571,10 @@ contract CirclePotV1 is
                 vote.withdrawVoteCount
             );
         } else {
-            // Less than 51% voted to start - allow withdrawals
             c.state = CircleState.CREATED;
             emit VoteExecuted(
                 _circleId,
-                true,
+                false,
                 vote.startVoteCount,
                 vote.withdrawVoteCount
             );
@@ -631,7 +582,7 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Each member can withdraw their collateral if after the ultimum, circle did not start
+     * @dev Each member can withdraw their collateral if after the ultimatum, circle did not start
      * @param _circleId Circle ID to withdraw from
      */
     function WithdrawCollateral(uint256 _circleId) external nonReentrant {
@@ -646,15 +597,12 @@ contract CirclePotV1 is
 
         Vote storage vote = circleVotes[_circleId];
 
-        // check if withdrawal is allowed (two consitions)
         bool canWithdraw = false;
-        // case 1: vote executed and failed (if less than 51% voted to start)
         if (vote.voteExecuted && canWithdrawAfterVote(_circleId)) {
             canWithdraw = true;
         } else {
-            // case 2: Ultimatum passed and 60% threshold is not met(no voting will be initiated)
             uint256 period = _ultimatum(c.frequency);
-            if (block.timestamp <= c.createdAt + period) {
+            if (block.timestamp > c.createdAt + period) {
                 if (c.currentMembers < (c.maxMembers * 60) / 100) {
                     canWithdraw = true;
                 }
@@ -673,7 +621,7 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Start circle mannually by only the creator after ultimatum and 60% threshold reached
+     * @dev Start circle manually by only the creator after ultimatum and 60% threshold reached
      * @param _circleId Circle ID to start
      */
     function startCircle(uint256 _circleId) external {
@@ -684,11 +632,9 @@ contract CirclePotV1 is
         if (c.creator != msg.sender) revert OnlyCreator();
         if (c.state != CircleState.CREATED) revert InvalidCircle();
 
-        // check 60% min threshold
         if (c.currentMembers < ((c.maxMembers * 60) / 100))
             revert MinMembersNotReached();
 
-        // check if ultimatum period has passed
         uint256 ultimatumPeriod = _ultimatum(c.frequency);
         if (block.timestamp <= c.createdAt + ultimatumPeriod)
             revert UltimatumNotReached();
@@ -744,28 +690,21 @@ contract CirclePotV1 is
         _checkComplete(_circleId);
     }
 
-    // helper functions
+    // ============ Helper Functions ============
     /**
      * @dev Calculate required collateral for a circle
-     * @param amount Contribution amount per round
-     * @param members Maximum number of members
-     * @return Total required collateral amount
      */
     function _calcCollateral(
         uint256 amount,
         uint256 members
     ) private pure returns (uint256) {
         uint256 totalCommitment = amount * members;
-
-        // Buffer cover all potential late fees (1% of the contributions amount per round)
         uint256 lateBuffer = (totalCommitment * LATE_FEE_BPS) / 10000;
-
         return totalCommitment + lateBuffer;
     }
 
     /**
-     * @dev Internal function to start a circle( to be called by both manual and auto-start)
-     * @param _circleId Circle ID to start
+     * @dev Internal function to start a circle
      */
     function _startCircleInternal(uint256 _circleId) private {
         Circle storage c = circles[_circleId];
@@ -785,19 +724,16 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Assign positions to all members base on reputation when circle starts
-     * @param cid Circle ID
+     * @dev Assign positions to all members based on reputation when circle starts
      */
-    function _assignPosition(uint256 cid) private {
+    function _assignPosition(uint256 cid) internal {
         Circle storage c = circles[cid];
         address[] storage mlist = circleMemberList[cid];
 
-        // creator always get first position
         circleMembers[cid][c.creator].position = 1;
         emit PositionAssigned(cid, c.creator, 1);
 
-        // array of non-creator members with thier reputation score
-        uint256 memberCount = mlist.length - 1; // exclude the creator
+        uint256 memberCount = mlist.length - 1;
         address[] memory members = new address[](memberCount);
         uint256[] memory reputationScores = new uint256[](memberCount);
 
@@ -806,24 +742,18 @@ contract CirclePotV1 is
         for (uint256 i = 0; i < mlist.length; i++) {
             if (mlist[i] != c.creator) {
                 members[idxCounter] = mlist[i];
-                // calculate the reputation score(number of completed ccirle worth more)
-                reputationScores[idxCounter] =
-                    userReputation[mlist[i]] +
-                    (completedCircles[mlist[i]] * 10);
+                reputationScores[idxCounter] = _getReputationScore(mlist[i]);
                 idxCounter++;
             }
         }
 
-            // Sort members by reputation (descending) using bubble sort (Higher rep gets more advantages)
-            for (uint256 i = 0; i < memberCount; i++) {
+        for (uint256 i = 0; i < memberCount; i++) {
             for (uint256 j = i + 1; j < memberCount; j++) {
                 if (reputationScores[j] > reputationScores[i]) {
-                    // Swap reputation scores
                     uint256 tempScore = reputationScores[i];
                     reputationScores[i] = reputationScores[j];
                     reputationScores[j] = tempScore;
-                    
-                    // Also swap member addresses
+
                     address tempAddr = members[i];
                     members[i] = members[j];
                     members[j] = tempAddr;
@@ -831,12 +761,89 @@ contract CirclePotV1 is
             }
         }
 
-        // Assign position through N based on sorted reputation
         for (uint256 i = 0; i < memberCount; i++) {
-            uint256 position = i + 2; // positions start at 2 (creator has 1)
+            uint256 position = i + 2;
             circleMembers[cid][members[i]].position = position;
-
             emit PositionAssigned(cid, members[i], position);
+        }
+    }
+
+    /**
+     * @dev Get reputation score from reputation contract
+     */
+    function _getReputationScore(
+        address _user
+    ) internal view returns (uint256) {
+        try
+            IReputation(reputationContract).getUserReputationData(_user)
+        returns (uint256, uint256, uint256, uint256 score) {
+            return score;
+        } catch {
+            return 0;
+        }
+    }
+
+    /**
+     * @dev Increase reputation via reputation contract
+     */
+    function _increaseReputation(
+        address _user,
+        uint256 _amount,
+        string memory _source
+    ) internal {
+        try
+            IReputation(reputationContract).increaseReputation(
+                _user,
+                _amount,
+                _source
+            )
+        {
+            // Success
+        } catch {
+            // Fail silently - reputation is not critical
+        }
+    }
+
+    /**
+     * @dev Decrease reputation via reputation contract
+     */
+    function _decreaseReputation(
+        address _user,
+        uint256 _amount,
+        string memory _source
+    ) internal {
+        try
+            IReputation(reputationContract).decreaseReputation(
+                _user,
+                _amount,
+                _source
+            )
+        {
+            // Success
+        } catch {
+            // Fail silently
+        }
+    }
+
+    /**
+     * @dev Record circle completion via reputation contract
+     */
+    function _recordCircleCompleted(address _user) internal {
+        try IReputation(reputationContract).recordCircleCompleted(_user) {
+            // Success
+        } catch {
+            // Fail silently
+        }
+    }
+
+    /**
+     * @dev Record late payment via reputation contract
+     */
+    function _recordLatePayment(address _user) internal {
+        try IReputation(reputationContract).recordLatePayment(_user) {
+            // Success
+        } catch {
+            // Fail silently
         }
     }
 
@@ -876,8 +883,9 @@ contract CirclePotV1 is
         m.hasReceivedPayout = true;
         c.totalPot = 0;
 
-        userReputation[recip] += 5;
-        completedCircles[recip]++;
+        // Update reputation via reputation contract
+        _increaseReputation(recip, 5, "Circle Payout Received");
+        _recordCircleCompleted(recip);
 
         emit PayoutDistributed(cid, round, recip, amt);
 
@@ -894,7 +902,7 @@ contract CirclePotV1 is
     ) private {
         if (round < c.totalRounds) {
             c.currentRound = round + 1;
-            circleRoundDeadlines[cid][round] = _nextDeadline(
+            circleRoundDeadlines[cid][round + 1] = _nextDeadline(
                 c.frequency,
                 block.timestamp
             );
@@ -940,7 +948,6 @@ contract CirclePotV1 is
 
         for (uint256 i = 0; i < mlist.length; i++) {
             address addr = mlist[i];
-            //only count active members who have paid
             if (
                 circleMembers[cid][addr].isActive &&
                 roundContributions[cid][c.currentRound][addr]
@@ -953,158 +960,38 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Convert frequency to seconds
+     * @dev Return grace period by frequency
      */
-    function _freqSeconds(Frequency f) private pure returns (uint256) {
-        if (f == Frequency.DAILY) return 1 days;
-        if (f == Frequency.WEEKLY) return 7 days;
-        return 30 days;
+    function _getGracePeriod(Frequency f) public pure returns (uint256) {
+        if (f == Frequency.DAILY) return 0;
+        return 48 hours;
     }
 
     /**
-     * @dev Calculate penalty basis points base on progress percentage
+     * @dev Handles late payment with collateral deduction
      */
-    function _penaltyBps(uint256 prog) private pure returns (uint256) {
-        if (prog < 2500) return 100; // 1.0%
-        if (prog < 5000) return 60; // 0.6%
-        if (prog < 7500) return 30; // 0.3%
-        if (prog < 10000) return 10; // 0.1%
-        return 0;
-    }
+    function _handleLate(uint256 cid, uint256 round, uint256 amt) internal {
+        uint256 fee = (amt * LATE_FEE_BPS) / 10000;
 
-    // ============ Personal Saving Goals Functions ============
-    /**
-     * @dev Create a personal savings goal
-     * @param params Goal creation parameters
-     * @return goalId The ID of the newly created goal
-     */
-    function createPersonalGoal(
-        CreateGoalParams calldata params
-    ) external returns (uint256) {
-        if (params.targetAmount < 10e18 || params.targetAmount > 50000e18)
-            revert InvalidGoalAmount();
-        if (params.contributionAmount == 0) revert InvalidContributionAmount();
-        if (params.deadline <= block.timestamp) revert InvalidDeadline();
-
-        uint256 gid = goalCounter++;
-
-        personalGoals[gid] = PersonalGoal({
-            owner: msg.sender,
-            name: params.name,
-            targetAmount: params.targetAmount,
-            currentAmount: 0,
-            contributionAmount: params.contributionAmount,
-            frequency: params.frequency,
-            deadline: params.deadline,
-            createdAt: block.timestamp,
-            isActive: true,
-            lastContributionAt: 0
-        });
-
-        userGoals[msg.sender].push(gid);
-
-        emit PersonalGoalCreated(
-            gid,
-            msg.sender,
-            params.name,
-            params.targetAmount
-        );
-
-        return gid;
-    }
-
-    /**
-     * @dev Contribute to a personal goal
-     * @param _goalId Goal ID
-     */
-    function ContributeToGoal(uint256 _goalId) external nonReentrant {
-    if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
-
-    PersonalGoal storage g = personalGoals[_goalId];
-    if (g.owner != msg.sender) revert NotGoalOwner();
-    if (!g.isActive) revert GoalNotActive();
-
-    if (g.lastContributionAt > 0) {
-        uint256 interval = _freqSeconds(g.frequency);
-        // Revert if insufficient time has passed since last contribution
-        if (block.timestamp < g.lastContributionAt + interval) {
-            revert AlreadyContributed();
+        Member storage m = circleMembers[cid][msg.sender];
+        uint256 deduction = amt + fee;
+        if (m.collateralLocked > deduction) {
+            m.collateralLocked -= deduction;
+        } else {
+            m.collateralLocked = 0;
         }
+
+        circles[cid].totalPot += amt;
+        totalPlatformFees += fee;
+
+        // Update reputation via reputation contract
+        _decreaseReputation(msg.sender, 5, "Late Payment");
+        _recordLatePayment(msg.sender);
+
+        emit LatePayment(cid, round, msg.sender, fee);
     }
 
-    IERC20(cUSDToken).safeTransferFrom(
-        msg.sender,
-        address(this),
-        g.contributionAmount
-    );
-
-    g.currentAmount += g.contributionAmount;
-    g.lastContributionAt = block.timestamp;
-
-    emit GoalContribution(_goalId, msg.sender, g.contributionAmount);
-
-    if (g.currentAmount >= g.targetAmount) {
-        userReputation[msg.sender] += 10;
-        emit GoalCompleted(_goalId, msg.sender);
-    }
-}
-    /**
-     * @dev Withdraw from a personaly goal (with penalty)
-     * @param _goalId Goal ID
-     * @param _amount Amount to withdraw
-     */
-    function withdrawFromGoal(
-        uint256 _goalId,
-        uint256 _amount
-    ) external nonReentrant {
-        if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
-
-        PersonalGoal storage g = personalGoals[_goalId];
-        if (g.owner != msg.sender) revert NotGoalOwner();
-        if (!g.isActive) revert GoalNotActive();
-        if (_amount > g.currentAmount) revert InsufficientBalance();
-
-        uint256 progress = (g.currentAmount * 10000) / g.targetAmount; // progress in percent
-        uint256 penaltyBps = _penaltyBps(progress);
-        uint256 penalty = (_amount * penaltyBps) / 10000;
-        uint256 net = _amount - penalty;
-
-        g.currentAmount -= _amount;
-        IERC20(cUSDToken).safeTransfer(msg.sender, net);
-        totalPlatformFees += penalty;
-
-        userReputation[msg.sender] = userReputation[msg.sender] > 5
-            ? userReputation[msg.sender] - 5
-            : 0;
-
-        emit GoalWithdrawn(_goalId, msg.sender, _amount, penalty);
-
-        if (g.currentAmount == 0) g.isActive = false;
-    }
-
-    /**
-     * @dev Complete a goal and withdraw full amount
-     * @param _goalId Goal ID
-     */
-    function CompleteGoal(uint256 _goalId) external nonReentrant {
-        if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
-
-        PersonalGoal storage g = personalGoals[_goalId];
-        if (g.owner != msg.sender) revert NotGoalOwner();
-        if (!g.isActive) revert GoalNotActive();
-        if (g.currentAmount < g.targetAmount) revert InsufficientBalance();
-
-        uint256 amt = g.currentAmount;
-        g.isActive = false;
-        g.currentAmount = 0;
-
-        IERC20(cUSDToken).safeTransfer(msg.sender, amt);
-        userReputation[msg.sender] += 10;
-
-        emit GoalCompleted(_goalId, msg.sender);
-    }
-
-    // ============Admin Functions ============
+    // ============ Admin Functions ============
     /**
      * @dev Withdraw accumulated platform fees to treasury
      */
@@ -1130,47 +1017,7 @@ contract CirclePotV1 is
         platformFeeBps = _newBps;
     }
 
-    /**
-     * @dev returns contract version
-     */
-    function version() external pure returns (string memory) {
-        return "1.0.0";
-    }
-
-    /**
-     * @dev Return grace period by frequency
-     */
-    function _getGracePeriod(Frequency f) public pure returns (uint256) {
-        if (f == Frequency.DAILY) return 0;
-        return 48 hours;
-    }
-
-    /**
-     * @dev Handles late payment with collateral deduction
-     */
-    function _handleLate(uint256 cid, uint256 round, uint256 amt) private {
-        uint256 fee = (amt * LATE_FEE_BPS) / 10000;
-
-        Member storage m = circleMembers[cid][msg.sender];
-        uint256 deduction = amt + fee;
-        if (m.collateralLocked > deduction) {
-            m.collateralLocked -= deduction;
-        } else {
-            m.collateralLocked = 0;
-        }
-
-        circles[cid].totalPot += amt;
-        totalPlatformFees += fee;
-
-        userReputation[msg.sender] = userReputation[msg.sender] > 5
-            ? userReputation[msg.sender] - 5
-            : 0;
-        latePayments[msg.sender]++;
-
-        emit LatePayment(cid, round, msg.sender, fee);
-    }
-
-    // ============ Getter/View Functions ============
+    // ============ View Functions ============
     /**
      * @dev Gets member address by position
      */
@@ -1188,7 +1035,7 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Checki if member can withdraw after failed vote
+     * @dev Check if member can withdraw after failed vote
      * @param _circleId circle ID
      * @return canWithdraw True if member can withraw
      */
@@ -1278,7 +1125,7 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Retunrs all circles a user is part of
+     * @dev Returns all circles a user is part of
      */
     function getUserCircles(
         address _user
@@ -1297,7 +1144,6 @@ contract CirclePotV1 is
         for (uint256 i = 1; i < circleCounter; i++) {
             if (circleMembers[i][_user].isActive) {
                 userCircles[idx] = i;
-
                 idx++;
             }
         }
@@ -1370,27 +1216,6 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Returns user's reputation data
-     */
-    function getUserReputation(
-        address _user
-    )
-        external
-        view
-        returns (
-            uint256 reputation,
-            uint256 circlesCompleted,
-            uint256 latePaymentsCount
-        )
-    {
-        return (
-            userReputation[_user],
-            completedCircles[_user],
-            latePayments[_user]
-        );
-    }
-
-    /**
      * @dev Returns all members of a circle
      */
     function getCircleMembers(
@@ -1400,11 +1225,9 @@ contract CirclePotV1 is
     }
 
     /**
-     * @dev Returns all goals for a user
+     * @dev returns contract version
      */
-    function getUserGoals(
-        address _user
-    ) external view returns (uint256[] memory) {
-        return userGoals[_user];
+    function version() external pure returns (string memory) {
+        return "1.0.0";
     }
 }

@@ -73,7 +73,7 @@ A credit scoring system that tracks user financial behavior across the platform 
 
 ### 👤 UserProfileV1
 
-Manages user identity, preferences, and settings across the entire Circlepot platform.
+Manages user identity across the entire Circlepot platform.
 
 **Key Features:**
 - **Secure Profile Management** - Secure profile management

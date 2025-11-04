@@ -43,6 +43,12 @@ interface IReputation {
     function recordLatePayment(address _user) external;
 
     /**
+     * @dev Record a completed goal for a user
+     * @param _user User address
+     */
+    function recordGoalCompleted(address _user) external;
+
+    /**
      * @dev Get user's reputation score
      * @param _user User address
      * @return Reputation score

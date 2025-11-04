@@ -65,7 +65,7 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
 
         // Authorize CircleSavings in reputation system
         vm.prank(testOwner);
-        reputation.authorizeContract(address(circleSavings), "CircleSavings");
+        reputation.authorizeContract(address(circleSavings));
     }
 
     // Helper to create a default circle and have enough members join so it becomes active
@@ -74,6 +74,8 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
         vm.prank(alice);
         CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
             .CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
@@ -124,6 +126,8 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
         vm.prank(creator);
         CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
             .CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,

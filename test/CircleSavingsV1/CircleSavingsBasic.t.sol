@@ -13,6 +13,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
             .CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
@@ -37,6 +39,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
             .CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
@@ -120,6 +124,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(
             CircleSavingsV1.CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
@@ -164,6 +170,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(
             CircleSavingsV1.CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
@@ -178,6 +186,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(
             CircleSavingsV1.CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.MONTHLY,
                 maxMembers: 5,
@@ -205,6 +215,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(
             CircleSavingsV1.CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,

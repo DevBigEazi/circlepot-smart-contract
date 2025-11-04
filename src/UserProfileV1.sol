@@ -60,8 +60,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      */
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
-        __UUPSUpgradeable_init();
-
+        
         // transfer ownership if a different initialOwner was provided
         if (initialOwner != address(0) && initialOwner != owner()) {
             _transferOwnership(initialOwner);

@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
@@ -17,7 +17,7 @@ import {IReputation} from "./interfaces/IReputation.sol";
 contract CircleSavingsV1 is
     Initializable,
     OwnableUpgradeable,
-    ReentrancyGuardUpgradeable,
+    ReentrancyGuard,
     UUPSUpgradeable
 {
     using SafeERC20 for IERC20;
@@ -62,6 +62,8 @@ contract CircleSavingsV1 is
     // ============ Structs ============
     struct Circle {
         uint256 circleId;
+        string title; // max of 32 characters
+        string description; // IPFS hash
         address creator;
         uint256 contributionAmount;
         Frequency frequency;
@@ -86,6 +88,8 @@ contract CircleSavingsV1 is
     }
 
     struct CreateCircleParams {
+        string title;
+        string description;
         uint256 contributionAmount;
         Frequency frequency;
         uint256 maxMembers;
@@ -130,9 +134,11 @@ contract CircleSavingsV1 is
     event ContractUpgraded(address indexed newImplementation, uint256 version);
     event VisibilityUpdated(uint256 indexed circleId, address indexed creator);
     event CircleCreated(
-        uint256 circleId,
-        address creator,
-        uint256 contributionAmount
+        uint256 indexed circleId,
+        string title,
+        string description,
+        address indexed creator,
+        uint256 indexed contributionAmount
     );
     event CircleJoined(uint256 indexed circleId, address indexed member);
     event CircleStarted(uint256 indexed circleId, uint256 startedAt);
@@ -181,13 +187,20 @@ contract CircleSavingsV1 is
         address member,
         uint256 indexed fee
     );
+    event MemberForfeited(
+        uint256 indexed circleId,
+        uint256 round,
+        address member,
+        uint256 indexed deduction,
+        address indexed forfeiter
+    );
     event ReputationContractUpdated(address indexed newContract);
 
     // ============ Errors ============
-    error InvalidTreasuryAddress();
     error InvalidContributionAmount();
     error InvalidMemberCount();
     error AddressZeroNotAllowed();
+    error TitleTooShortOrLong();
     error InvalidCircle();
     error OnlyCreator();
     error CircleNotExist();
@@ -209,6 +222,9 @@ contract CircleSavingsV1 is
     error NotInvited();
     error CircleNotActive();
     error AlreadyContributed();
+    error InsufficientCollateral();
+    error GracePeriodNotExpired();
+    error NotNextRecipient();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -229,14 +245,12 @@ contract CircleSavingsV1 is
         address initialOwner
     ) public initializer {
         __Ownable_init(initialOwner);
-        __ReentrancyGuard_init();
-        __UUPSUpgradeable_init();
 
         if (
             _cUSDToken == address(0) ||
             _treasury == address(0) ||
             _reputationContract == address(0)
-        ) revert InvalidTreasuryAddress();
+        ) revert AddressZeroNotAllowed();
 
         cUSDToken = _cUSDToken;
         treasury = _treasury;
@@ -313,6 +327,9 @@ contract CircleSavingsV1 is
         if (params.maxMembers < MIN_MEMBERS || params.maxMembers > MAX_MEMBERS)
             revert InvalidMemberCount();
 
+        if (bytes(params.title).length == 0 || bytes(params.title).length > 32)
+            revert TitleTooShortOrLong();
+
         uint256 circleId = circleCounter++;
         uint256 collateral = _calcCollateral(
             params.contributionAmount,
@@ -334,6 +351,8 @@ contract CircleSavingsV1 is
 
         circles[circleId] = Circle({
             circleId: circleId,
+            title: params.title,
+            description: params.description,
             creator: msg.sender,
             contributionAmount: params.contributionAmount,
             frequency: params.frequency,
@@ -359,7 +378,7 @@ contract CircleSavingsV1 is
 
         circleMemberList[circleId].push(msg.sender);
 
-        emit CircleCreated(circleId, msg.sender, params.contributionAmount);
+        emit CircleCreated(circleId, params.title, params.description, msg.sender, params.contributionAmount);
 
         return circleId;
     }
@@ -660,12 +679,6 @@ contract CircleSavingsV1 is
         if (roundContributions[_circleId][round][msg.sender])
             revert AlreadyContributed();
 
-        IERC20(cUSDToken).safeTransferFrom(
-            msg.sender,
-            address(this),
-            c.contributionAmount
-        );
-
         uint256 deadline = circleRoundDeadlines[_circleId][round];
         uint256 gracePeriod = _getGracePeriod(c.frequency);
         uint256 graceDeadline = deadline + gracePeriod;
@@ -675,6 +688,12 @@ contract CircleSavingsV1 is
         if (afterGrace) {
             _handleLate(_circleId, round, c.contributionAmount);
         } else {
+            IERC20(cUSDToken).safeTransferFrom(
+                msg.sender,
+                address(this),
+                c.contributionAmount
+            );
+
             c.totalPot += c.contributionAmount;
             m.totalContributed += c.contributionAmount;
         }
@@ -687,6 +706,73 @@ contract CircleSavingsV1 is
             c.contributionAmount
         );
 
+        _checkComplete(_circleId);
+    }
+    /*
+    * @dev Forfeit a member who hasn't contributed after grace period
+    * @param _circleId Circle ID
+    * @param _member Member to forfeit
+    * @notice Can ONLY be called by the next payout recipient
+    * @notice Can ONLY be called AFTER grace period expires
+    * @notice This incentivizes the next recipient to keep the circle moving
+    */
+    function forfeitMember(
+        uint256 _circleId, 
+        address _member
+    ) external nonReentrant {
+        Circle storage c = circles[_circleId];
+        if (c.state != CircleState.ACTIVE) revert CircleNotActive();
+
+        uint256 round = c.currentRound;
+        
+        // CHECK 1: Caller must be the next payout recipient
+        address nextRecipient = _getByPos(_circleId, round);
+        if (msg.sender != nextRecipient) revert NotNextRecipient();
+
+        // CHECK 2: Grace period must have expired
+        uint256 deadline = circleRoundDeadlines[_circleId][round];
+        uint256 gracePeriod = _getGracePeriod(c.frequency);
+        uint256 graceDeadline = deadline + gracePeriod;
+        
+        if (block.timestamp <= graceDeadline) revert GracePeriodNotExpired();
+
+        // CHECK 3: Member must not have contributed yet
+        if (roundContributions[_circleId][round][_member]) 
+            revert AlreadyContributed();
+
+        Member storage m = circleMembers[_circleId][_member];
+        if (!m.isActive) revert NotActiveMember();
+
+        // Deduct from collateral
+        uint256 fee = (c.contributionAmount * LATE_FEE_BPS) / 10000;
+        uint256 deduction = c.contributionAmount + fee;
+
+        if (m.collateralLocked < deduction) {
+            // Not enough collateral - take what's left
+            deduction = m.collateralLocked;
+        }
+
+        m.collateralLocked -= deduction;
+        
+        // Split forfeited amount
+        uint256 toPot = deduction > c.contributionAmount 
+            ? c.contributionAmount 
+            : deduction;
+        uint256 toFees = deduction - toPot;
+
+        c.totalPot += toPot;
+        totalPlatformFees += toFees;
+
+        // Mark as contributed (forfeited counts as contributed)
+        roundContributions[_circleId][round][_member] = true;
+
+        // Update reputation via reputation contract
+        _decreaseReputation(_member, 5, "Late Payment");
+        _recordLatePayment(_member);
+
+        emit MemberForfeited(_circleId, round, _member, deduction, msg.sender);
+
+        // Check if round is now complete
         _checkComplete(_circleId);
     }
 
@@ -963,24 +1049,23 @@ contract CircleSavingsV1 is
      * @dev Return grace period by frequency
      */
     function _getGracePeriod(Frequency f) public pure returns (uint256) {
-        if (f == Frequency.DAILY) return 0;
+        if (f == Frequency.DAILY) return 12 hours;
         return 48 hours;
     }
 
     /**
      * @dev Handles late payment with collateral deduction
+     * @notice Called when user has insufficient balance OR after grace period
      */
     function _handleLate(uint256 cid, uint256 round, uint256 amt) internal {
         uint256 fee = (amt * LATE_FEE_BPS) / 10000;
-
-        Member storage m = circleMembers[cid][msg.sender];
         uint256 deduction = amt + fee;
-        if (m.collateralLocked > deduction) {
-            m.collateralLocked -= deduction;
-        } else {
-            m.collateralLocked = 0;
-        }
+        Member storage m = circleMembers[cid][msg.sender];
 
+        if (m.collateralLocked < deduction) 
+        revert InsufficientCollateral();
+        
+        m.collateralLocked -= deduction;
         circles[cid].totalPot += amt;
         totalPlatformFees += fee;
 
@@ -1005,7 +1090,7 @@ contract CircleSavingsV1 is
      * @dev Update treasury address
      */
     function updateTreasury(address _new) external onlyOwner {
-        if (_new == address(0)) revert InvalidTreasuryAddress();
+        if (_new == address(0)) revert AddressZeroNotAllowed();
         treasury = _new;
     }
 

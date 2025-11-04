@@ -15,6 +15,7 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
     ReputationV1 public reputation;
 
     address public testOwner = address(1);
+    address public testTreasury = address(2);
 
     function setUp() public virtual {
         _setupMockTokenAndUsers();
@@ -33,13 +34,14 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
 
         // Deploy personal savings
         implementation = new PersonalSavingsV1();
+
         bytes memory initData = abi.encodeWithSelector(
             PersonalSavingsV1.initialize.selector,
             address(cUSD),
+            testTreasury,
             address(reputation),
             testOwner
         );
-
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(implementation),
             initData
@@ -62,10 +64,7 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
 
         // Authorize PersonalSavings in reputation system
         vm.prank(testOwner);
-        reputation.authorizeContract(
-            address(personalSavings),
-            "PersonalSavings"
-        );
+        reputation.authorizeContract(address(personalSavings));
     }
 
     // Helper to create a default personal goal for a creator

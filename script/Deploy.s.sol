@@ -43,6 +43,7 @@ contract Deploy is Script {
         PersonalSavingsProxy personalSavingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
             cUSD, // cUSD token address
+            treasury, // treasury address
             address(reputationProxy), // reputation contract address
             msg.sender // initialOwner
         );
@@ -56,14 +57,12 @@ contract Deploy is Script {
         );
 
         // Authorize contracts in the reputation system
-        ReputationV1(address(reputationProxy)).authorizeContract(
-            address(personalSavingsProxy),
-            "PersonalSavings"
-        );
-        ReputationV1(address(reputationProxy)).authorizeContract(
-            address(circleSavingsProxy),
-            "CircleSavings"
-        );
+      ReputationV1(address(reputationProxy)).authorizeContract(
+    address(personalSavingsProxy)
+);
+ReputationV1(address(reputationProxy)).authorizeContract(
+    address(circleSavingsProxy)
+);
 
         // Log deployed addresses
         console2.log("Deployment Complete");
@@ -115,6 +114,7 @@ contract Deploy is Script {
         PersonalSavingsProxy personalSavingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
             cUSD, // cUSD token address
+            treasury, // treasury address
             address(reputationProxy), // reputation contract address
             msg.sender // initialOwner
         );
@@ -129,12 +129,10 @@ contract Deploy is Script {
 
         // Authorize contracts in the reputation system
         ReputationV1(address(reputationProxy)).authorizeContract(
-            address(personalSavingsProxy),
-            "PersonalSavings"
+            address(personalSavingsProxy)
         );
         ReputationV1(address(reputationProxy)).authorizeContract(
-            address(circleSavingsProxy),
-            "CircleSavings"
+            address(circleSavingsProxy)
         );
 
         // Log deployed addresses

@@ -9,7 +9,7 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         super.setUp();
     }
 
-    function test_CompleteGoalAndWithdrawFull() public {
+    function test_completeGoalAndWithdrawFull() public {
         vm.prank(alice);
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
             .CreateGoalParams({
@@ -23,23 +23,23 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         uint256 gid = personalSavings.createPersonalGoal(params);
 
         vm.startPrank(alice);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         uint256 t = block.timestamp;
         t += 8 days + 1;
         vm.warp(t);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         t += 8 days + 1;
         vm.warp(t);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         t += 8 days + 1;
         vm.warp(t);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         vm.stopPrank();
 
         uint256 balBefore = cUSD.balanceOf(alice);
 
         vm.prank(alice);
-        personalSavings.CompleteGoal(gid);
+        personalSavings.completeGoal(gid);
 
         uint256 balAfter = cUSD.balanceOf(alice);
         assertEq(balAfter - balBefore, 200e18);
@@ -50,7 +50,7 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
 
         // one contribution => progress small => 1% penalty
         vm.prank(alice);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
 
         uint256 balBefore = cUSD.balanceOf(alice);
         vm.prank(alice);
@@ -63,12 +63,12 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         uint256 gid = _createDefaultGoal(alice);
 
         vm.prank(alice);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
 
         // try to contribute again immediately
         vm.prank(alice);
         vm.expectRevert(PersonalSavingsV1.AlreadyContributed.selector);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
     }
 
     function test_RevertWithdrawInsufficientBalance() public {
@@ -125,20 +125,20 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         uint256 gid = _createDefaultGoal(alice);
         vm.prank(alice);
         vm.expectRevert(PersonalSavingsV1.InsufficientBalance.selector);
-        personalSavings.CompleteGoal(gid);
+        personalSavings.completeGoal(gid);
     }
 
     function test_Contribute_RevertNotOwner() public {
         uint256 gid = _createDefaultGoal(alice);
         vm.prank(bob);
         vm.expectRevert(PersonalSavingsV1.NotGoalOwner.selector);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
     }
 
     function test_Withdraw_RevertNotOwner() public {
         uint256 gid = _createDefaultGoal(alice);
         vm.prank(alice);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         vm.prank(bob);
         vm.expectRevert(PersonalSavingsV1.NotGoalOwner.selector);
         personalSavings.withdrawFromGoal(gid, 10e18);
@@ -147,13 +147,13 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
     function test_Complete_RevertNotOwner() public {
         uint256 gid = _createDefaultGoal(alice);
         vm.startPrank(alice);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         vm.warp(block.timestamp + 8 days);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         vm.stopPrank();
         vm.prank(bob);
         vm.expectRevert(PersonalSavingsV1.NotGoalOwner.selector);
-        personalSavings.CompleteGoal(gid);
+        personalSavings.completeGoal(gid);
     }
 
     function test_Withdraw_25PercentProgress() public {
@@ -168,7 +168,7 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
             })
         );
         vm.prank(alice);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         uint256 balBefore = cUSD.balanceOf(alice);
         vm.prank(alice);
         personalSavings.withdrawFromGoal(gid, 25e18);
@@ -188,9 +188,9 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
             })
         );
         vm.startPrank(alice);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         vm.warp(block.timestamp + 8 days);
-        personalSavings.ContributeToGoal(gid);
+        personalSavings.contributeToGoal(gid);
         uint256 balBefore = cUSD.balanceOf(alice);
         personalSavings.withdrawFromGoal(gid, 50e18);
         uint256 balAfter = cUSD.balanceOf(alice);

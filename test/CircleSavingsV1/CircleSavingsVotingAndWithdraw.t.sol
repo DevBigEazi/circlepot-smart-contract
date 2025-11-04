@@ -104,6 +104,8 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         vm.prank(alice);
         CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
             .CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,

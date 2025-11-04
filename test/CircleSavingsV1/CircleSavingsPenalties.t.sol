@@ -81,11 +81,11 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         // Creator receives pot (500) minus their own contribution (100)
         assertEq(aliceBalAfter - aliceBalBefore, 500e18 - 100e18);
 
-        (uint256 rep, uint256 completed, , ) = reputation.getUserReputationData(
+        (uint256 positiveActions, , uint256 completed, ) = reputation.getUserReputationData(
             alice
         );
-        assertEq(completed, 1);
-        assertTrue(rep >= 5);
+        assertEq(completed, 1, "Should have 1 completed circle");
+        assertGt(positiveActions, 0, "Should have positive actions");
     }
 
     function test_RoundAdvanceWithReputation() public {

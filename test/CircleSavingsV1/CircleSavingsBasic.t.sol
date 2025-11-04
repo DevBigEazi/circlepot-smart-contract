@@ -11,37 +11,35 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
 
     function testCreateCircleAndDetails() public {
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
-            .CreateCircleParams({
-                contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
-                maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PRIVATE
-            });
+        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
+            title: "Test Circle",
+            description: "Test Description",
+            contributionAmount: 100e18,
+            frequency: CircleSavingsV1.Frequency.WEEKLY,
+            maxMembers: 5,
+            visibility: CircleSavingsV1.Visibility.PRIVATE
+        });
 
         uint256 cid = circleSavings.createCircle(params);
 
-        (CircleSavingsV1.Circle memory c, , , ) = circleSavings
-            .getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
 
         assertEq(c.creator, alice);
         assertEq(c.contributionAmount, 100e18);
         assertEq(c.maxMembers, 5);
-        assertEq(
-            uint256(c.state),
-            uint256(CircleSavingsV1.CircleState.CREATED)
-        );
+        assertEq(uint256(c.state), uint256(CircleSavingsV1.CircleState.CREATED));
     }
 
     function testJoinMembersAndAutoStart() public {
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
-            .CreateCircleParams({
-                contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
-                maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PRIVATE
-            });
+        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
+            title: "Test Circle",
+            description: "Test Description",
+            contributionAmount: 100e18,
+            frequency: CircleSavingsV1.Frequency.WEEKLY,
+            maxMembers: 5,
+            visibility: CircleSavingsV1.Visibility.PRIVATE
+        });
 
         uint256 cid = circleSavings.createCircle(params);
 
@@ -85,8 +83,7 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.stopPrank();
 
         // After the fifth member joins, circle should be ACTIVE and currentRound 1
-        (CircleSavingsV1.Circle memory c, , , ) = circleSavings
-            .getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
         assertEq(uint256(c.state), uint256(CircleSavingsV1.CircleState.ACTIVE));
         assertEq(c.currentRound, 1);
     }
@@ -120,6 +117,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(
             CircleSavingsV1.CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
@@ -164,13 +163,15 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(
             CircleSavingsV1.CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC
             })
         );
-        (CircleSavingsV1.Circle memory c, , , ) = circleSavings.getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
         assertEq(uint256(c.frequency), uint256(CircleSavingsV1.Frequency.DAILY));
     }
 
@@ -178,13 +179,15 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(
             CircleSavingsV1.CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.MONTHLY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC
             })
         );
-        (CircleSavingsV1.Circle memory c, , , ) = circleSavings.getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
         assertEq(uint256(c.frequency), uint256(CircleSavingsV1.Frequency.MONTHLY));
     }
 
@@ -205,19 +208,22 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(
             CircleSavingsV1.CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
                 contributionAmount: 100e18,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC
             })
         );
-        (CircleSavingsV1.Circle memory c, , , ) = circleSavings.getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
         assertEq(uint256(c.visibility), uint256(CircleSavingsV1.Visibility.PUBLIC));
     }
 
     function test_GetCircleDetails() public {
         uint256 cid = _createDefaultCircle(alice);
-        (CircleSavingsV1.Circle memory c, uint256 membersJoined, uint256 currentDeadline, bool canStart) = circleSavings.getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c, uint256 membersJoined, uint256 currentDeadline, bool canStart) =
+            circleSavings.getCircleDetails(cid);
         assertEq(c.creator, alice);
         assertEq(membersJoined, 1);
         assertEq(currentDeadline, 0);
@@ -228,7 +234,7 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
         uint256 cid = _createDefaultCircle(alice);
         vm.prank(bob);
         circleSavings.joinCircle(cid);
-        (CircleSavingsV1.Member memory m, bool hasContributed, ) = circleSavings.getMemberInfo(cid, bob);
+        (CircleSavingsV1.Member memory m, bool hasContributed,) = circleSavings.getMemberInfo(cid, bob);
         assertTrue(m.isActive);
         assertFalse(hasContributed);
     }

@@ -12,11 +12,7 @@ interface IReputation {
      * @param _amount Amount to increase
      * @param _source Source description
      */
-    function increaseReputation(
-        address _user,
-        uint256 _amount,
-        string calldata _source
-    ) external;
+    function increaseReputation(address _user, uint256 _amount, string calldata _source) external;
 
     /**
      * @dev Decrease user's reputation
@@ -24,11 +20,7 @@ interface IReputation {
      * @param _amount Amount to decrease
      * @param _source Source description
      */
-    function decreaseReputation(
-        address _user,
-        uint256 _amount,
-        string calldata _source
-    ) external;
+    function decreaseReputation(address _user, uint256 _amount, string calldata _source) external;
 
     /**
      * @dev Record a completed circle for a user
@@ -41,6 +33,12 @@ interface IReputation {
      * @param _user User address
      */
     function recordLatePayment(address _user) external;
+
+    /**
+     * @dev Record a completed goal for a user
+     * @param _user User address
+     */
+    function recordGoalCompleted(address _user) external;
 
     /**
      * @dev Get user's reputation score
@@ -57,17 +55,10 @@ interface IReputation {
      * @return latePaymentsCount Number of late payments
      * @return reputationScore Calculated weighted score
      */
-    function getUserReputationData(
-        address _user
-    )
+    function getUserReputationData(address _user)
         external
         view
-        returns (
-            uint256 reputation,
-            uint256 circlesCompleted,
-            uint256 latePaymentsCount,
-            uint256 reputationScore
-        );
+        returns (uint256 reputation, uint256 circlesCompleted, uint256 latePaymentsCount, uint256 reputationScore);
 
     /**
      * @dev Check if a contract is authorized

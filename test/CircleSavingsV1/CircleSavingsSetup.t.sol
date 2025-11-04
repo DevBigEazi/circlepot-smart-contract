@@ -22,31 +22,18 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
 
         // Deploy reputation system first
         reputationImpl = new ReputationV1();
-        bytes memory repInitData = abi.encodeWithSelector(
-            ReputationV1.initialize.selector,
-            testOwner
-        );
-        ERC1967Proxy repProxy = new ERC1967Proxy(
-            address(reputationImpl),
-            repInitData
-        );
+        bytes memory repInitData = abi.encodeWithSelector(ReputationV1.initialize.selector, testOwner);
+        ERC1967Proxy repProxy = new ERC1967Proxy(address(reputationImpl), repInitData);
         reputation = ReputationV1(address(repProxy));
 
         // Deploy implementation and proxy
         implementation = new CircleSavingsV1();
 
         bytes memory initData = abi.encodeWithSelector(
-            CircleSavingsV1.initialize.selector,
-            address(cUSD),
-            testTreasury,
-            address(reputation),
-            testOwner
+            CircleSavingsV1.initialize.selector, address(cUSD), testTreasury, address(reputation), testOwner
         );
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            initData
-        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         circleSavings = CircleSavingsV1(address(proxy));
 
         // Approve contract to spend user's cUSD
@@ -58,27 +45,28 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
         users[4] = eve;
         users[5] = frank;
 
-        for (uint i = 0; i < users.length; i++) {
+        for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
             cUSD.approve(address(circleSavings), type(uint256).max);
         }
 
         // Authorize CircleSavings in reputation system
         vm.prank(testOwner);
-        reputation.authorizeContract(address(circleSavings), "CircleSavings");
+        reputation.authorizeContract(address(circleSavings));
     }
 
     // Helper to create a default circle and have enough members join so it becomes active
     function _createAndStartCircle() internal returns (uint256) {
         // Create circle
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
-            .CreateCircleParams({
-                contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
-                maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PRIVATE
-            });
+        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
+            title: "Test Circle",
+            description: "Test Description",
+            contributionAmount: 100e18,
+            frequency: CircleSavingsV1.Frequency.WEEKLY,
+            maxMembers: 5,
+            visibility: CircleSavingsV1.Visibility.PRIVATE
+        });
 
         uint256 cid = circleSavings.createCircle(params);
 
@@ -122,13 +110,14 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
     // Helper to create a default circle without adding other members
     function _createDefaultCircle(address creator) internal returns (uint256) {
         vm.prank(creator);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
-            .CreateCircleParams({
-                contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
-                maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
-            });
+        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
+            title: "Test Circle",
+            description: "Test Description",
+            contributionAmount: 100e18,
+            frequency: CircleSavingsV1.Frequency.WEEKLY,
+            maxMembers: 5,
+            visibility: CircleSavingsV1.Visibility.PUBLIC
+        });
 
         return circleSavings.createCircle(params);
     }

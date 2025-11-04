@@ -50,11 +50,12 @@ contract ReputationSetup is Test {
         vm.stopPrank();
     }
 
-    function _authorizeContract(
-        address _contract,
-        string memory _name
-    ) internal {
+    /**
+     * @dev Helper function to authorize a contract (made virtual for overriding)
+     * Note: This is virtual so child test contracts can override if needed
+     */
+    function _authorizeContract(address _contract) internal virtual {
         vm.prank(owner);
-        reputation.authorizeContract(_contract, _name);
+        reputation.authorizeContract(_contract);
     }
 }

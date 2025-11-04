@@ -693,8 +693,8 @@ DA:185,12
 DA:187,12
 DA:194,0
 DA:201,17
-FN:201,PersonalSavingsV1.ContributeToGoal
-FNDA:17,PersonalSavingsV1.ContributeToGoal
+FN:201,PersonalSavingsV1.contributeToGoal
+FNDA:17,PersonalSavingsV1.contributeToGoal
 DA:202,17
 BRDA:202,8,0,-
 DA:204,17
@@ -743,8 +743,8 @@ DA:272,3
 DA:274,3
 BRDA:274,19,0,-
 DA:281,5
-FN:281,PersonalSavingsV1.CompleteGoal
-FNDA:5,PersonalSavingsV1.CompleteGoal
+FN:281,PersonalSavingsV1.completeGoal
+FNDA:5,PersonalSavingsV1.completeGoal
 DA:282,5
 BRDA:282,20,0,-
 DA:284,5

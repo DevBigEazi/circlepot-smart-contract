@@ -10,17 +10,8 @@ import {UserProfileV1} from "../UserProfileV1.sol";
  * @notice Ownership and upgrades are managed by the implementation (UserProfileV1)
  */
 contract UserProfileProxy is ERC1967Proxy {
-    constructor(
-        address _implementation,
-        address _initialOwner
-    )
-        ERC1967Proxy(
-            _implementation,
-            abi.encodeWithSelector(
-                UserProfileV1.initialize.selector,
-                _initialOwner
-            )
-        )
+    constructor(address _implementation, address _initialOwner)
+        ERC1967Proxy(_implementation, abi.encodeWithSelector(UserProfileV1.initialize.selector, _initialOwner))
     {}
 }
 
@@ -29,17 +20,12 @@ contract UserProfileProxy is ERC1967Proxy {
  * @param _initialOwner Address of contract owner
  * @return proxy Address of the deployed proxy (which delegates to UserProfileV1)
  */
-function createUserProfile(
-    address _initialOwner
-) returns (UserProfileV1 proxy) {
+function createUserProfile(address _initialOwner) returns (UserProfileV1 proxy) {
     // Deploy implementation
     UserProfileV1 implementation = new UserProfileV1();
 
     // Deploy proxy pointing to the implementation
-    UserProfileProxy _proxy = new UserProfileProxy(
-        address(implementation),
-        _initialOwner
-    );
+    UserProfileProxy _proxy = new UserProfileProxy(address(implementation), _initialOwner);
 
     // Return proxy as UserProfileV1 interface
     proxy = UserProfileV1(address(_proxy));

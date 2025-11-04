@@ -60,7 +60,6 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      */
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
-        __UUPSUpgradeable_init();
 
         // transfer ownership if a different initialOwner was provided
         if (initialOwner != address(0) && initialOwner != owner()) {
@@ -81,9 +80,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Authorizes upgrade to new implementation
      * @param newImplementation Address of the new implementation contract
      */
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
         emit ContractUpgraded(newImplementation, VERSION);
     }
 
@@ -95,11 +92,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _username Unique username
      * @param _profilePhoto Profile photo IPFS hash or URL
      */
-    function createProfile(
-        string calldata _email,
-        string calldata _username,
-        string calldata _profilePhoto
-    ) external {
+    function createProfile(string calldata _email, string calldata _username, string calldata _profilePhoto) external {
         if (hasProfile[msg.sender]) revert ProfileAlreadyExists();
         if (bytes(_username).length == 0) revert EmptyUsername();
         if (bytes(_email).length == 0) revert EmptyEmail();
@@ -149,7 +142,6 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit PhotoUpdated(msg.sender, _profilePhoto);
     }
 
-
     // ============ View Functions ============
 
     /**
@@ -157,9 +149,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _user User address
      * @return User profile struct
      */
-    function getProfile(
-        address _user
-    ) external view returns (UserProfile memory) {
+    function getProfile(address _user) external view returns (UserProfile memory) {
         if (!hasProfile[_user]) revert ProfileDoesNotExist();
         return profiles[_user];
     }
@@ -169,9 +159,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _username Username to lookup
      * @return User address
      */
-    function getAddressByUsername(
-        string calldata _username
-    ) external view returns (address) {
+    function getAddressByUsername(string calldata _username) external view returns (address) {
         address userAddr = usernameToAddress[_username];
         if (userAddr == address(0)) revert ProfileDoesNotExist();
         return userAddr;
@@ -182,9 +170,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _username Username to check
      * @return True if available
      */
-    function isUsernameAvailable(
-        string calldata _username
-    ) external view returns (bool) {
+    function isUsernameAvailable(string calldata _username) external view returns (bool) {
         return usernameToAddress[_username] == address(0);
     }
 

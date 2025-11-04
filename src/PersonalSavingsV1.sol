@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
@@ -13,12 +13,7 @@ import {IReputation} from "./interfaces/IReputation.sol";
  * @title PersonalSavingsV1
  * @dev Personal savings goals management
  */
-contract PersonalSavingsV1 is
-    Initializable,
-    OwnableUpgradeable,
-    ReentrancyGuardUpgradeable,
-    UUPSUpgradeable
-{
+contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, UUPSUpgradeable {
     using SafeERC20 for IERC20;
 
     // ============ Version ============
@@ -56,30 +51,20 @@ contract PersonalSavingsV1 is
     // ============ Storage ============
     address public cUSDToken;
     IReputation public reputationContract;
+    address public treasury;
 
     uint256 public goalCounter;
 
+    uint256 public totalPlatformFees;
+
     mapping(uint256 => PersonalGoal) public personalGoals;
     mapping(address => uint256[]) public userGoals; // ============ Events ============
+
     event ContractUpgraded(address indexed newImplementation, uint256 version);
-    event PersonalGoalCreated(
-        uint256 indexed goalId,
-        address indexed owner,
-        string name,
-        uint256 indexed amount
-    );
+    event PersonalGoalCreated(uint256 indexed goalId, address indexed owner, string name, uint256 indexed amount);
     event GoalCompleted(uint256 indexed goalId, address indexed owner);
-    event GoalContribution(
-        uint256 indexed goalId,
-        address indexed owner,
-        uint256 amount
-    );
-    event GoalWithdrawn(
-        uint256 indexed goalId,
-        address indexed owner,
-        uint256 _amount,
-        uint256 penalty
-    );
+    event GoalContribution(uint256 indexed goalId, address indexed owner, uint256 amount);
+    event GoalWithdrawn(uint256 indexed goalId, address indexed owner, uint256 _amount, uint256 penalty);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -101,22 +86,23 @@ contract PersonalSavingsV1 is
     /**
      * @dev Initializes the contract with initial parameters
      * @param _cUSDToken Address of the cUSD token contract
+     * @param _treasury Address for platform fees
+     * @param _reputationContract Address of the reputation contract
      * @param initialOwner Address of the initial owner (if zero, msg.sender remains owner)
      */
-    function initialize(
-        address _cUSDToken,
-        address _reputationContract,
-        address initialOwner
-    ) public initializer {
+    function initialize(address _cUSDToken, address _treasury, address _reputationContract, address initialOwner)
+        public
+        initializer
+    {
         __Ownable_init(initialOwner);
-        __ReentrancyGuard_init();
-        __UUPSUpgradeable_init();
 
-        if (_cUSDToken == address(0)) revert InvalidTreasuryAddress();
-        if (_reputationContract == address(0)) revert AddressZeroNotAllowed();
+        if (_cUSDToken == address(0) || _treasury == address(0) || _reputationContract == address(0)) {
+            revert AddressZeroNotAllowed();
+        }
 
         cUSDToken = _cUSDToken;
         reputationContract = IReputation(_reputationContract);
+        treasury = _treasury;
         goalCounter = 1;
 
         // transfer ownership if a different initialOwner was provided
@@ -130,13 +116,16 @@ contract PersonalSavingsV1 is
      * @param _cUSDToken Address of cUSD token (if changed)
      * @param _version Reinitializer version number
      */
-    function upgrade(
-        address _cUSDToken,
-        address _reputationContract,
-        uint8 _version
-    ) public reinitializer(_version) onlyOwner {
+    function upgrade(address _cUSDToken, address _treasury, address _reputationContract, uint8 _version)
+        public
+        reinitializer(_version)
+        onlyOwner
+    {
         if (_cUSDToken != address(0)) {
             cUSDToken = _cUSDToken;
+        }
+        if (_treasury != address(0)) {
+            treasury = _treasury;
         }
         if (_reputationContract != address(0)) {
             reputationContract = IReputation(_reputationContract);
@@ -147,9 +136,7 @@ contract PersonalSavingsV1 is
      * @dev Authorizes upgrade to new implementation
      * @param newImplementation Address of the new implementation contract
      */
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
         emit ContractUpgraded(newImplementation, VERSION);
     }
 
@@ -159,11 +146,10 @@ contract PersonalSavingsV1 is
      * @param params Goal creation parameters
      * @return goalId The ID of the newly created goal
      */
-    function createPersonalGoal(
-        CreateGoalParams calldata params
-    ) external returns (uint256) {
-        if (params.targetAmount < 10e18 || params.targetAmount > 50000e18)
+    function createPersonalGoal(CreateGoalParams calldata params) external returns (uint256) {
+        if (params.targetAmount < 10e18 || params.targetAmount > 50000e18) {
             revert InvalidGoalAmount();
+        }
         if (params.contributionAmount == 0) revert InvalidContributionAmount();
         if (params.deadline <= block.timestamp) revert InvalidDeadline();
 
@@ -184,12 +170,7 @@ contract PersonalSavingsV1 is
 
         userGoals[msg.sender].push(gid);
 
-        emit PersonalGoalCreated(
-            gid,
-            msg.sender,
-            params.name,
-            params.targetAmount
-        );
+        emit PersonalGoalCreated(gid, msg.sender, params.name, params.targetAmount);
 
         return gid;
     }
@@ -198,7 +179,7 @@ contract PersonalSavingsV1 is
      * @dev Contribute to a personal goal
      * @param _goalId Goal ID
      */
-    function ContributeToGoal(uint256 _goalId) external nonReentrant {
+    function contributeToGoal(uint256 _goalId) external nonReentrant {
         if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
 
         PersonalGoal storage g = personalGoals[_goalId];
@@ -213,11 +194,7 @@ contract PersonalSavingsV1 is
             }
         }
 
-        IERC20(cUSDToken).safeTransferFrom(
-            msg.sender,
-            address(this),
-            g.contributionAmount
-        );
+        IERC20(cUSDToken).safeTransferFrom(msg.sender, address(this), g.contributionAmount);
 
         g.currentAmount += g.contributionAmount;
         g.lastContributionAt = block.timestamp;
@@ -225,11 +202,7 @@ contract PersonalSavingsV1 is
         emit GoalContribution(_goalId, msg.sender, g.contributionAmount);
 
         if (g.currentAmount >= g.targetAmount) {
-            reputationContract.increaseReputation(
-                msg.sender,
-                10,
-                "Goal target reached"
-            );
+            reputationContract.increaseReputation(msg.sender, 10, "Goal target reached");
             emit GoalCompleted(_goalId, msg.sender);
         }
     }
@@ -239,10 +212,7 @@ contract PersonalSavingsV1 is
      * @param _goalId Goal ID
      * @param _amount Amount to withdraw
      */
-    function withdrawFromGoal(
-        uint256 _goalId,
-        uint256 _amount
-    ) external nonReentrant {
+    function withdrawFromGoal(uint256 _goalId, uint256 _amount) external nonReentrant {
         if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
 
         PersonalGoal storage g = personalGoals[_goalId];
@@ -259,15 +229,12 @@ contract PersonalSavingsV1 is
 
         if (penalty > 0) {
             IERC20(cUSDToken).safeTransfer(msg.sender, net);
+            totalPlatformFees += penalty;
         } else {
             IERC20(cUSDToken).safeTransfer(msg.sender, _amount);
         }
 
-        reputationContract.decreaseReputation(
-            msg.sender,
-            5,
-            "Early withdrawal"
-        );
+        reputationContract.decreaseReputation(msg.sender, 5, "Early withdrawal");
 
         emit GoalWithdrawn(_goalId, msg.sender, _amount, penalty);
 
@@ -278,7 +245,7 @@ contract PersonalSavingsV1 is
      * @dev Complete a goal and withdraw full amount
      * @param _goalId Goal ID
      */
-    function CompleteGoal(uint256 _goalId) external nonReentrant {
+    function completeGoal(uint256 _goalId) external nonReentrant {
         if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
 
         PersonalGoal storage g = personalGoals[_goalId];
@@ -293,7 +260,28 @@ contract PersonalSavingsV1 is
         IERC20(cUSDToken).safeTransfer(msg.sender, amt);
         reputationContract.increaseReputation(msg.sender, 10, "Goal completed");
 
+        // Record goal completion in reputation contract
+        _recordGoalCompleted(msg.sender);
+
         emit GoalCompleted(_goalId, msg.sender);
+    }
+
+    // ============ Admin Functions ============
+    /**
+     * @dev Withdraw accumulated platform fees to treasury
+     */
+    function withdrawPlatformFees() external onlyOwner {
+        uint256 amt = totalPlatformFees;
+        totalPlatformFees = 0;
+        IERC20(cUSDToken).safeTransfer(treasury, amt);
+    }
+
+    /**
+     * @dev Update treasury address
+     */
+    function updateTreasury(address _new) external onlyOwner {
+        if (_new == address(0)) revert InvalidTreasuryAddress();
+        treasury = _new;
     }
 
     // ============ Helper Functions ============
@@ -317,13 +305,22 @@ contract PersonalSavingsV1 is
         return 0;
     }
 
+    /**
+     * @dev Record goal completion via reputation contract
+     */
+    function _recordGoalCompleted(address _user) internal {
+        try IReputation(reputationContract).recordGoalCompleted(_user) {
+            // Success
+        } catch {
+            // Fail silently
+        }
+    }
+
     // ============ View Functions ============
     /**
      * @dev Returns all goals for a user
      */
-    function getUserGoals(
-        address _user
-    ) external view returns (uint256[] memory) {
+    function getUserGoals(address _user) external view returns (uint256[] memory) {
         return userGoals[_user];
     }
 

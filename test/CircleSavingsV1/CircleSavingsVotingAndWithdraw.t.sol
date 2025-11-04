@@ -36,8 +36,7 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         vm.prank(alice);
         circleSavings.executeVote(cid);
 
-        (CircleSavingsV1.Circle memory c, , , ) = circleSavings
-            .getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
         assertEq(uint256(c.state), uint256(CircleSavingsV1.CircleState.ACTIVE));
     }
 
@@ -70,10 +69,7 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         circleSavings.WithdrawCollateral(cid);
         uint256 afterBalance = cUSD.balanceOf(alice);
 
-        assertTrue(
-            afterBalance > before,
-            "Alice should have received collateral after failed vote"
-        );
+        assertTrue(afterBalance > before, "Alice should have received collateral after failed vote");
     }
 
     function test_RevertInitiateVotingBeforeUltimatumOrBelowThreshold() public {
@@ -102,13 +98,14 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
 
     function test_InviteAndJoinPrivateCircleReverts() public {
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
-            .CreateCircleParams({
-                contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
-                maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PRIVATE
-            });
+        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
+            title: "Test Circle",
+            description: "Test Description",
+            contributionAmount: 100e18,
+            frequency: CircleSavingsV1.Frequency.WEEKLY,
+            maxMembers: 5,
+            visibility: CircleSavingsV1.Visibility.PRIVATE
+        });
 
         uint256 cid = circleSavings.createCircle(params);
 
@@ -126,10 +123,7 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         vm.prank(bob);
         circleSavings.joinCircle(cid);
 
-        (CircleSavingsV1.Member memory m, , ) = circleSavings.getMemberInfo(
-            cid,
-            bob
-        );
+        (CircleSavingsV1.Member memory m,,) = circleSavings.getMemberInfo(cid, bob);
         assertTrue(m.isActive);
     }
 
@@ -216,7 +210,7 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 8 days);
         vm.prank(alice);
         circleSavings.startCircle(cid);
-        (CircleSavingsV1.Circle memory c, , , ) = circleSavings.getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
         assertEq(uint256(c.state), uint256(CircleSavingsV1.CircleState.ACTIVE));
     }
 

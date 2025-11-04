@@ -15,35 +15,24 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
     ReputationV1 public reputation;
 
     address public testOwner = address(1);
+    address public testTreasury = address(2);
 
     function setUp() public virtual {
         _setupMockTokenAndUsers();
 
         // Deploy reputation system first
         reputationImpl = new ReputationV1();
-        bytes memory repInitData = abi.encodeWithSelector(
-            ReputationV1.initialize.selector,
-            testOwner
-        );
-        ERC1967Proxy repProxy = new ERC1967Proxy(
-            address(reputationImpl),
-            repInitData
-        );
+        bytes memory repInitData = abi.encodeWithSelector(ReputationV1.initialize.selector, testOwner);
+        ERC1967Proxy repProxy = new ERC1967Proxy(address(reputationImpl), repInitData);
         reputation = ReputationV1(address(repProxy));
 
         // Deploy personal savings
         implementation = new PersonalSavingsV1();
-        bytes memory initData = abi.encodeWithSelector(
-            PersonalSavingsV1.initialize.selector,
-            address(cUSD),
-            address(reputation),
-            testOwner
-        );
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            initData
+        bytes memory initData = abi.encodeWithSelector(
+            PersonalSavingsV1.initialize.selector, address(cUSD), testTreasury, address(reputation), testOwner
         );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         personalSavings = PersonalSavingsV1(address(proxy));
 
         // Approve contract to spend user's cUSD
@@ -55,30 +44,26 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
         users[4] = eve;
         users[5] = frank;
 
-        for (uint i = 0; i < users.length; i++) {
+        for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
             cUSD.approve(address(personalSavings), type(uint256).max);
         }
 
         // Authorize PersonalSavings in reputation system
         vm.prank(testOwner);
-        reputation.authorizeContract(
-            address(personalSavings),
-            "PersonalSavings"
-        );
+        reputation.authorizeContract(address(personalSavings));
     }
 
     // Helper to create a default personal goal for a creator
     function _createDefaultGoal(address creator) internal returns (uint256) {
         vm.prank(creator);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
-            .CreateGoalParams({
-                name: "Default Goal",
-                targetAmount: 500e18,
-                contributionAmount: 100e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 30 days
-            });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
+            name: "Default Goal",
+            targetAmount: 500e18,
+            contributionAmount: 100e18,
+            frequency: PersonalSavingsV1.Frequency.WEEKLY,
+            deadline: block.timestamp + 30 days
+        });
 
         return personalSavings.createPersonalGoal(params);
     }

@@ -11,11 +11,7 @@ contract UserProfileV1BasicTests is UserProfileV1Setup {
 
     function testCreateAndGetProfile() public {
         vm.prank(alice);
-        userProfile.createProfile(
-            "alice@example.com",
-            "alice",
-            "ipfs://photo1"
-        );
+        userProfile.createProfile("alice@example.com", "alice", "ipfs://photo1");
 
         UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
         assertEq(p.userAddress, alice);

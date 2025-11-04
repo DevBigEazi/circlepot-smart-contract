@@ -13,16 +13,14 @@ contract PersonalSavingsProxy is ERC1967Proxy {
     constructor(
         address _implementation,
         address _cUSDToken,
+        address _treasury,
         address _reputationContract,
         address _initialOwner
     )
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                PersonalSavingsV1.initialize.selector,
-                _cUSDToken,
-                _reputationContract,
-                _initialOwner
+                PersonalSavingsV1.initialize.selector, _cUSDToken, _treasury, _reputationContract, _initialOwner
             )
         )
     {}
@@ -31,12 +29,14 @@ contract PersonalSavingsProxy is ERC1967Proxy {
 /**
  * @dev Factory function to deploy PersonalSavings with proxy
  * @param _cUSDToken Address of cUSD token on Celo L2
+ * @param _treasury Address for platform fees
  * @param _reputationContract Address of the reputation contract
  * @param _initialOwner Address of contract owner
  * @return proxy Address of the deployed proxy (which delegates to PersonalSavingsV1)
  */
 function createPersonalSavings(
     address _cUSDToken,
+    address _treasury,
     address _reputationContract,
     address _initialOwner
 ) returns (PersonalSavingsV1 proxy) {
@@ -44,12 +44,8 @@ function createPersonalSavings(
     PersonalSavingsV1 implementation = new PersonalSavingsV1();
 
     // Deploy proxy pointing to the implementation
-    PersonalSavingsProxy _proxy = new PersonalSavingsProxy(
-        address(implementation),
-        _cUSDToken,
-        _reputationContract,
-        _initialOwner
-    );
+    PersonalSavingsProxy _proxy =
+        new PersonalSavingsProxy(address(implementation), _cUSDToken, _treasury, _reputationContract, _initialOwner);
 
     // Return proxy as PersonalSavingsV1 interface
     proxy = PersonalSavingsV1(address(_proxy));

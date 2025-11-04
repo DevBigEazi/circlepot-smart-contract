@@ -9,7 +9,7 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         super.setUp();
     }
 
-  function testCircleCompletionReputation() public {
+    function testCircleCompletionReputation() public {
         // Create and start a circle
         uint256 cid = _createAndStartCircle();
 
@@ -30,7 +30,7 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         assertGt(recipientRep, 300, "First recipient should gain reputation above default");
 
         // Check circle completion was recorded
-        (, , uint256 circles, ) = reputation.getUserReputationData(alice);
+        (,, uint256 circles,) = reputation.getUserReputationData(alice);
         assertEq(circles, 1, "Should record circle completion");
     }
 
@@ -63,7 +63,7 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         assertEq(bobRep, 300, "Late payment at minimum score stays at minimum");
 
         // Check late payment was recorded
-        (, , , , , , , uint256 latePayments, ) = reputation.getUserReputationDetails(bob);
+        (,,,,,,, uint256 latePayments,) = reputation.getUserReputationDetails(bob);
         assertEq(latePayments, 1, "Should record late payment");
     }
 
@@ -90,16 +90,9 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         circleSavings.joinCircle(cid);
 
         // Get member info to check positions
-        (uint256 bobPosition, , , , , ) = circleSavings.circleMembers(
-            cid,
-            bob
-        );
+        (uint256 bobPosition,,,,,) = circleSavings.circleMembers(cid, bob);
 
-        assertEq(
-            bobPosition,
-            2,
-            "Bob should be second in rotation due to high reputation"
-        );
+        assertEq(bobPosition, 2, "Bob should be second in rotation due to high reputation");
     }
 
     function testSuccessfulCircleCompletionReputation() public {
@@ -131,19 +124,14 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         members[4] = eve;
 
         for (uint256 i = 0; i < members.length; i++) {
-            (
-                uint256 positiveActions,
-                ,
-                uint256 circles,
-                uint256 score
-            ) = reputation.getUserReputationData(members[i]);
+            (uint256 positiveActions,, uint256 circles, uint256 score) = reputation.getUserReputationData(members[i]);
 
             assertGt(positiveActions, 0, "Member should have positive actions");
             assertEq(circles, 1, "Member should have completed one circle");
             assertGt(score, 300, "Score should be higher than default");
         }
     }
-    
+
     function testReputationNotAffectedByPlatformFees() public {
         uint256 cid = _createAndStartCircle();
 
@@ -165,16 +153,13 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         vm.prank(testOwner);
         circleSavings.withdrawPlatformFees();
 
-        assertEq(
-            reputation.getReputation(alice),
-            aliceRep,
-            "Platform fee withdrawal should not affect reputation"
-        );
+        assertEq(reputation.getReputation(alice), aliceRep, "Platform fee withdrawal should not affect reputation");
     }
 
     function test_GetMemberInfo() public {
         uint256 cid = _createAndStartCircle();
-        (CircleSavingsV1.Member memory m, bool hasContributed, uint256 nextDeadline) = circleSavings.getMemberInfo(cid, alice);
+        (CircleSavingsV1.Member memory m, bool hasContributed, uint256 nextDeadline) =
+            circleSavings.getMemberInfo(cid, alice);
         assertTrue(m.isActive);
         assertEq(m.position, 1);
         assertGt(nextDeadline, 0);

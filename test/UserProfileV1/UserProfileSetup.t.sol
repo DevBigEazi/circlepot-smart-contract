@@ -17,15 +17,9 @@ contract UserProfileV1Setup is Test, TestHelpers {
 
         implementation = new UserProfileV1();
 
-        bytes memory initData = abi.encodeWithSelector(
-            UserProfileV1.initialize.selector,
-            testOwner
-        );
+        bytes memory initData = abi.encodeWithSelector(UserProfileV1.initialize.selector, testOwner);
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            initData
-        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         userProfile = UserProfileV1(address(proxy));
     }
 }

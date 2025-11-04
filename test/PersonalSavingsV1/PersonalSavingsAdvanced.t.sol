@@ -11,14 +11,13 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
 
     function test_completeGoalAndWithdrawFull() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
-            .CreateGoalParams({
-                name: "GoalFull",
-                targetAmount: 200e18,
-                contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
-            });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
+            name: "GoalFull",
+            targetAmount: 200e18,
+            contributionAmount: 50e18,
+            frequency: PersonalSavingsV1.Frequency.WEEKLY,
+            deadline: block.timestamp + 365 days
+        });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
 
@@ -198,4 +197,3 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         vm.stopPrank();
     }
 }
-

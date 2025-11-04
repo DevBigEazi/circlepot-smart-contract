@@ -46,21 +46,12 @@ contract ReputationIntegration is ReputationSetup {
 
         // Deploy proxies
         savingsProxy = new PersonalSavingsProxy(
-            address(personalSavingsImpl),
-            address(mockCUSD),
-            treasury,
-            address(reputation),
-            owner
+            address(personalSavingsImpl), address(mockCUSD), treasury, address(reputation), owner
         );
         personalSavings = PersonalSavingsV1(address(savingsProxy));
 
-        circleProxy = new CircleSavingsProxy(
-            address(circleSavingsImpl),
-            address(mockCUSD),
-            treasury,
-            address(reputation),
-            owner
-        );
+        circleProxy =
+            new CircleSavingsProxy(address(circleSavingsImpl), address(mockCUSD), treasury, address(reputation), owner);
         circleSavings = CircleSavingsV1(address(circleProxy));
 
         // Authorize the contracts
@@ -79,14 +70,13 @@ contract ReputationIntegration is ReputationSetup {
         mockCUSD.approve(address(savingsProxy), type(uint256).max);
 
         // Create goal
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
-            .CreateGoalParams({
-                name: "Test Goal",
-                targetAmount: TARGET_AMOUNT,
-                contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
-            });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
+            name: "Test Goal",
+            targetAmount: TARGET_AMOUNT,
+            contributionAmount: CONTRIBUTION_AMOUNT,
+            frequency: PersonalSavingsV1.Frequency.DAILY,
+            deadline: block.timestamp + DEADLINE
+        });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
         uint256 scoreBefore = reputation.getReputation(user1);
@@ -104,9 +94,9 @@ contract ReputationIntegration is ReputationSetup {
         vm.stopPrank();
 
         assertGt(scoreAfter, scoreBefore, "Score should increase after goal completion");
-        
+
         // Check goals completed counter
-        (, , , , , , uint256 goalsCompleted, , ) = reputation.getUserReputationDetails(user1);
+        (,,,,,, uint256 goalsCompleted,,) = reputation.getUserReputationDetails(user1);
         assertGt(goalsCompleted, 0, "Should track goal completion");
     }
 
@@ -116,14 +106,13 @@ contract ReputationIntegration is ReputationSetup {
         vm.startPrank(user1);
         mockCUSD.approve(address(savingsProxy), type(uint256).max);
 
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
-            .CreateGoalParams({
-                name: "Test Goal",
-                targetAmount: TARGET_AMOUNT,
-                contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
-            });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
+            name: "Test Goal",
+            targetAmount: TARGET_AMOUNT,
+            contributionAmount: CONTRIBUTION_AMOUNT,
+            frequency: PersonalSavingsV1.Frequency.DAILY,
+            deadline: block.timestamp + DEADLINE
+        });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
         uint256 scoreBefore = reputation.getReputation(user1);
@@ -147,19 +136,18 @@ contract ReputationIntegration is ReputationSetup {
         vm.startPrank(user1);
         mockCUSD.approve(address(savingsProxy), type(uint256).max);
 
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
-            .CreateGoalParams({
-                name: "Test Goal",
-                targetAmount: TARGET_AMOUNT,
-                contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
-            });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
+            name: "Test Goal",
+            targetAmount: TARGET_AMOUNT,
+            contributionAmount: CONTRIBUTION_AMOUNT,
+            frequency: PersonalSavingsV1.Frequency.DAILY,
+            deadline: block.timestamp + DEADLINE
+        });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
         // Make one contribution
         personalSavings.contributeToGoal(goalId);
-        
+
         uint256 scoreBefore = reputation.getReputation(user1);
 
         // Withdraw early
@@ -179,14 +167,13 @@ contract ReputationIntegration is ReputationSetup {
 
         // Create and complete 3 goals
         for (uint256 i = 0; i < 3; i++) {
-            PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
-                .CreateGoalParams({
-                    name: "Test Goal",
-                    targetAmount: TARGET_AMOUNT,
-                    contributionAmount: CONTRIBUTION_AMOUNT,
-                    frequency: PersonalSavingsV1.Frequency.DAILY,
-                    deadline: block.timestamp + DEADLINE
-                });
+            PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
+                name: "Test Goal",
+                targetAmount: TARGET_AMOUNT,
+                contributionAmount: CONTRIBUTION_AMOUNT,
+                frequency: PersonalSavingsV1.Frequency.DAILY,
+                deadline: block.timestamp + DEADLINE
+            });
             uint256 goalId = personalSavings.createPersonalGoal(params);
 
             // Contribute to reach target
@@ -196,13 +183,13 @@ contract ReputationIntegration is ReputationSetup {
             }
 
             personalSavings.completeGoal(goalId);
-            
+
             // Explicitly record goal completion since we're testing this functionality
             try IReputation(address(reputation)).recordGoalCompleted(user1) {} catch {}
         }
         vm.stopPrank();
 
-        (, , , , , , uint256 goalsCompleted, , ) = reputation.getUserReputationDetails(user1);
+        (,,,,,, uint256 goalsCompleted,,) = reputation.getUserReputationDetails(user1);
         assertEq(goalsCompleted, 3, "Should track all completed goals");
     }
 
@@ -256,7 +243,7 @@ contract ReputationIntegration is ReputationSetup {
         assertGt(scoreAfter, scoreBefore, "Score should increase after payout");
 
         // Check circle completion tracked
-        (, , uint256 circlesCompleted, ) = reputation.getUserReputationData(user1);
+        (,, uint256 circlesCompleted,) = reputation.getUserReputationData(user1);
         assertEq(circlesCompleted, 1, "Should track circle completion for payout recipient");
     }
 
@@ -314,7 +301,7 @@ contract ReputationIntegration is ReputationSetup {
         assertLt(scoreAfter, scoreBefore, "Score should decrease for late payment");
 
         // Check late payment tracked
-        (, , , , , , , uint256 latePayments, ) = reputation.getUserReputationDetails(users[4]);
+        (,,,,,,, uint256 latePayments,) = reputation.getUserReputationDetails(users[4]);
         assertEq(latePayments, 1, "Should track late payment");
     }
 
@@ -355,7 +342,7 @@ contract ReputationIntegration is ReputationSetup {
             for (uint256 i = 0; i < users.length; i++) {
                 vm.prank(users[i]);
                 circleSavings.contribute(circleId);
-                
+
                 // Explicitly increase reputation for on-time contributions
                 address mockContract = makeAddr("mockContract");
                 vm.prank(owner);
@@ -374,7 +361,7 @@ contract ReputationIntegration is ReputationSetup {
 
         // Check circle completion tracked
         for (uint256 i = 0; i < users.length; i++) {
-            (, , uint256 circles, ) = reputation.getUserReputationData(users[i]);
+            (,, uint256 circles,) = reputation.getUserReputationData(users[i]);
             assertEq(circles, 1, "All members should have 1 completed circle");
         }
     }
@@ -384,7 +371,7 @@ contract ReputationIntegration is ReputationSetup {
         address mockContract = makeAddr("mockContract");
         vm.prank(owner);
         reputation.authorizeContract(mockContract);
-        
+
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 100, "Setup"); // Score: 800
 
@@ -421,11 +408,11 @@ contract ReputationIntegration is ReputationSetup {
         }
 
         // Check positions - user1 should have position 2 (highest rep after creator)
-        (CircleSavingsV1.Member memory member, , ) = circleSavings.getMemberInfo(circleId, user1);
+        (CircleSavingsV1.Member memory member,,) = circleSavings.getMemberInfo(circleId, user1);
         assertEq(member.position, 2, "High reputation user should get position 2");
 
         // Creator should have position 1
-        (CircleSavingsV1.Member memory creatorMember, , ) = circleSavings.getMemberInfo(circleId, user2);
+        (CircleSavingsV1.Member memory creatorMember,,) = circleSavings.getMemberInfo(circleId, user2);
         assertEq(creatorMember.position, 1, "Creator should always have position 1");
     }
 
@@ -438,14 +425,13 @@ contract ReputationIntegration is ReputationSetup {
         vm.startPrank(user1);
         mockCUSD.approve(address(savingsProxy), type(uint256).max);
 
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
-            .CreateGoalParams({
-                name: "Test Goal",
-                targetAmount: TARGET_AMOUNT,
-                contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
-            });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
+            name: "Test Goal",
+            targetAmount: TARGET_AMOUNT,
+            contributionAmount: CONTRIBUTION_AMOUNT,
+            frequency: PersonalSavingsV1.Frequency.DAILY,
+            deadline: block.timestamp + DEADLINE
+        });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
         for (uint256 i = 0; i < 5; i++) {
@@ -453,7 +439,7 @@ contract ReputationIntegration is ReputationSetup {
             vm.warp(block.timestamp + 1 days);
         }
         personalSavings.completeGoal(goalId);
-        
+
         // Explicitly record goal completion
         try IReputation(address(reputation)).recordGoalCompleted(user1) {} catch {}
         vm.stopPrank();
@@ -503,9 +489,9 @@ contract ReputationIntegration is ReputationSetup {
         assertGt(finalScore, scoreAfterGoal, "Score should increase from circle participation");
 
         // Check tracking
-        (, , , , , ,uint256 goalsCompleted, , ) = reputation.getUserReputationDetails(user1);
-        (, , uint256 circlesCompleted, ) = reputation.getUserReputationData(user1);
-        
+        (,,,,,, uint256 goalsCompleted,,) = reputation.getUserReputationDetails(user1);
+        (,, uint256 circlesCompleted,) = reputation.getUserReputationData(user1);
+
         assertEq(goalsCompleted, 1, "Should track goal completion");
         assertEq(circlesCompleted, 1, "Should track circle completion");
     }
@@ -556,9 +542,9 @@ contract ReputationIntegration is ReputationSetup {
         }
 
         // Verify position assignment
-        (CircleSavingsV1.Member memory m1, , ) = circleSavings.getMemberInfo(circleId, user1);
-        (CircleSavingsV1.Member memory m2, , ) = circleSavings.getMemberInfo(circleId, user2);
-        (CircleSavingsV1.Member memory m3, , ) = circleSavings.getMemberInfo(circleId, user3);
+        (CircleSavingsV1.Member memory m1,,) = circleSavings.getMemberInfo(circleId, user1);
+        (CircleSavingsV1.Member memory m2,,) = circleSavings.getMemberInfo(circleId, user2);
+        (CircleSavingsV1.Member memory m3,,) = circleSavings.getMemberInfo(circleId, user3);
 
         assertEq(m1.position, 2, "Exceptional user should be position 2");
         assertEq(m2.position, 3, "Fair user should be position 3");

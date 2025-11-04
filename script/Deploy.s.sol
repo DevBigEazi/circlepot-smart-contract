@@ -57,27 +57,17 @@ contract Deploy is Script {
         );
 
         // Authorize contracts in the reputation system
-      ReputationV1(address(reputationProxy)).authorizeContract(
-    address(personalSavingsProxy)
-);
-ReputationV1(address(reputationProxy)).authorizeContract(
-    address(circleSavingsProxy)
-);
+        ReputationV1(address(reputationProxy)).authorizeContract(address(personalSavingsProxy));
+        ReputationV1(address(reputationProxy)).authorizeContract(address(circleSavingsProxy));
 
         // Log deployed addresses
         console2.log("Deployment Complete");
         console2.log("==================");
         console2.log("UserProfile Implementation:", address(userProfileImpl));
         console2.log("UserProfile Proxy:", address(userProfileProxy));
-        console2.log(
-            "PersonalSavings Implementation:",
-            address(personalSavingsImpl)
-        );
+        console2.log("PersonalSavings Implementation:", address(personalSavingsImpl));
         console2.log("PersonalSavings Proxy:", address(personalSavingsProxy));
-        console2.log(
-            "CircleSavings Implementation:",
-            address(circleSavingsImpl)
-        );
+        console2.log("CircleSavings Implementation:", address(circleSavingsImpl));
         console2.log("CircleSavings Proxy:", address(circleSavingsProxy));
         console2.log("Reputation Implementation:", address(reputationImpl));
         console2.log("Reputation Proxy:", address(reputationProxy));
@@ -128,27 +118,17 @@ ReputationV1(address(reputationProxy)).authorizeContract(
         );
 
         // Authorize contracts in the reputation system
-        ReputationV1(address(reputationProxy)).authorizeContract(
-            address(personalSavingsProxy)
-        );
-        ReputationV1(address(reputationProxy)).authorizeContract(
-            address(circleSavingsProxy)
-        );
+        ReputationV1(address(reputationProxy)).authorizeContract(address(personalSavingsProxy));
+        ReputationV1(address(reputationProxy)).authorizeContract(address(circleSavingsProxy));
 
         // Log deployed addresses
         console2.log("Testnet Deployment Complete");
         console2.log("=========================");
         console2.log("UserProfile Implementation:", address(userProfileImpl));
         console2.log("UserProfile Proxy:", address(userProfileProxy));
-        console2.log(
-            "PersonalSavings Implementation:",
-            address(personalSavingsImpl)
-        );
+        console2.log("PersonalSavings Implementation:", address(personalSavingsImpl));
         console2.log("PersonalSavings Proxy:", address(personalSavingsProxy));
-        console2.log(
-            "CircleSavings Implementation:",
-            address(circleSavingsImpl)
-        );
+        console2.log("CircleSavings Implementation:", address(circleSavingsImpl));
         console2.log("CircleSavings Proxy:", address(circleSavingsProxy));
         console2.log("Reputation Implementation:", address(reputationImpl));
         console2.log("Reputation Proxy:", address(reputationProxy));

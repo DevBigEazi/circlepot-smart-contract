@@ -9,9 +9,8 @@ import {ReputationV1} from "../../src/ReputationV1.sol";
  * @dev Basic test cases for Reputation contract with credit score system (300-850)
  */
 contract ReputationBasic is ReputationSetup {
-    
     // ============ Initialization Tests ============
-    
+
     function test_initializer() public view {
         assertEq(reputation.owner(), owner);
         assertEq(reputation.VERSION(), 1);
@@ -21,7 +20,7 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Authorization Tests ============
-    
+
     function test_contractAuthorization() public {
         address mockContract = makeAddr("mockContract");
 
@@ -33,11 +32,11 @@ contract ReputationBasic is ReputationSetup {
 
     function test_contractDeauthorization() public {
         address mockContract = makeAddr("mockContract");
-        
+
         vm.startPrank(owner);
         reputation.authorizeContract(mockContract);
         assertTrue(reputation.authorizedContracts(mockContract));
-        
+
         reputation.revokeContract(mockContract);
         assertFalse(reputation.authorizedContracts(mockContract));
         vm.stopPrank();
@@ -66,19 +65,15 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Score Initialization Tests ============
-    
+
     function test_newUserHasDefaultScore() public view {
         uint256 score = reputation.getReputation(user1);
         assertEq(score, 300, "New user should have default score of 300");
     }
 
     function test_getUserReputationData_NewUser() public view {
-        (
-            uint256 positiveActions,
-            uint256 negativeActions,
-            uint256 circlesCompleted,
-            uint256 score
-        ) = reputation.getUserReputationData(user1);
+        (uint256 positiveActions, uint256 negativeActions, uint256 circlesCompleted, uint256 score) =
+            reputation.getUserReputationData(user1);
 
         assertEq(positiveActions, 0);
         assertEq(negativeActions, 0);
@@ -87,7 +82,7 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Reputation Increase Tests ============
-    
+
     function test_reputationIncrease_PoorScore() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
@@ -107,7 +102,7 @@ contract ReputationBasic is ReputationSetup {
         vm.startPrank(mockContract);
         // Get user to Fair score (600)
         reputation.increaseReputation(user1, 60, "Setup"); // 300 + (60×5) = 600
-        
+
         // Now increase from Fair
         reputation.increaseReputation(user1, 10, "Test");
         vm.stopPrank();
@@ -124,7 +119,7 @@ contract ReputationBasic is ReputationSetup {
         vm.startPrank(mockContract);
         // Get to Good score (700)
         reputation.increaseReputation(user1, 80, "Setup"); // 300 + (80×5) = 700
-        
+
         reputation.increaseReputation(user1, 10, "Test");
         vm.stopPrank();
 
@@ -140,7 +135,7 @@ contract ReputationBasic is ReputationSetup {
         vm.startPrank(mockContract);
         // Get to Very Good score (750)
         reputation.increaseReputation(user1, 90, "Setup"); // 300 + (90×5) = 750
-        
+
         reputation.increaseReputation(user1, 10, "Test");
         vm.stopPrank();
 
@@ -156,7 +151,7 @@ contract ReputationBasic is ReputationSetup {
         vm.startPrank(mockContract);
         // Get to Exceptional score (820)
         reputation.increaseReputation(user1, 104, "Setup"); // 300 + (104×5) = 820
-        
+
         reputation.increaseReputation(user1, 10, "Test");
         vm.stopPrank();
 
@@ -172,7 +167,7 @@ contract ReputationBasic is ReputationSetup {
         vm.startPrank(mockContract);
         // Get close to max
         reputation.increaseReputation(user1, 110, "Setup"); // 300 + (110×5) = 850 (capped)
-        
+
         // Try to increase more
         reputation.increaseReputation(user1, 10, "Test");
         vm.stopPrank();
@@ -190,7 +185,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 10, "Action 2");
         vm.stopPrank();
 
-        (uint256 positiveActions, , , ) = reputation.getUserReputationData(user1);
+        (uint256 positiveActions,,,) = reputation.getUserReputationData(user1);
         assertEq(positiveActions, 2, "Should track positive actions");
     }
 
@@ -217,7 +212,7 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Reputation Decrease Tests ============
-    
+
     function test_reputationDecrease_PoorScore() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
@@ -326,7 +321,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.decreaseReputation(user1, 5, "Action 2");
         vm.stopPrank();
 
-        (, uint256 negativeActions, , ) = reputation.getUserReputationData(user1);
+        (, uint256 negativeActions,,) = reputation.getUserReputationData(user1);
         assertEq(negativeActions, 2, "Should track negative actions");
     }
 
@@ -345,7 +340,7 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Circle Completion Tests ============
-    
+
     function test_recordCircleCompletion() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
@@ -353,7 +348,7 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.recordCircleCompleted(user1);
 
-        (, , uint256 circles, ) = reputation.getUserReputationData(user1);
+        (,, uint256 circles,) = reputation.getUserReputationData(user1);
         assertEq(circles, 1, "Should record circle completion");
     }
 
@@ -367,12 +362,12 @@ contract ReputationBasic is ReputationSetup {
         reputation.recordCircleCompleted(user1);
         vm.stopPrank();
 
-        (, , uint256 circles, ) = reputation.getUserReputationData(user1);
+        (,, uint256 circles,) = reputation.getUserReputationData(user1);
         assertEq(circles, 3, "Should track multiple circle completions");
     }
 
     // ============ Late Payment Tests ============
-    
+
     function test_recordLatePayment() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
@@ -398,11 +393,11 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Score Category Tests ============
-    
+
     function test_getScoreCategory_Poor() public view {
         // Default score is 300 (Poor)
         ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint(category), uint(ReputationV1.ScoreCategory.POOR));
+        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.POOR));
     }
 
     function test_getScoreCategory_Fair() public {
@@ -413,7 +408,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 60, "Setup"); // 300 + (60×5) = 600
 
         ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint(category), uint(ReputationV1.ScoreCategory.FAIR));
+        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.FAIR));
     }
 
     function test_getScoreCategory_Good() public {
@@ -424,7 +419,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 80, "Setup"); // 300 + (80×5) = 700
 
         ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint(category), uint(ReputationV1.ScoreCategory.GOOD));
+        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.GOOD));
     }
 
     function test_getScoreCategory_VeryGood() public {
@@ -435,7 +430,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 90, "Setup"); // 300 + (90×5) = 750
 
         ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint(category), uint(ReputationV1.ScoreCategory.VERY_GOOD));
+        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.VERY_GOOD));
     }
 
     function test_getScoreCategory_Exceptional() public {
@@ -446,10 +441,10 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 110, "Setup"); // 300 + (110×5) = 850 (capped)
 
         ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint(category), uint(ReputationV1.ScoreCategory.EXCEPTIONAL));
+        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.EXCEPTIONAL));
     }
 
-   function test_getScoreCategoryString_AllCategories() public {
+    function test_getScoreCategoryString_AllCategories() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
 
@@ -458,7 +453,7 @@ contract ReputationBasic is ReputationSetup {
         assertEq(cat, "Poor (300-579)");
 
         vm.startPrank(mockContract);
-        
+
         // Fair (600) - Need to increase by 60 points * 5 multiplier = 300 points
         reputation.increaseReputation(user1, 60, "Setup");
         cat = reputation.getScoreCategoryString(user1);
@@ -481,7 +476,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 35, "Setup");
         cat = reputation.getScoreCategoryString(user1);
         assertEq(cat, "Exceptional (800-850)");
-        
+
         vm.stopPrank();
     }
 
@@ -539,7 +534,7 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Penalty Multiplier Tests ============
-    
+
     function test_getPenaltyMultiplier_Poor() public view {
         uint256 multiplier = reputation.getPenaltyMultiplier(user1); // Score: 300
         assertEq(multiplier, 10000, "Poor score: no reduction (100%)");
@@ -589,7 +584,7 @@ contract ReputationBasic is ReputationSetup {
         assertEq(multiplier, 5000, "Exceptional score: 50% reduction");
     }
 
-    // ============ Collateral Multiplier Tests ============ 
+    // ============ Collateral Multiplier Tests ============
     function test_getCollateralMultiplier_AllScores() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
@@ -599,7 +594,7 @@ contract ReputationBasic is ReputationSetup {
         assertEq(mult, 10000);
 
         vm.startPrank(mockContract);
-        
+
         // Fair (600): 95%
         reputation.increaseReputation(user1, 60, "Setup");
         mult = reputation.getCollateralMultiplier(user1);
@@ -619,12 +614,12 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 35, "Setup");
         mult = reputation.getCollateralMultiplier(user1);
         assertEq(mult, 8000);
-        
+
         vm.stopPrank();
     }
 
     // ============ Reputation Details Tests ============
-    
+
     function test_getUserReputationDetails_Complete() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
@@ -650,7 +645,7 @@ contract ReputationBasic is ReputationSetup {
         ) = reputation.getUserReputationDetails(user1);
 
         assertGt(score, 300);
-        assertEq(uint(category), uint(ReputationV1.ScoreCategory.POOR)); // Still poor after penalties
+        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.POOR)); // Still poor after penalties
         assertEq(positiveActions, 2);
         assertEq(negativeActions, 1);
         assertEq(consecutivePayments, 0); // Reset by decrease
@@ -661,7 +656,7 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Reputation History Tests ============
-    
+
     function test_getReputationHistory() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
@@ -673,7 +668,7 @@ contract ReputationBasic is ReputationSetup {
         vm.stopPrank();
 
         ReputationV1.ReputationHistory[] memory history = reputation.getReputationHistory(user1);
-        
+
         assertEq(history.length, 3);
         assertEq(history[0].reason, "Action 1");
         assertEq(history[1].reason, "Action 2");
@@ -683,7 +678,7 @@ contract ReputationBasic is ReputationSetup {
     }
 
     // ============ Event Tests ============
-    
+
     function test_emitsReputationIncreasedEvent() public {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
@@ -704,7 +699,7 @@ contract ReputationBasic is ReputationSetup {
 
         vm.expectEmit(true, true, true, true);
         emit ReputationV1.ReputationDecreased(user1, 15, "Test", 385);
-        
+
         reputation.decreaseReputation(user1, 5, "Test");
         vm.stopPrank();
     }
@@ -714,11 +709,7 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.ScoreCategoryChanged(
-            user1,
-            ReputationV1.ScoreCategory.POOR,
-            ReputationV1.ScoreCategory.FAIR
-        );
+        emit ReputationV1.ScoreCategoryChanged(user1, ReputationV1.ScoreCategory.POOR, ReputationV1.ScoreCategory.FAIR);
 
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 60, "Upgrade"); // 300 -> 600 (Poor -> Fair)
@@ -767,7 +758,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.recordLatePayment(user1);
     }
 
- // ============ Helper Function ============  
+    // ============ Helper Function ============
     function _getUserReputation(address _user) internal view returns (ReputationV1.UserReputation memory) {
         (
             uint256 score,

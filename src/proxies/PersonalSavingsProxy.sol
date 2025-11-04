@@ -20,11 +20,7 @@ contract PersonalSavingsProxy is ERC1967Proxy {
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                PersonalSavingsV1.initialize.selector,
-                _cUSDToken,
-                _treasury,
-                _reputationContract,
-                _initialOwner
+                PersonalSavingsV1.initialize.selector, _cUSDToken, _treasury, _reputationContract, _initialOwner
             )
         )
     {}
@@ -48,13 +44,8 @@ function createPersonalSavings(
     PersonalSavingsV1 implementation = new PersonalSavingsV1();
 
     // Deploy proxy pointing to the implementation
-    PersonalSavingsProxy _proxy = new PersonalSavingsProxy(
-        address(implementation),
-        _cUSDToken,
-        _treasury,
-        _reputationContract,
-        _initialOwner
-    );
+    PersonalSavingsProxy _proxy =
+        new PersonalSavingsProxy(address(implementation), _cUSDToken, _treasury, _reputationContract, _initialOwner);
 
     // Return proxy as PersonalSavingsV1 interface
     proxy = PersonalSavingsV1(address(_proxy));

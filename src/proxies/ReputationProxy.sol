@@ -10,17 +10,8 @@ import {ReputationV1} from "../ReputationV1.sol";
  * @notice Ownership and upgrades are managed by the implementation (ReputationV1)
  */
 contract ReputationProxy is ERC1967Proxy {
-    constructor(
-        address _implementation,
-        address _initialOwner
-    )
-        ERC1967Proxy(
-            _implementation,
-            abi.encodeWithSelector(
-                ReputationV1.initialize.selector,
-                _initialOwner
-            )
-        )
+    constructor(address _implementation, address _initialOwner)
+        ERC1967Proxy(_implementation, abi.encodeWithSelector(ReputationV1.initialize.selector, _initialOwner))
     {}
 }
 
@@ -34,10 +25,7 @@ function createReputation(address _initialOwner) returns (ReputationV1 proxy) {
     ReputationV1 implementation = new ReputationV1();
 
     // Deploy proxy pointing to the implementation
-    ReputationProxy _proxy = new ReputationProxy(
-        address(implementation),
-        _initialOwner
-    );
+    ReputationProxy _proxy = new ReputationProxy(address(implementation), _initialOwner);
 
     // Return proxy as ReputationV1 interface
     proxy = ReputationV1(address(_proxy));

@@ -20,11 +20,7 @@ contract CircleSavingsProxy is ERC1967Proxy {
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                CircleSavingsV1.initialize.selector,
-                _cUSDToken,
-                _treasury,
-                _reputationContract,
-                _initialOwner
+                CircleSavingsV1.initialize.selector, _cUSDToken, _treasury, _reputationContract, _initialOwner
             )
         )
     {}
@@ -38,23 +34,15 @@ contract CircleSavingsProxy is ERC1967Proxy {
  * @param _initialOwner Address of contract owner
  * @return proxy Address of the deployed proxy (which delegates to CircleSavingsV1)
  */
-function createCircleSavings(
-    address _cUSDToken,
-    address _treasury,
-    address _reputationContract,
-    address _initialOwner
-) returns (CircleSavingsV1 proxy) {
+function createCircleSavings(address _cUSDToken, address _treasury, address _reputationContract, address _initialOwner)
+    returns (CircleSavingsV1 proxy)
+{
     // Deploy implementation
     CircleSavingsV1 implementation = new CircleSavingsV1();
 
     // Deploy proxy pointing to the implementation
-    CircleSavingsProxy _proxy = new CircleSavingsProxy(
-        address(implementation),
-        _cUSDToken,
-        _treasury,
-        _reputationContract,
-        _initialOwner
-    );
+    CircleSavingsProxy _proxy =
+        new CircleSavingsProxy(address(implementation), _cUSDToken, _treasury, _reputationContract, _initialOwner);
 
     // Return proxy as CircleSavingsV1 interface
     proxy = CircleSavingsV1(address(_proxy));

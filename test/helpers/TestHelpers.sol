@@ -32,7 +32,7 @@ contract TestHelpers is Test {
         users[4] = eve;
         users[5] = frank;
 
-        for (uint i = 0; i < users.length; i++) {
+        for (uint256 i = 0; i < users.length; i++) {
             cUSD.mint(users[i], 100000e18);
         }
     }

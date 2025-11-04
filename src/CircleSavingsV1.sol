@@ -625,15 +625,14 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
         _checkComplete(_circleId);
     }
     /*
-    * @dev Forfeit a member who hasn't contributed after grace period
+    * @dev Forfeit all members who haven't contributed after grace period
     * @param _circleId Circle ID
-    * @param _member Member to forfeit
     * @notice Can ONLY be called by the next payout recipient
     * @notice Can ONLY be called AFTER grace period expires
     * @notice This incentivizes the next recipient to keep the circle moving
+    * @notice Processes all late members in a single transaction
     */
-
-    function forfeitMember(uint256 _circleId, address _member) external nonReentrant {
+    function forfeitMember(uint256 _circleId) external nonReentrant {
         Circle storage c = circles[_circleId];
         if (c.state != CircleState.ACTIVE) revert CircleNotActive();
 
@@ -650,43 +649,51 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
         if (block.timestamp <= graceDeadline) revert GracePeriodNotExpired();
 
-        // CHECK 3: Member must not have contributed yet
-        if (roundContributions[_circleId][round][_member]) {
-            revert AlreadyContributed();
+        // Process all members who haven't contributed yet
+        address[] storage mlist = circleMemberList[_circleId];
+        bool anyForfeited = false;
+
+        for (uint256 i = 0; i < mlist.length; i++) {
+            address memberAddr = mlist[i];
+
+            // Skip members who already contributed or are not active
+            if (!roundContributions[_circleId][round][memberAddr] && circleMembers[_circleId][memberAddr].isActive) {
+                Member storage m = circleMembers[_circleId][memberAddr];
+
+                // Deduct from collateral
+                uint256 fee = (c.contributionAmount * LATE_FEE_BPS) / 10000;
+                uint256 deduction = c.contributionAmount + fee;
+
+                if (m.collateralLocked < deduction) {
+                    // Not enough collateral - take what's left
+                    deduction = m.collateralLocked;
+                }
+
+                m.collateralLocked -= deduction;
+
+                // Split forfeited amount
+                uint256 toPot = deduction > c.contributionAmount ? c.contributionAmount : deduction;
+                uint256 toFees = deduction - toPot;
+
+                c.totalPot += toPot;
+                totalPlatformFees += toFees;
+
+                // Mark as contributed (forfeited counts as contributed)
+                roundContributions[_circleId][round][memberAddr] = true;
+
+                // Update reputation via reputation contract
+                _decreaseReputation(memberAddr, 5, "Late Payment");
+                _recordLatePayment(memberAddr);
+
+                emit MemberForfeited(_circleId, round, memberAddr, deduction, msg.sender);
+                anyForfeited = true;
+            }
         }
 
-        Member storage m = circleMembers[_circleId][_member];
-        if (!m.isActive) revert NotActiveMember();
-
-        // Deduct from collateral
-        uint256 fee = (c.contributionAmount * LATE_FEE_BPS) / 10000;
-        uint256 deduction = c.contributionAmount + fee;
-
-        if (m.collateralLocked < deduction) {
-            // Not enough collateral - take what's left
-            deduction = m.collateralLocked;
+        // Only check for round completion if at least one member was forfeited
+        if (anyForfeited) {
+            _checkComplete(_circleId);
         }
-
-        m.collateralLocked -= deduction;
-
-        // Split forfeited amount
-        uint256 toPot = deduction > c.contributionAmount ? c.contributionAmount : deduction;
-        uint256 toFees = deduction - toPot;
-
-        c.totalPot += toPot;
-        totalPlatformFees += toFees;
-
-        // Mark as contributed (forfeited counts as contributed)
-        roundContributions[_circleId][round][_member] = true;
-
-        // Update reputation via reputation contract
-        _decreaseReputation(_member, 5, "Late Payment");
-        _recordLatePayment(_member);
-
-        emit MemberForfeited(_circleId, round, _member, deduction, msg.sender);
-
-        // Check if round is now complete
-        _checkComplete(_circleId);
     }
 
     // ============ Helper Functions ============

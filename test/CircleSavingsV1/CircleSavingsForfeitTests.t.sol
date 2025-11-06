@@ -298,7 +298,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         assertEq(circleAfter.currentRound, 2, "Round should advance after forfeit completes round");
 
         // Get circle progress to verify contributions
-        (,, uint256 contributionsThisRound, uint256 totalMembers) = circleSavings.getCircleProgress(cid);
+        (,, uint256 contributionsThisRound, ) = circleSavings.getCircleProgress(cid);
         assertEq(contributionsThisRound, 0, "No contributions in new round yet");
     }
 

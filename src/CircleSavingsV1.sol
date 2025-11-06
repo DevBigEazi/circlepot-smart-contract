@@ -632,6 +632,7 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
     * @notice This incentivizes the next recipient to keep the circle moving
     * @notice Processes all late members in a single transaction
     */
+
     function forfeitMember(uint256 _circleId) external nonReentrant {
         Circle storage c = circles[_circleId];
         if (c.state != CircleState.ACTIVE) revert CircleNotActive();

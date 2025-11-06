@@ -11,17 +11,19 @@ contract UserProfileV1BasicTests is UserProfileV1Setup {
 
     function testCreateAndGetProfile() public {
         vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "ipfs://photo1");
+        userProfile.createProfile("alice@example.com", "alice", "Alice Johnson", "ipfs://photo1");
 
         UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
         assertEq(p.userAddress, alice);
         assertEq(p.email, "alice@example.com");
         assertEq(p.username, "alice");
+        assertEq(p.fullName, "Alice Johnson");
+        assertEq(p.profilePhoto, "ipfs://photo1");
     }
 
     function testUpdatePhoto_CooldownNotMet() public {
         vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "ipfs://p1");
+        userProfile.createProfile("alice@example.com", "alice", "Alice Johnson", "ipfs://p1");
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);
         userProfile.updatePhoto("ipfs://p2");

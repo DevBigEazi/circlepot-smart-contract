@@ -25,20 +25,25 @@ interface IReputation {
     /**
      * @dev Record a completed circle for a user
      * @param _user User address
+     * @param _cid Circle ID
      */
-    function recordCircleCompleted(address _user) external;
+    function recordCircleCompleted(address _user, uint256 _cid) external;
 
     /**
      * @dev Record a late payment for a user
      * @param _user User address
+     * @param _cid Circle ID
+     * @param _round Round number
+     * @param _fee Fee amount
      */
-    function recordLatePayment(address _user) external;
+    function recordLatePayment(address _user, uint256 _cid, uint256 _round, uint256 _fee) external;
 
     /**
      * @dev Record a completed goal for a user
      * @param _user User address
+     * @param _goalId Goal ID
      */
-    function recordGoalCompleted(address _user) external;
+    function recordGoalCompleted(address _user, uint256 _goalId) external;
 
     /**
      * @dev Get user's reputation score

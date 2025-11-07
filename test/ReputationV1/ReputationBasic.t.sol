@@ -332,7 +332,7 @@ contract ReputationBasic is ReputationSetup {
         vm.startPrank(mockContract);
         reputation.decreaseReputation(user1, 5, "Late Payment");
         // Explicitly call recordLatePayment since we removed the automatic tracking in decreaseReputation
-        reputation.recordLatePayment(user1);
+        reputation.recordLatePayment(user1, 1, 1, 1);
         vm.stopPrank();
 
         ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
@@ -346,7 +346,7 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.prank(mockContract);
-        reputation.recordCircleCompleted(user1);
+        reputation.recordCircleCompleted(user1, 1);
 
         (,, uint256 circles,) = reputation.getUserReputationData(user1);
         assertEq(circles, 1, "Should record circle completion");
@@ -357,9 +357,9 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.startPrank(mockContract);
-        reputation.recordCircleCompleted(user1);
-        reputation.recordCircleCompleted(user1);
-        reputation.recordCircleCompleted(user1);
+        reputation.recordCircleCompleted(user1, 1);
+        reputation.recordCircleCompleted(user1, 2);
+        reputation.recordCircleCompleted(user1, 3);
         vm.stopPrank();
 
         (,, uint256 circles,) = reputation.getUserReputationData(user1);
@@ -373,7 +373,7 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.prank(mockContract);
-        reputation.recordLatePayment(user1);
+        reputation.recordLatePayment(user1, 1, 1, 1);
 
         ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
         assertEq(userRep.latePayments, 1, "Should record late payment");
@@ -384,8 +384,8 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.startPrank(mockContract);
-        reputation.recordLatePayment(user1);
-        reputation.recordLatePayment(user1);
+        reputation.recordLatePayment(user1, 1, 1, 1);
+        reputation.recordLatePayment(user1, 1, 1, 1);
         vm.stopPrank();
 
         ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
@@ -627,8 +627,8 @@ contract ReputationBasic is ReputationSetup {
         vm.startPrank(mockContract);
         reputation.increaseReputation(user1, 20, "Goal completed");
         reputation.increaseReputation(user1, 10, "Contribution");
-        reputation.recordCircleCompleted(user1);
-        reputation.recordLatePayment(user1);
+        reputation.recordCircleCompleted(user1, 1);
+        reputation.recordLatePayment(user1, 1, 1, 1);
         reputation.decreaseReputation(user1, 5, "Late Payment");
         vm.stopPrank();
 
@@ -741,10 +741,10 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.CircleCompleted(user1, 1);
+        emit ReputationV1.CircleCompleted(user1, 1, 1);
 
         vm.prank(mockContract);
-        reputation.recordCircleCompleted(user1);
+        reputation.recordCircleCompleted(user1, 1);
     }
 
     function test_emitsLatePaymentRecordedEvent() public {
@@ -752,10 +752,10 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.LatePaymentRecorded(user1, 1);
+        emit ReputationV1.LatePaymentRecorded(user1, 1, 1, 1, 1);
 
         vm.prank(mockContract);
-        reputation.recordLatePayment(user1);
+        reputation.recordLatePayment(user1, 1, 1, 1);
     }
 
     // ============ Helper Function ============

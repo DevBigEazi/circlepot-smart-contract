@@ -68,14 +68,15 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     mapping(address => bool) public authorizedContracts;
 
     // ============ Events ============
+    event ContractUpgraded(address indexed newImplementation, uint256 version);
     event ReputationIncreased(address indexed user, uint256 points, string reason, uint256 newScore);
     event ReputationDecreased(address indexed user, uint256 points, string reason, uint256 newScore);
     event ContractAuthorized(address indexed contractAddress);
     event ContractRevoked(address indexed contractAddress);
     event ScoreCategoryChanged(address indexed user, ScoreCategory oldCategory, ScoreCategory newCategory);
-    event CircleCompleted(address indexed user, uint256 totalCompleted);
-    event LatePaymentRecorded(address indexed user, uint256 totalLatePayments);
-
+    event CircleCompleted(address indexed user, uint256 indexed cid, uint256 totalCompleted);
+    event LatePaymentRecorded(address indexed user, uint256 indexed cid, uint256 indexed round, uint256 fee, uint256 totalLatePayments);
+    event GoalCompleted(address indexed user, uint256 indexed goalId, uint256 totalCompleted);
     // ============ Errors ============
     error UnauthorizedContract();
     error InvalidScoreChange();
@@ -88,15 +89,23 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     /**
      * @dev Initializes the reputation contract
+     * @param initialOwner Address of the initial owner
      */
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
+
+        // transfer ownership if a different initialOwner was provided
+        if (initialOwner != address(0) && initialOwner != owner()) {
+            _transferOwnership(initialOwner);
+        }
     }
 
     /**
      * @dev Authorizes upgrade to new implementation
      */
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
+        emit ContractUpgraded(newImplementation, VERSION);
+    }
 
     // ============ Modifiers ============
     modifier onlyAuthorized() {
@@ -230,33 +239,40 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Record circle completion (called by CircleSavingsV1)
      * @param _user Address of the user
+     * @param _cid Circle ID
      */
-    function recordCircleCompleted(address _user) external onlyAuthorized {
+    function recordCircleCompleted(address _user, uint256 _cid) external onlyAuthorized {
         _initializeUser(_user);
         UserReputation storage rep = userReputations[_user];
         rep.circlesCompleted++;
-        emit CircleCompleted(_user, rep.circlesCompleted);
+        emit CircleCompleted(_user, _cid, rep.circlesCompleted);
     }
 
     /**
      * @dev Record late payment (called by CircleSavingsV1)
      * @param _user Address of the user
+     * @param _cid Circle ID
+     * @param _round Round number
+     * @param _fee Fee amount
      */
-    function recordLatePayment(address _user) external onlyAuthorized {
+    function recordLatePayment(address _user, uint256 _cid, uint256 _round, uint256 _fee) external onlyAuthorized {
         _initializeUser(_user);
         UserReputation storage rep = userReputations[_user];
         rep.latePayments++;
-        emit LatePaymentRecorded(_user, rep.latePayments);
+        emit LatePaymentRecorded(_user,  _cid, _round, _fee, rep.latePayments);
     }
 
     /**
      * @dev Record goal completion (called by PersonalSavingsV1)
      * @param _user Address of the user
+     * @param _goalId Goal ID
      */
-    function recordGoalCompleted(address _user) external onlyAuthorized {
+    function recordGoalCompleted(address _user, uint256 _goalId) external onlyAuthorized {
         _initializeUser(_user);
         UserReputation storage rep = userReputations[_user];
         rep.goalsCompleted++;
+
+        emit GoalCompleted(_user, _goalId, rep.goalsCompleted);
     }
 
     // ============ Score Calculation Logic ============

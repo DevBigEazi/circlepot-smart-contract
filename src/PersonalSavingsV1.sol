@@ -61,9 +61,8 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
     mapping(address => uint256[]) public userGoals; // ============ Events ============
 
     event ContractUpgraded(address indexed newImplementation, uint256 version);
-    event PersonalGoalCreated(uint256 indexed goalId, address indexed owner, string name, uint256 indexed amount);
-    event GoalCompleted(uint256 indexed goalId, address indexed owner);
-    event GoalContribution(uint256 indexed goalId, address indexed owner, uint256 amount);
+    event PersonalGoalCreated(uint256 indexed goalId, address indexed owner, string name, uint256 indexed amount, uint256 currentAmount, bool isActive);
+    event GoalContribution(uint256 indexed goalId, address indexed owner, uint256 amount, uint256 currentAmount);
     event GoalWithdrawn(uint256 indexed goalId, address indexed owner, uint256 _amount, uint256 penalty);
 
     // ============ Errors ============
@@ -170,7 +169,7 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
 
         userGoals[msg.sender].push(gid);
 
-        emit PersonalGoalCreated(gid, msg.sender, params.name, params.targetAmount);
+        emit PersonalGoalCreated(gid, msg.sender, params.name, params.targetAmount, 0, true);
 
         return gid;
     }
@@ -199,11 +198,11 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
         g.currentAmount += g.contributionAmount;
         g.lastContributionAt = block.timestamp;
 
-        emit GoalContribution(_goalId, msg.sender, g.contributionAmount);
+        emit GoalContribution(_goalId, msg.sender, g.contributionAmount, g.currentAmount);
 
         if (g.currentAmount >= g.targetAmount) {
             reputationContract.increaseReputation(msg.sender, 10, "Goal target reached");
-            emit GoalCompleted(_goalId, msg.sender);
+            _recordGoalCompleted(msg.sender, _goalId);
         }
     }
 
@@ -261,9 +260,7 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
         reputationContract.increaseReputation(msg.sender, 10, "Goal completed");
 
         // Record goal completion in reputation contract
-        _recordGoalCompleted(msg.sender);
-
-        emit GoalCompleted(_goalId, msg.sender);
+        _recordGoalCompleted(msg.sender, _goalId);
     }
 
     // ============ Admin Functions ============
@@ -308,8 +305,8 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
     /**
      * @dev Record goal completion via reputation contract
      */
-    function _recordGoalCompleted(address _user) internal {
-        try IReputation(reputationContract).recordGoalCompleted(_user) {
+    function _recordGoalCompleted(address _user, uint256 _goalId) internal {
+        try IReputation(reputationContract).recordGoalCompleted(_user, _goalId) {
             // Success
         } catch {
             // Fail silently

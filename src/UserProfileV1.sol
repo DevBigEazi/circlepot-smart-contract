@@ -50,7 +50,10 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         string indexed email,
         string indexed username,
         string fullName,
-        uint256 accountId
+        uint256 accountId,
+        string profilePhoto,
+        uint256 createdAt,
+        bool hasProfile
     );
     event PhotoUpdated(address indexed user, string indexed photo);
 
@@ -87,15 +90,6 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         if (initialOwner != address(0) && initialOwner != owner()) {
             _transferOwnership(initialOwner);
         }
-    }
-
-    /**
-     * @dev Function for upgrading the contract to a new version (reinitializer)
-     * @param _version Reinitializer version number
-     */
-    function upgrade(uint8 _version) public reinitializer(_version) onlyOwner {
-        // Version 1 - no upgrade logic needed yet
-        // Future versions will add initialization logic here
     }
 
     /**
@@ -167,7 +161,10 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             _email,
             _username,
             _fullName,
-            accountId
+            accountId,
+            _profilePhoto,
+            block.timestamp,
+            true
         );
     }
 

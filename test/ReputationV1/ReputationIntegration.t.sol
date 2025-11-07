@@ -185,7 +185,7 @@ contract ReputationIntegration is ReputationSetup {
             personalSavings.completeGoal(goalId);
 
             // Explicitly record goal completion since we're testing this functionality
-            try IReputation(address(reputation)).recordGoalCompleted(user1) {} catch {}
+            try IReputation(address(reputation)).recordGoalCompleted(user1, goalId) {} catch {}
         }
         vm.stopPrank();
 
@@ -441,7 +441,7 @@ contract ReputationIntegration is ReputationSetup {
         personalSavings.completeGoal(goalId);
 
         // Explicitly record goal completion
-        try IReputation(address(reputation)).recordGoalCompleted(user1) {} catch {}
+        try IReputation(address(reputation)).recordGoalCompleted(user1, goalId) {} catch {}
         vm.stopPrank();
 
         uint256 scoreAfterGoal = reputation.getReputation(user1);

@@ -16,11 +16,10 @@ contract Deploy is Script {
     function setUp() public {}
 
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address treasury = vm.envAddress("TREASURY_ADDRESS");
         address cUSD = vm.envAddress("CUSD_ADDRESS");
 
-        vm.startBroadcast(deployerPrivateKey);
+        vm.startBroadcast();
 
         // Deploy implementation contracts
         UserProfileV1 userProfileImpl = new UserProfileV1();

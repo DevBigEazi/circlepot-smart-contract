@@ -363,7 +363,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         
         // We can't predict the exact account ID due to obfuscation, so we don't check it
         vm.expectEmit(true, true, true, false);
-        emit UserProfileV1.ProfileCreated(alice, "alice@example.com", "alice", "Alice Johnson", 0);
+        emit UserProfileV1.ProfileCreated(alice, "alice@example.com", "alice", "Alice Johnson", 0, "ipfs://p1", block.timestamp, true);
         
         userProfile.createProfile("alice@example.com", "alice", "Alice Johnson", "ipfs://p1");
     }

@@ -132,20 +132,23 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
         string title,
         string description,
         address indexed creator,
-        uint256 indexed contributionAmount
+        uint256 indexed contributionAmount,
+        Frequency frequency,
+        uint256 maxMembers,
+        Visibility visibility,
+        uint256 createdAt,
+        uint256 collateralLocked
     );
-    event CircleJoined(uint256 indexed circleId, address indexed member);
-    event CircleStarted(uint256 indexed circleId, uint256 startedAt);
+    event CircleJoined(uint256 indexed circleId, address indexed member, uint256 indexed currentMembers, CircleState state);
+    event CircleStarted(uint256 indexed circleId, uint256 startedAt, CircleState state);
     event PayoutDistributed(uint256 indexed circleId, uint256 indexed round, address indexed recipient, uint256 amount);
-    event CircleCompleted(uint256 indexed circleId);
     event PositionAssigned(uint256 indexed circledId, address indexed member, uint256 position);
     event CollateralWithdrawn(uint256 indexed circleId, address indexed member, uint256 amount);
-    event VotingInitiated(uint256 indexed circleId, uint256 indexed votingEndTime);
+    event VotingInitiated(uint256 indexed circleId, uint256 indexed votingStartTime, uint256 indexed votingEndTime);
     event VoteCast(uint256 indexed circleId, address indexed voter, VoteChoice choice);
-    event MemberInvited(uint256 indexed circleId, address indexed _invitee);
+    event MemberInvited(uint256 indexed circleId, address indexed creator, address indexed _invitee, uint256 invitedAt);
     event VoteExecuted(uint256 indexed circleId, bool circleStarted, uint256 startVoteCount, uint256 withdrawVoteCount);
     event ContributionMade(uint256 indexed circleId, uint256 round, address member, uint256 indexed amount);
-    event LatePayment(uint256 indexed circleId, uint256 round, address member, uint256 indexed fee);
     event MemberForfeited(
         uint256 indexed circleId, uint256 round, address member, uint256 indexed deduction, address indexed forfeiter
     );
@@ -317,7 +320,8 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
         circleMemberList[circleId].push(msg.sender);
 
-        emit CircleCreated(circleId, params.title, params.description, msg.sender, params.contributionAmount);
+        emit CircleCreated(circleId, params.title, params.description, msg.sender, params.contributionAmount, params.frequency, params.maxMembers, params.visibility, block.timestamp, circleMembers[circleId][msg.sender].collateralLocked);
+        emit CircleJoined(circleId, msg.sender, 1, CircleState.CREATED);
 
         return circleId;
     }
@@ -362,7 +366,7 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
         for (uint256 i = 0; i < _invitees.length; i++) {
             circleInvitations[_circleId][_invitees[i]] = true;
-            emit MemberInvited(_circleId, _invitees[i]);
+            emit MemberInvited(_circleId, msg.sender, _invitees[i], block.timestamp);
         }
     }
 
@@ -403,11 +407,11 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
         c.currentMembers++;
 
-        emit CircleJoined(_circleId, msg.sender);
+        emit CircleJoined(_circleId, msg.sender, c.currentMembers, c.state);
 
         if (c.currentMembers == c.maxMembers) {
             _startCircleInternal(_circleId);
-            emit CircleStarted(_circleId, block.timestamp);
+            emit CircleStarted(_circleId, block.timestamp, c.state);
         }
     }
 
@@ -445,7 +449,7 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
         c.state = CircleState.VOTING;
 
-        emit VotingInitiated(_circleId, vote.votingEndTime);
+        emit VotingInitiated(_circleId, vote.votingStartTime, vote.votingEndTime);
     }
 
     /**
@@ -684,7 +688,7 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
                 // Update reputation via reputation contract
                 _decreaseReputation(memberAddr, 5, "Late Payment");
-                _recordLatePayment(memberAddr);
+                _recordLatePayment(memberAddr, _circleId, round, fee);
 
                 emit MemberForfeited(_circleId, round, memberAddr, deduction, msg.sender);
                 anyForfeited = true;
@@ -721,7 +725,7 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
         circleRoundDeadlines[_circleId][1] = _nextDeadline(c.frequency, block.timestamp);
 
-        emit CircleStarted(_circleId, block.timestamp);
+        emit CircleStarted(_circleId, block.timestamp, c.state);
     }
 
     /**
@@ -807,8 +811,8 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
     /**
      * @dev Record circle completion via reputation contract
      */
-    function _recordCircleCompleted(address _user) internal {
-        try IReputation(reputationContract).recordCircleCompleted(_user) {
+    function _recordCircleCompleted(address _user, uint256 _cid) internal {
+        try IReputation(reputationContract).recordCircleCompleted(_user, _cid) {
             // Success
         } catch {
             // Fail silently
@@ -818,8 +822,8 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
     /**
      * @dev Record late payment via reputation contract
      */
-    function _recordLatePayment(address _user) internal {
-        try IReputation(reputationContract).recordLatePayment(_user) {
+    function _recordLatePayment(address _user, uint256 _cid, uint256 _round, uint256 _fee) internal {
+        try IReputation(reputationContract).recordLatePayment(_user, _cid, _round, _fee) {
             // Success
         } catch {
             // Fail silently
@@ -861,7 +865,7 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
         // Update reputation via reputation contract
         _increaseReputation(recip, 5, "Circle Payout Received");
-        _recordCircleCompleted(recip);
+        _recordCircleCompleted(recip, cid);
 
         emit PayoutDistributed(cid, round, recip, amt);
 
@@ -878,7 +882,7 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
         } else {
             c.state = CircleState.COMPLETED;
             _releaseAllCollateral(cid);
-            emit CircleCompleted(cid);
+            _recordCircleCompleted(c.creator, cid);
         }
     }
 
@@ -952,9 +956,8 @@ contract CircleSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, 
 
         // Update reputation via reputation contract
         _decreaseReputation(msg.sender, 5, "Late Payment");
-        _recordLatePayment(msg.sender);
+        _recordLatePayment(msg.sender, cid, round, fee);
 
-        emit LatePayment(cid, round, msg.sender, fee);
     }
 
     // ============ Admin Functions ============

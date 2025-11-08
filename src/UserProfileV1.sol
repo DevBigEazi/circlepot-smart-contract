@@ -47,15 +47,15 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     event ContractUpgraded(address indexed newImplementation, uint256 version);
     event ProfileCreated(
         address indexed user,
-        string indexed email,
-        string indexed username,
+        string email,
+        string username,
         string fullName,
         uint256 accountId,
         string profilePhoto,
         uint256 createdAt,
         bool hasProfile
     );
-    event PhotoUpdated(address indexed user, string indexed photo);
+    event PhotoUpdated(address indexed user, string photo);
 
     // ============ Errors ============
     error ProfileAlreadyExists();
@@ -191,14 +191,13 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit PhotoUpdated(msg.sender, _profilePhoto);
     }
 
-
     // ============ Helper Functions ============
     /**
      * @dev Generate obfuscated unique account number using pseudo-random hash
      */
     function _generateAccountId() private returns (uint256) {
         uint256 maxAttempts = 100; // Prevent infinite loop
-        
+
         for (uint256 attempt = 0; attempt < maxAttempts; attempt++) {
             // Create pseudo-random hash using multiple sources
             uint256 randomHash = uint256(
@@ -215,7 +214,8 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             );
 
             // Map to 10-digit range
-            uint256 accountId = (randomHash % (ACCOUNT_ID_MAX - ACCOUNT_ID_START + 1)) + ACCOUNT_ID_START;
+            uint256 accountId = (randomHash %
+                (ACCOUNT_ID_MAX - ACCOUNT_ID_START + 1)) + ACCOUNT_ID_START;
 
             // Check if this account ID is available
             if (accountIdToAddress[accountId] == address(0)) {

@@ -185,7 +185,7 @@ contract CircleSavingsV1 is
     event MemberInvited(
         uint256 indexed circleId,
         address indexed creator,
-        address indexed _invitee,
+        address indexed invitee,
         uint256 invitedAt
     );
     event VoteExecuted(

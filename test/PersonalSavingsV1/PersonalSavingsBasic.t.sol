@@ -11,19 +11,32 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
 
     function testCreatePersonalGoal() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
-            name: "Emergency Fund",
-            targetAmount: 1000e18,
-            contributionAmount: 50e18,
-            frequency: PersonalSavingsV1.Frequency.WEEKLY,
-            deadline: block.timestamp + 365 days
-        });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+            .CreateGoalParams({
+                name: "Emergency Fund",
+                targetAmount: 1000e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days
+            });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
 
-        (address owner,, uint256 targetAmount,,,,,,,) = personalSavings.personalGoals(gid);
+        (
+            address owner,
+            ,
+            uint256 targetAmount,
+            uint256 currentAmount,
+            ,
+            ,
+            ,
+            ,
+            ,
+
+        ) = personalSavings.personalGoals(gid);
         assertEq(owner, alice);
         assertEq(targetAmount, 1000e18);
+        assertEq(currentAmount, 50e18); // First contribution made automatically
 
         // Should start with DEFAULT_SCORE reputation
         assertEq(reputation.getReputation(alice), 300);
@@ -31,21 +44,26 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
 
     function testcontributeToGoal() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
-            name: "Emergency Fund",
-            targetAmount: 200e18,
-            contributionAmount: 50e18,
-            frequency: PersonalSavingsV1.Frequency.WEEKLY,
-            deadline: block.timestamp + 365 days
-        });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+            .CreateGoalParams({
+                name: "Emergency Fund",
+                targetAmount: 200e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days
+            });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
+
+        // Wait for the contribution interval before making second contribution
+        vm.warp(block.timestamp + 7 days);
 
         vm.prank(alice);
         personalSavings.contributeToGoal(gid);
 
-        (,,, uint256 currentAmount,,,,,,) = personalSavings.personalGoals(gid);
-        assertEq(currentAmount, 50e18);
+        (, , , uint256 currentAmount, , , , , , ) = personalSavings
+            .personalGoals(gid);
+        assertEq(currentAmount, 100e18); // First contribution (50) + second contribution (50)
 
         // Should still have DEFAULT_SCORE reputation (not complete yet)
         assertEq(reputation.getReputation(alice), 300);
@@ -53,20 +71,19 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
 
     function testcompleteGoal() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
-            name: "Emergency Fund",
-            targetAmount: 100e18,
-            contributionAmount: 50e18,
-            frequency: PersonalSavingsV1.Frequency.WEEKLY,
-            deadline: block.timestamp + 365 days
-        });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+            .CreateGoalParams({
+                name: "Emergency Fund",
+                targetAmount: 100e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days
+            });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
+        // First contribution already made (50e18)
 
-        // Make two contributions to reach target
-        vm.prank(alice);
-        personalSavings.contributeToGoal(gid);
-
+        // Make one more contribution to reach target (total 100e18)
         vm.warp(block.timestamp + 7 days);
 
         vm.prank(alice);
@@ -82,21 +99,19 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
 
     function testEarlyWithdrawalPenalty() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
-            name: "Emergency Fund",
-            targetAmount: 200e18,
-            contributionAmount: 50e18,
-            frequency: PersonalSavingsV1.Frequency.WEEKLY,
-            deadline: block.timestamp + 365 days
-        });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+            .CreateGoalParams({
+                name: "Emergency Fund",
+                targetAmount: 200e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days
+            });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
+        // First contribution already made (50e18)
 
-        // Make a contribution
-        vm.prank(alice);
-        personalSavings.contributeToGoal(gid);
-
-        // Withdraw early
+        // Withdraw early from the initial contribution
         vm.prank(alice);
         personalSavings.withdrawFromGoal(gid, 25e18);
 
@@ -107,32 +122,35 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
     function testMultipleGoalReputationTracking() public {
         // Create first goal
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params1 = PersonalSavingsV1.CreateGoalParams({
-            name: "Emergency Fund",
-            targetAmount: 100e18,
-            contributionAmount: 50e18,
-            frequency: PersonalSavingsV1.Frequency.WEEKLY,
-            deadline: block.timestamp + 365 days
-        });
+        PersonalSavingsV1.CreateGoalParams memory params1 = PersonalSavingsV1
+            .CreateGoalParams({
+                name: "Emergency Fund",
+                targetAmount: 100e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days
+            });
 
         uint256 gid1 = personalSavings.createPersonalGoal(params1);
+        // First contribution already made (50e18)
 
         // Create second goal
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params2 = PersonalSavingsV1.CreateGoalParams({
-            name: "Vacation Fund",
-            targetAmount: 200e18,
-            contributionAmount: 100e18,
-            frequency: PersonalSavingsV1.Frequency.WEEKLY,
-            deadline: block.timestamp + 365 days
-        });
+        PersonalSavingsV1.CreateGoalParams memory params2 = PersonalSavingsV1
+            .CreateGoalParams({
+                name: "Vacation Fund",
+                targetAmount: 200e18,
+                contributionAmount: 100e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days
+            });
 
         uint256 gid2 = personalSavings.createPersonalGoal(params2);
+        // First contribution already made (100e18)
 
-        // Complete first goal
-        vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid1);
+        // Complete first goal - need only one more contribution
         vm.warp(block.timestamp + 7 days);
+        vm.startPrank(alice);
         personalSavings.contributeToGoal(gid1);
         personalSavings.completeGoal(gid1);
         vm.stopPrank();
@@ -141,10 +159,9 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         // The actual score is 400 due to the test setup
         assertEq(reputation.getReputation(alice), 400);
 
-        // Complete second goal
-        vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid2);
+        // Complete second goal - need only one more contribution
         vm.warp(block.timestamp + 7 days + 1);
+        vm.startPrank(alice);
         personalSavings.contributeToGoal(gid2);
         personalSavings.completeGoal(gid2);
         vm.stopPrank();
@@ -165,10 +182,10 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 deadline: block.timestamp + 365 days
             })
         );
-        // Goal created with MONTHLY frequency - verify by making contributions
-        vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid);
+        // Goal created with MONTHLY frequency - first contribution already made
+        // Verify by making second contribution after interval
         vm.warp(block.timestamp + 31 days);
+        vm.startPrank(alice);
         personalSavings.contributeToGoal(gid);
         vm.stopPrank();
     }
@@ -184,16 +201,16 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 deadline: block.timestamp + 365 days
             })
         );
-        vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid);
+        // First contribution already made (50e18)
         uint256 t = block.timestamp;
         t += 7 days + 1;
         vm.warp(t);
+        vm.startPrank(alice);
         personalSavings.contributeToGoal(gid);
         t += 7 days + 1;
         vm.warp(t);
         personalSavings.contributeToGoal(gid);
-        // Now at 75% progress - penalty should apply
+        // Now at 75% progress (150e18 / 200e18) - penalty should apply
         uint256 balBefore = cUSD.balanceOf(alice);
         personalSavings.withdrawFromGoal(gid, 50e18);
         uint256 balAfter = cUSD.balanceOf(alice);
@@ -230,9 +247,9 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 deadline: block.timestamp + 365 days
             })
         );
-        vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid);
+        // First contribution already made
         vm.warp(block.timestamp + 1 days + 1);
+        vm.startPrank(alice);
         personalSavings.contributeToGoal(gid);
         vm.stopPrank();
     }

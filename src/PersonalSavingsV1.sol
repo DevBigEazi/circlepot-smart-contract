@@ -1,19 +1,34 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.27;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {
+    Initializable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {
+    UUPSUpgradeable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {
+    ReentrancyGuard
+} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {
+    SafeERC20
+} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
 
 /**
  * @title PersonalSavingsV1
  * @dev Personal savings goals management
  */
-contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard, UUPSUpgradeable {
+contract PersonalSavingsV1 is
+    Initializable,
+    OwnableUpgradeable,
+    ReentrancyGuard,
+    UUPSUpgradeable
+{
     using SafeERC20 for IERC20;
 
     // ============ Version ============
@@ -58,12 +73,30 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
     uint256 public totalPlatformFees;
 
     mapping(uint256 => PersonalGoal) public personalGoals;
-    mapping(address => uint256[]) public userGoals; // ============ Events ============
+    mapping(address => uint256[]) public userGoals;
 
+    //   ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
-    event PersonalGoalCreated(uint256 indexed goalId, address indexed owner, string name, uint256 indexed amount, uint256 currentAmount, bool isActive);
-    event GoalContribution(uint256 indexed goalId, address indexed owner, uint256 amount, uint256 currentAmount);
-    event GoalWithdrawn(uint256 indexed goalId, address indexed owner, uint256 _amount, uint256 penalty);
+    event PersonalGoalCreated(
+        uint256 indexed goalId,
+        address indexed owner,
+        string name,
+        uint256 indexed amount,
+        uint256 currentAmount,
+        bool isActive
+    );
+    event GoalContribution(
+        uint256 indexed goalId,
+        address indexed owner,
+        uint256 amount,
+        uint256 currentAmount
+    );
+    event GoalWithdrawn(
+        uint256 indexed goalId,
+        address indexed owner,
+        uint256 amount,
+        uint256 penalty
+    );
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -89,13 +122,19 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param _reputationContract Address of the reputation contract
      * @param initialOwner Address of the initial owner (if zero, msg.sender remains owner)
      */
-    function initialize(address _cUSDToken, address _treasury, address _reputationContract, address initialOwner)
-        public
-        initializer
-    {
+    function initialize(
+        address _cUSDToken,
+        address _treasury,
+        address _reputationContract,
+        address initialOwner
+    ) public initializer {
         __Ownable_init(initialOwner);
 
-        if (_cUSDToken == address(0) || _treasury == address(0) || _reputationContract == address(0)) {
+        if (
+            _cUSDToken == address(0) ||
+            _treasury == address(0) ||
+            _reputationContract == address(0)
+        ) {
             revert AddressZeroNotAllowed();
         }
 
@@ -115,11 +154,12 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param _cUSDToken Address of cUSD token (if changed)
      * @param _version Reinitializer version number
      */
-    function upgrade(address _cUSDToken, address _treasury, address _reputationContract, uint8 _version)
-        public
-        reinitializer(_version)
-        onlyOwner
-    {
+    function upgrade(
+        address _cUSDToken,
+        address _treasury,
+        address _reputationContract,
+        uint8 _version
+    ) public reinitializer(_version) onlyOwner {
         if (_cUSDToken != address(0)) {
             cUSDToken = _cUSDToken;
         }
@@ -135,17 +175,21 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
      * @dev Authorizes upgrade to new implementation
      * @param newImplementation Address of the new implementation contract
      */
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {
         emit ContractUpgraded(newImplementation, VERSION);
     }
 
     // ============ Personal Saving Goals Functions ============
     /**
-     * @dev Create a personal savings goal
+     * @dev Create a personal savings goal with initial contribution
      * @param params Goal creation parameters
      * @return goalId The ID of the newly created goal
      */
-    function createPersonalGoal(CreateGoalParams calldata params) external returns (uint256) {
+    function createPersonalGoal(
+        CreateGoalParams calldata params
+    ) external nonReentrant returns (uint256) {
         if (params.targetAmount < 10e18 || params.targetAmount > 50000e18) {
             revert InvalidGoalAmount();
         }
@@ -154,22 +198,43 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
 
         uint256 gid = goalCounter++;
 
+        // Transfer the first contribution immediately
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            params.contributionAmount
+        );
+
+        emit GoalContribution(
+            gid,
+            msg.sender,
+            params.contributionAmount,
+            params.contributionAmount
+        );
+
         personalGoals[gid] = PersonalGoal({
             owner: msg.sender,
             name: params.name,
             targetAmount: params.targetAmount,
-            currentAmount: 0,
+            currentAmount: params.contributionAmount,
             contributionAmount: params.contributionAmount,
             frequency: params.frequency,
             deadline: params.deadline,
             createdAt: block.timestamp,
             isActive: true,
-            lastContributionAt: 0
+            lastContributionAt: block.timestamp
         });
 
         userGoals[msg.sender].push(gid);
 
-        emit PersonalGoalCreated(gid, msg.sender, params.name, params.targetAmount, 0, true);
+        emit PersonalGoalCreated(
+            gid,
+            msg.sender,
+            params.name,
+            params.targetAmount,
+            params.contributionAmount,
+            true
+        );
 
         return gid;
     }
@@ -193,15 +258,28 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
             }
         }
 
-        IERC20(cUSDToken).safeTransferFrom(msg.sender, address(this), g.contributionAmount);
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            g.contributionAmount
+        );
 
         g.currentAmount += g.contributionAmount;
         g.lastContributionAt = block.timestamp;
 
-        emit GoalContribution(_goalId, msg.sender, g.contributionAmount, g.currentAmount);
+        emit GoalContribution(
+            _goalId,
+            msg.sender,
+            g.contributionAmount,
+            g.currentAmount
+        );
 
         if (g.currentAmount >= g.targetAmount) {
-            reputationContract.increaseReputation(msg.sender, 10, "Goal target reached");
+            reputationContract.increaseReputation(
+                msg.sender,
+                10,
+                "Goal target reached"
+            );
             _recordGoalCompleted(msg.sender, _goalId);
         }
     }
@@ -211,7 +289,10 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param _goalId Goal ID
      * @param _amount Amount to withdraw
      */
-    function withdrawFromGoal(uint256 _goalId, uint256 _amount) external nonReentrant {
+    function withdrawFromGoal(
+        uint256 _goalId,
+        uint256 _amount
+    ) external nonReentrant {
         if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
 
         PersonalGoal storage g = personalGoals[_goalId];
@@ -233,7 +314,11 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
             IERC20(cUSDToken).safeTransfer(msg.sender, _amount);
         }
 
-        reputationContract.decreaseReputation(msg.sender, 5, "Early withdrawal");
+        reputationContract.decreaseReputation(
+            msg.sender,
+            5,
+            "Early withdrawal"
+        );
 
         emit GoalWithdrawn(_goalId, msg.sender, _amount, penalty);
 
@@ -306,7 +391,9 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
      * @dev Record goal completion via reputation contract
      */
     function _recordGoalCompleted(address _user, uint256 _goalId) internal {
-        try IReputation(reputationContract).recordGoalCompleted(_user, _goalId) {
+        try
+            IReputation(reputationContract).recordGoalCompleted(_user, _goalId)
+        {
             // Success
         } catch {
             // Fail silently
@@ -317,7 +404,9 @@ contract PersonalSavingsV1 is Initializable, OwnableUpgradeable, ReentrancyGuard
     /**
      * @dev Returns all goals for a user
      */
-    function getUserGoals(address _user) external view returns (uint256[] memory) {
+    function getUserGoals(
+        address _user
+    ) external view returns (uint256[] memory) {
         return userGoals[_user];
     }
 

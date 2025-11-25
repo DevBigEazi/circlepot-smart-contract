@@ -10,7 +10,4 @@ via_ir = true
 celo-sepolia = "https://forno.celo-sepolia.celo-testnet.org/"
 celo = "https://forno.celo.org"
 
-[etherscan]
-celo-sepolia = { key = "TXP97HKQ1NGA83N72D7BQTK8SHPDMAS6WZ", url = "https://api.celoscan.io/v2/api" }
-
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

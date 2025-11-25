@@ -34,18 +34,23 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         // warp to after grace period
         vm.warp(block.timestamp + 8 days + 49 hours);
 
-        (CircleSavingsV1.Member memory aliceMemberBefore,,) = circleSavings.getMemberInfo(cid, alice);
+        (CircleSavingsV1.Member memory aliceMemberBefore, , ) = circleSavings
+            .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceMemberBefore.collateralLocked;
 
         vm.prank(alice);
         circleSavings.contribute(cid);
 
-        (CircleSavingsV1.Member memory aliceMemberAfter,,) = circleSavings.getMemberInfo(cid, alice);
+        (CircleSavingsV1.Member memory aliceMemberAfter, , ) = circleSavings
+            .getMemberInfo(cid, alice);
         uint256 collateralAfter = aliceMemberAfter.collateralLocked;
 
-        uint256 expectedDeduction = 100e18 + (100e18 * circleSavings.LATE_FEE_BPS()) / 10000;
+        uint256 expectedDeduction = 100e18 +
+            (100e18 * circleSavings.LATE_FEE_BPS()) /
+            10000;
         assertEq(collateralBefore - collateralAfter, expectedDeduction);
-        (,, uint256 latePayments,) = reputation.getUserReputationData(alice);
+        (, , , , , , , uint256 latePayments, ) = reputation
+            .getUserReputationDetails(alice);
         assertEq(latePayments, 1);
     }
 
@@ -77,8 +82,13 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         // Creator receives pot (500) minus their own contribution (100)
         assertEq(aliceBalAfter - aliceBalBefore, 500e18 - 100e18);
 
-        (uint256 positiveActions,, uint256 completed,) = reputation.getUserReputationData(alice);
-        assertEq(completed, 1, "Should have 1 completed circle");
+        (uint256 positiveActions, , uint256 completed, ) = reputation
+            .getUserReputationData(alice);
+        assertEq(
+            completed,
+            0,
+            "Should not have completed circle yet (only 1 round done)"
+        );
         assertGt(positiveActions, 0, "Should have positive actions");
     }
 
@@ -98,7 +108,8 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         circleSavings.contribute(cid);
 
         // Check that round advanced
-        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
+        (CircleSavingsV1.Circle memory c, , , ) = circleSavings
+            .getCircleDetails(cid);
         assertEq(c.currentRound, 2);
 
         // Check that first position holder got reputation increase

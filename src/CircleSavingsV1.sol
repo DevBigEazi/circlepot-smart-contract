@@ -1,12 +1,22 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.27;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {
+    Initializable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {
+    UUPSUpgradeable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {
+    ReentrancyGuard
+} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {
+    SafeERC20
+} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
 
 /**
@@ -1000,6 +1010,18 @@ contract CircleSavingsV1 is
     }
 
     /**
+     * @dev Record circle completion for all active members
+     */
+    function _recordCircleCompletedForAll(uint256 _cid) internal {
+        address[] storage mlist = circleMemberList[_cid];
+        for (uint256 i = 0; i < mlist.length; i++) {
+            if (circleMembers[_cid][mlist[i]].isActive) {
+                _recordCircleCompleted(mlist[i], _cid);
+            }
+        }
+    }
+
+    /**
      * @dev Record late payment via reputation contract
      */
     function _recordLatePayment(
@@ -1060,7 +1082,6 @@ contract CircleSavingsV1 is
 
         // Update reputation via reputation contract
         _increaseReputation(recip, 5, "Circle Payout Received");
-        _recordCircleCompleted(recip, cid);
 
         emit PayoutDistributed(cid, round, recip, amt);
 
@@ -1084,7 +1105,7 @@ contract CircleSavingsV1 is
         } else {
             c.state = CircleState.COMPLETED;
             _releaseAllCollateral(cid);
-            _recordCircleCompleted(c.creator, cid);
+            _recordCircleCompletedForAll(cid);
         }
     }
 

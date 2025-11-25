@@ -1,12 +1,22 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.27;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {
+    Initializable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {
+    UUPSUpgradeable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {
+    ReentrancyGuard
+} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {
+    SafeERC20
+} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
 
 /**
@@ -173,13 +183,13 @@ contract PersonalSavingsV1 is
 
     // ============ Personal Saving Goals Functions ============
     /**
-     * @dev Create a personal savings goal
+     * @dev Create a personal savings goal with initial contribution
      * @param params Goal creation parameters
      * @return goalId The ID of the newly created goal
      */
     function createPersonalGoal(
         CreateGoalParams calldata params
-    ) external returns (uint256) {
+    ) external nonReentrant returns (uint256) {
         if (params.targetAmount < 10e18 || params.targetAmount > 50000e18) {
             revert InvalidGoalAmount();
         }
@@ -188,17 +198,31 @@ contract PersonalSavingsV1 is
 
         uint256 gid = goalCounter++;
 
+        // Transfer the first contribution immediately
+        IERC20(cUSDToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            params.contributionAmount
+        );
+
+        emit GoalContribution(
+            gid,
+            msg.sender,
+            params.contributionAmount,
+            params.contributionAmount
+        );
+
         personalGoals[gid] = PersonalGoal({
             owner: msg.sender,
             name: params.name,
             targetAmount: params.targetAmount,
-            currentAmount: 0,
+            currentAmount: params.contributionAmount,
             contributionAmount: params.contributionAmount,
             frequency: params.frequency,
             deadline: params.deadline,
             createdAt: block.timestamp,
             isActive: true,
-            lastContributionAt: 0
+            lastContributionAt: block.timestamp
         });
 
         userGoals[msg.sender].push(gid);
@@ -208,7 +232,7 @@ contract PersonalSavingsV1 is
             msg.sender,
             params.name,
             params.targetAmount,
-            0,
+            params.contributionAmount,
             true
         );
 

@@ -83,6 +83,8 @@ contract PersonalSavingsV1 is
         string name,
         uint256 indexed amount,
         uint256 currentAmount,
+        Frequency frequency,
+        uint256 deadline,
         bool isActive
     );
     event GoalContribution(
@@ -233,6 +235,8 @@ contract PersonalSavingsV1 is
             params.name,
             params.targetAmount,
             params.contributionAmount,
+            params.frequency,
+            params.deadline,
             true
         );
 
@@ -346,6 +350,7 @@ contract PersonalSavingsV1 is
 
         // Record goal completion in reputation contract
         _recordGoalCompleted(msg.sender, _goalId);
+        emit GoalWithdrawn(_goalId, msg.sender, amt, 0);
     }
 
     // ============ Admin Functions ============

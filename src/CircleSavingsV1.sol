@@ -52,7 +52,8 @@ contract CircleSavingsV1 is
         CREATED,
         VOTING,
         ACTIVE,
-        COMPLETED
+        COMPLETED,
+        DEAD
     }
     enum Frequency {
         DAILY,
@@ -502,7 +503,7 @@ contract CircleSavingsV1 is
         if (circleMembers[_circleId][msg.sender].isActive) {
             revert AlreadyJoined();
         }
-        if (c.state != CircleState.CREATED) revert InvalidCircle();
+        if (c.state != CircleState.CREATED && c.state != CircleState.VOTING) revert InvalidCircle();
 
         if (c.visibility == Visibility.PRIVATE) {
             if (!circleInvitations[_circleId][msg.sender]) revert NotInvited();
@@ -674,7 +675,7 @@ contract CircleSavingsV1 is
         }
 
         Circle storage c = circles[_circleId];
-        if (c.state != CircleState.CREATED) revert InvalidCircle();
+        if (c.state != CircleState.CREATED && c.state != CircleState.DEAD) revert InvalidCircle();
 
         Member storage m = circleMembers[_circleId][msg.sender];
         if (!m.isActive) revert NotActiveMember();
@@ -698,6 +699,7 @@ contract CircleSavingsV1 is
         uint256 amt = m.collateralLocked;
         m.collateralLocked = 0;
         m.isActive = false;
+        c.state = CircleState.DEAD;
 
         IERC20(cUSDToken).safeTransfer(msg.sender, amt);
 

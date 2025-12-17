@@ -394,7 +394,7 @@ contract CircleSavingsV1 is
             maxMembers: params.maxMembers,
             currentMembers: 1,
             currentRound: 0,
-            totalRounds: params.maxMembers,
+            totalRounds: 1,
             state: CircleState.CREATED,
             visibility: params.visibility,
             createdAt: block.timestamp,
@@ -532,6 +532,7 @@ contract CircleSavingsV1 is
         circleMemberList[_circleId].push(msg.sender);
 
         c.currentMembers++;
+        c.currentRound = c.currentMembers;
 
         emit CircleJoined(_circleId, msg.sender, c.currentMembers, c.state);
 

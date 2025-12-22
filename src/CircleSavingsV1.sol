@@ -143,7 +143,7 @@ contract CircleSavingsV1 is
 
     // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
-    event VisibilityUpdated(uint256 indexed circleId, address indexed creator);
+    event VisibilityUpdated(uint256 indexed circleId, address indexed creator, Visibility newVisibility);
     event CircleCreated(
         uint256 indexed circleId,
         string title,
@@ -217,6 +217,11 @@ contract CircleSavingsV1 is
         address member,
         uint256 indexed deduction,
         address indexed forfeiter
+    );
+    event CollateralReturned(
+        uint256 indexed circleId,
+        address indexed member,
+        uint256 indexed amount
     );
     event ReputationContractUpdated(address indexed newContract);
 
@@ -375,7 +380,7 @@ contract CircleSavingsV1 is
         if (params.visibility == Visibility.PUBLIC) {
             totalRequired += VISIBILITY_UPDATE_FEE;
             totalPlatformFees += VISIBILITY_UPDATE_FEE;
-            emit VisibilityUpdated(circleId, msg.sender);
+            emit VisibilityUpdated(circleId, msg.sender, params.visibility);
         }
 
         IERC20(cUSDToken).safeTransferFrom(
@@ -457,7 +462,7 @@ contract CircleSavingsV1 is
 
         c.visibility = _newVisibility;
 
-        emit VisibilityUpdated(_circleId, msg.sender);
+        emit VisibilityUpdated(_circleId, msg.sender, c.visibility);
     }
 
     /**
@@ -503,7 +508,8 @@ contract CircleSavingsV1 is
         if (circleMembers[_circleId][msg.sender].isActive) {
             revert AlreadyJoined();
         }
-        if (c.state != CircleState.CREATED && c.state != CircleState.VOTING) revert InvalidCircle();
+        if (c.state != CircleState.CREATED && c.state != CircleState.VOTING)
+            revert InvalidCircle();
 
         if (c.visibility == Visibility.PRIVATE) {
             if (!circleInvitations[_circleId][msg.sender]) revert NotInvited();
@@ -676,7 +682,8 @@ contract CircleSavingsV1 is
         }
 
         Circle storage c = circles[_circleId];
-        if (c.state != CircleState.CREATED && c.state != CircleState.DEAD) revert InvalidCircle();
+        if (c.state != CircleState.CREATED && c.state != CircleState.DEAD)
+            revert InvalidCircle();
 
         Member storage m = circleMembers[_circleId][msg.sender];
         if (!m.isActive) revert NotActiveMember();
@@ -748,6 +755,10 @@ contract CircleSavingsV1 is
         if (!m.isActive) revert NotActiveMember();
 
         uint256 round = c.currentRound;
+
+        // CHECK 0: Caller must be an active member
+        if (!circleMembers[_circleId][msg.sender].isActive)
+            revert NotActiveMember();
         if (roundContributions[_circleId][round][msg.sender]) {
             revert AlreadyContributed();
         }
@@ -790,16 +801,15 @@ contract CircleSavingsV1 is
      * @notice This incentivizes the next recipient to keep the circle moving
      * @notice Processes all late members in a single transaction
      */
-
     function forfeitMember(uint256 _circleId) external nonReentrant {
         Circle storage c = circles[_circleId];
         if (c.state != CircleState.ACTIVE) revert CircleNotActive();
 
         uint256 round = c.currentRound;
 
-        // CHECK 1: Caller must be the next payout recipient
-        address nextRecipient = _getByPos(_circleId, round);
-        if (msg.sender != nextRecipient) revert NotNextRecipient();
+        // CHECK 1: Caller must be an active member
+        if (!circleMembers[_circleId][msg.sender].isActive)
+            revert NotActiveMember();
 
         // CHECK 2: Grace period must have expired
         uint256 deadline = circleRoundDeadlines[_circleId][round];
@@ -1125,6 +1135,7 @@ contract CircleSavingsV1 is
                 uint256 amt = m.collateralLocked;
                 m.collateralLocked = 0;
                 IERC20(cUSDToken).safeTransfer(mlist[i], amt);
+                emit CollateralReturned(cid, mlist[i], amt);
             }
         }
     }

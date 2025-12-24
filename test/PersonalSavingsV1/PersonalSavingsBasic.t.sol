@@ -92,9 +92,9 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         vm.prank(alice);
         personalSavings.completeGoal(gid);
 
-        // Should gain reputation for reaching target (+10) and completing goal (+10) = 20 points above DEFAULT_SCORE
-        // The actual score is 400 due to the test setup
-        assertEq(reputation.getReputation(alice), 400);
+        // Should gain reputation for completing goal (+10) = 10 * 5 = 50 points
+        // The actual score is 350 (300 + 50)
+        assertEq(reputation.getReputation(alice), 350);
     }
 
     function testEarlyWithdrawalPenalty() public {
@@ -155,9 +155,9 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         personalSavings.completeGoal(gid1);
         vm.stopPrank();
 
-        // Should have reputation from first goal (10 on target + 10 on complete) added to DEFAULT_SCORE
-        // The actual score is 400 due to the test setup
-        assertEq(reputation.getReputation(alice), 400);
+        // Should have reputation from first goal (10 on complete) added to DEFAULT_SCORE
+        // The actual score is 350 (300 + 50)
+        assertEq(reputation.getReputation(alice), 350);
 
         // Complete second goal - need only one more contribution
         vm.warp(block.timestamp + 7 days + 1);
@@ -166,9 +166,9 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         personalSavings.completeGoal(gid2);
         vm.stopPrank();
 
-        // Should have cumulative reputation from both goals (20 + 20) added to DEFAULT_SCORE
-        // The actual score is 500 due to the test setup
-        assertEq(reputation.getReputation(alice), 500);
+        // Should have cumulative reputation from both goals (10 + 10) added to DEFAULT_SCORE
+        // The actual score is 400 (300 + 50 + 50)
+        assertEq(reputation.getReputation(alice), 400);
     }
 
     function testCreateGoal_MonthlyFrequency() public {

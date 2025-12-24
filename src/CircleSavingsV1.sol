@@ -232,6 +232,11 @@ contract CircleSavingsV1 is
         address indexed member,
         uint256 indexed amount
     );
+    event DeadCircleFeeDeducted(
+        uint256 indexed circleId,
+        address indexed creator,
+        uint256 indexed amount
+    );
     event ReputationContractUpdated(address indexed newContract);
 
     // ============ Errors ============
@@ -716,25 +721,30 @@ contract CircleSavingsV1 is
         if (!canWithdraw) revert UltimatumNotPassed();
 
         uint256 amt = m.collateralLocked;
-        
+
         // Check if this is the creator withdrawing from a dead circle
         bool isCreator = c.creator == msg.sender;
         uint256 deadFee = 0;
-        
-        if (isCreator && c.state == CircleState.DEAD || c.state == CircleState.ACTIVE) {
+
+        if (
+            (isCreator && c.state == CircleState.DEAD) ||
+            c.state == CircleState.ACTIVE
+        ) {
             if (c.visibility == Visibility.PRIVATE) {
                 deadFee = PRIVATE_CIRCLE_DEAD_FEE;
             } else {
                 deadFee = PUBLIC_CIRCLE_DEAD_FEE;
             }
-            
+
             // Deduct fee from creator's collateral if sufficient
             if (amt >= deadFee) {
                 amt -= deadFee;
                 totalPlatformFees += deadFee;
             }
+
+            emit DeadCircleFeeDeducted(_circleId, c.creator, deadFee);
         }
-        
+
         m.collateralLocked = 0;
         m.isActive = false;
         c.state = CircleState.DEAD;
@@ -1275,13 +1285,13 @@ contract CircleSavingsV1 is
     }
 
     /**
- * @dev Updates the fixed fee threshold (admin only)
- * @notice This changes the threshold at which fixed fee applies
- */
-function updateFeeThreshold(uint256 _newThreshold) external onlyOwner {
-    require(_newThreshold > 0, "threshold must be positive");
-    fixedFeeThreshold = _newThreshold;
-}
+     * @dev Updates the fixed fee threshold (admin only)
+     * @notice This changes the threshold at which fixed fee applies
+     */
+    function updateFeeThreshold(uint256 _newThreshold) external onlyOwner {
+        require(_newThreshold > 0, "threshold must be positive");
+        fixedFeeThreshold = _newThreshold;
+    }
 
     // ============ View Functions ============
     /**

@@ -277,15 +277,6 @@ contract PersonalSavingsV1 is
             g.contributionAmount,
             g.currentAmount
         );
-
-        if (g.currentAmount >= g.targetAmount) {
-            reputationContract.increaseReputation(
-                msg.sender,
-                10,
-                "Goal target reached"
-            );
-            _recordGoalCompleted(msg.sender, _goalId);
-        }
     }
 
     /**

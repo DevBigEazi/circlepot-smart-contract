@@ -47,6 +47,8 @@ contract CircleSavingsV1 is
     uint256 public constant VISIBILITY_UPDATE_FEE = 0.5e18; // $0.50
     uint256 public constant VOTING_PERIOD = 2 days;
     uint256 public constant START_VOTE_THRESHOLD = 5100; //51% IN BASIS POINTS
+    uint256 public constant PRIVATE_CIRCLE_DEAD_FEE = 1e18; // $1 fee for dead private circles
+    uint256 public constant PUBLIC_CIRCLE_DEAD_FEE = 0.5e18; // $0.50 fee for dead public circles
 
     // ============ Enums ============
     enum CircleState {
@@ -230,6 +232,11 @@ contract CircleSavingsV1 is
         address indexed member,
         uint256 indexed amount
     );
+    event DeadCircleFeeDeducted(
+        uint256 indexed circleId,
+        address indexed creator,
+        uint256 indexed amount
+    );
     event ReputationContractUpdated(address indexed newContract);
 
     // ============ Errors ============
@@ -385,6 +392,7 @@ contract CircleSavingsV1 is
         );
         uint256 totalRequired = collateral;
 
+        // Only public circles pay visibility fee at creation
         if (params.visibility == Visibility.PUBLIC) {
             totalRequired += VISIBILITY_UPDATE_FEE;
             totalPlatformFees += VISIBILITY_UPDATE_FEE;
@@ -546,7 +554,7 @@ contract CircleSavingsV1 is
         circleMemberList[_circleId].push(msg.sender);
 
         c.currentMembers++;
-        c.currentRound = c.currentMembers;
+        c.totalRounds = c.currentMembers;
 
         emit CircleJoined(_circleId, msg.sender, c.currentMembers, c.state);
 
@@ -713,6 +721,27 @@ contract CircleSavingsV1 is
         if (!canWithdraw) revert UltimatumNotPassed();
 
         uint256 amt = m.collateralLocked;
+
+        // Check if this is the creator withdrawing from a dead circle
+        bool isCreator = c.creator == msg.sender;
+        uint256 deadFee = 0;
+
+        if (isCreator) {
+            if (c.visibility == Visibility.PRIVATE) {
+                deadFee = PRIVATE_CIRCLE_DEAD_FEE;
+            } else {
+                deadFee = PUBLIC_CIRCLE_DEAD_FEE;
+            }
+
+            // Deduct fee from creator's collateral if sufficient
+            if (amt >= deadFee) {
+                amt -= deadFee;
+                totalPlatformFees += deadFee;
+            }
+
+            emit DeadCircleFeeDeducted(_circleId, c.creator, deadFee);
+        }
+
         m.collateralLocked = 0;
         m.isActive = false;
         c.state = CircleState.DEAD;
@@ -1253,13 +1282,13 @@ contract CircleSavingsV1 is
     }
 
     /**
- * @dev Updates the fixed fee threshold (admin only)
- * @notice This changes the threshold at which fixed fee applies
- */
-function updateFeeThreshold(uint256 _newThreshold) external onlyOwner {
-    require(_newThreshold > 0, "threshold must be positive");
-    fixedFeeThreshold = _newThreshold;
-}
+     * @dev Updates the fixed fee threshold (admin only)
+     * @notice This changes the threshold at which fixed fee applies
+     */
+    function updateFeeThreshold(uint256 _newThreshold) external onlyOwner {
+        require(_newThreshold > 0, "threshold must be positive");
+        fixedFeeThreshold = _newThreshold;
+    }
 
     // ============ View Functions ============
     /**

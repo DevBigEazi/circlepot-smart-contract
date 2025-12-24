@@ -36,7 +36,9 @@ contract CircleSavingsV1 is
     uint256 public constant VERSION = 1;
 
     // ============ Constants ============
-    uint256 public constant PLATFORM_FEE_BPS = 20; // 0.2%
+    uint256 public constant PLATFORM_FEE_BPS = 100; // 1% for payouts ≤ $1000
+    uint256 public constant FIXED_FEE_THRESHOLD = 1000e18; // $1000 threshold
+    uint256 public constant FIXED_FEE_AMOUNT = 10e18; // $10 fixed fee for payouts
     uint256 public constant LATE_FEE_BPS = 100; // 1%
     uint256 public constant MAX_CONTRIBUTION = 5000e18;
     uint256 public constant MIN_CONTRIBUTION = 1e18;
@@ -140,10 +142,15 @@ contract CircleSavingsV1 is
 
     uint256 public totalPlatformFees;
     uint256 public platformFeeBps;
+    uint256 public fixedFeeThreshold;
 
     // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
-    event VisibilityUpdated(uint256 indexed circleId, address indexed creator, Visibility newVisibility);
+    event VisibilityUpdated(
+        uint256 indexed circleId,
+        address indexed creator,
+        Visibility newVisibility
+    );
     event CircleCreated(
         uint256 indexed circleId,
         string title,
@@ -288,6 +295,7 @@ contract CircleSavingsV1 is
         reputationContract = _reputationContract;
         circleCounter = 1;
         platformFeeBps = PLATFORM_FEE_BPS;
+        fixedFeeThreshold = FIXED_FEE_THRESHOLD;
 
         if (initialOwner != address(0) && initialOwner != owner()) {
             _transferOwnership(initialOwner);
@@ -955,6 +963,23 @@ contract CircleSavingsV1 is
     }
 
     /**
+     * @dev Calculate platform fee based on payout amount
+     * @param payoutAmount The total payout amount before fees
+     * @return fee The calculated platform fee
+     */
+    function _calculatePlatformFee(
+        uint256 payoutAmount
+    ) private pure returns (uint256) {
+        if (payoutAmount <= FIXED_FEE_THRESHOLD) {
+            // For payouts ≤ $1000, charge 1%
+            return (payoutAmount * PLATFORM_FEE_BPS) / 10000;
+        } else {
+            // For payouts > $1000, charge fixed $10
+            return FIXED_FEE_AMOUNT;
+        }
+    }
+
+    /**
      * @dev Get reputation score from reputation contract
      */
     function _getReputationScore(
@@ -1070,7 +1095,7 @@ contract CircleSavingsV1 is
     }
 
     /**
-     * @dev Processes payout for a round
+     * @dev Processes payout for a round with tiered fee structure
      */
     function _payoutRound(uint256 cid, uint256 round) private {
         Circle storage c = circles[cid];
@@ -1081,10 +1106,12 @@ contract CircleSavingsV1 is
         Member storage m = circleMembers[cid][recip];
         if (m.hasReceivedPayout) return;
 
-        uint256 amt = c.totalPot;
+        uint256 totalAmount = c.totalPot;
+        uint256 amt = totalAmount;
 
         if (recip != c.creator) {
-            uint256 fee = (amt * platformFeeBps) / 10000;
+            // Use tiered fee calculation
+            uint256 fee = _calculatePlatformFee(totalAmount);
             amt -= fee;
             totalPlatformFees += fee;
         }
@@ -1224,6 +1251,15 @@ contract CircleSavingsV1 is
         require(_newBps <= 100, "fee too high");
         platformFeeBps = _newBps;
     }
+
+    /**
+ * @dev Updates the fixed fee threshold (admin only)
+ * @notice This changes the threshold at which fixed fee applies
+ */
+function updateFeeThreshold(uint256 _newThreshold) external onlyOwner {
+    require(_newThreshold > 0, "threshold must be positive");
+    fixedFeeThreshold = _newThreshold;
+}
 
     // ============ View Functions ============
     /**

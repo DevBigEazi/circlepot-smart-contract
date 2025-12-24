@@ -1,0 +1,1164 @@
+{
+    "contractName": "IReputation",
+    "abi": [
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_user",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_amount",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "string",
+                    "name": "_source",
+                    "type": "string"
+                }
+            ],
+            "name": "decreaseReputation",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_user",
+                    "type": "address"
+                }
+            ],
+            "name": "getReputation",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_user",
+                    "type": "address"
+                }
+            ],
+            "name": "getUserReputationData",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "reputation",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "circlesCompleted",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "latePaymentsCount",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "reputationScore",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_user",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_amount",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "string",
+                    "name": "_source",
+                    "type": "string"
+                }
+            ],
+            "name": "increaseReputation",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_contract",
+                    "type": "address"
+                }
+            ],
+            "name": "isAuthorized",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_user",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_cid",
+                    "type": "uint256"
+                }
+            ],
+            "name": "recordCircleCompleted",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_user",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_goalId",
+                    "type": "uint256"
+                }
+            ],
+            "name": "recordGoalCompleted",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_user",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_cid",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_round",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_fee",
+                    "type": "uint256"
+                }
+            ],
+            "name": "recordLatePayment",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        }
+    ],
+    "metadata": "{\"compiler\":{\"version\":\"0.8.33+commit.64118f21\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_source\",\"type\":\"string\"}],\"name\":\"decreaseReputation\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"}],\"name\":\"getReputation\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"}],\"name\":\"getUserReputationData\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"reputation\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"circlesCompleted\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"latePaymentsCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reputationScore\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"_source\",\"type\":\"string\"}],\"name\":\"increaseReputation\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_contract\",\"type\":\"address\"}],\"name\":\"isAuthorized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_cid\",\"type\":\"uint256\"}],\"name\":\"recordCircleCompleted\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_goalId\",\"type\":\"uint256\"}],\"name\":\"recordGoalCompleted\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_cid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_round\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_fee\",\"type\":\"uint256\"}],\"name\":\"recordLatePayment\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Interface for the Reputation contract\",\"kind\":\"dev\",\"methods\":{\"decreaseReputation(address,uint256,string)\":{\"details\":\"Decrease user's reputation\",\"params\":{\"_amount\":\"Amount to decrease\",\"_source\":\"Source description\",\"_user\":\"User address\"}},\"getReputation(address)\":{\"details\":\"Get user's reputation score\",\"params\":{\"_user\":\"User address\"},\"returns\":{\"_0\":\"Reputation score\"}},\"getUserReputationData(address)\":{\"details\":\"Get comprehensive reputation data for a user\",\"params\":{\"_user\":\"User address\"},\"returns\":{\"circlesCompleted\":\"Number of circles completed\",\"latePaymentsCount\":\"Number of late payments\",\"reputation\":\"Total reputation score\",\"reputationScore\":\"Calculated weighted score\"}},\"increaseReputation(address,uint256,string)\":{\"details\":\"Increase user's reputation\",\"params\":{\"_amount\":\"Amount to increase\",\"_source\":\"Source description\",\"_user\":\"User address\"}},\"isAuthorized(address)\":{\"details\":\"Check if a contract is authorized\",\"params\":{\"_contract\":\"Contract address\"},\"returns\":{\"_0\":\"True if authorized\"}},\"recordCircleCompleted(address,uint256)\":{\"details\":\"Record a completed circle for a user\",\"params\":{\"_cid\":\"Circle ID\",\"_user\":\"User address\"}},\"recordGoalCompleted(address,uint256)\":{\"details\":\"Record a completed goal for a user\",\"params\":{\"_goalId\":\"Goal ID\",\"_user\":\"User address\"}},\"recordLatePayment(address,uint256,uint256,uint256)\":{\"details\":\"Record a late payment for a user\",\"params\":{\"_cid\":\"Circle ID\",\"_fee\":\"Fee amount\",\"_round\":\"Round number\",\"_user\":\"User address\"}}},\"title\":\"IReputation\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/interfaces/IReputation.sol\":\"IReputation\"},\"evmVersion\":\"osaka\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/interfaces/IReputation.sol\":{\"keccak256\":\"0x2b261962e621e15a244c2392326ed7e4dc39c9453a5a050c16d1bb5aac3be742\",\"license\":\"SEE LICENSE IN LICENSE\",\"urls\":[\"bzz-raw://699b36fd65ecebd4fdd2d374427ebcc423d161894f6ec9e67888846ba21a89cf\",\"dweb:/ipfs/QmbuAXGoCgj3SPf8ubvyiZuECFcAu3AGp8hXsRSvawLd6m\"]}},\"version\":1}",
+    "bytecode": "",
+    "deployedBytecode": "",
+    "sourceMap": "",
+    "deployedSourceMap": "",
+    "sourcePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/interfaces/IReputation.sol",
+    "compiler": {
+        "name": "solc",
+        "version": "0.8.33+commit.64118f21"
+    },
+    "ast": {
+        "absolutePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/interfaces/IReputation.sol",
+        "exportedSymbols": {
+            "IReputation": [
+                9592
+            ]
+        },
+        "id": 9593,
+        "license": "SEE LICENSE IN LICENSE",
+        "nodeType": "SourceUnit",
+        "nodes": [
+            {
+                "id": 9512,
+                "literals": [
+                    "solidity",
+                    "^",
+                    "0.8",
+                    ".27"
+                ],
+                "nodeType": "PragmaDirective",
+                "src": "51:24:27"
+            },
+            {
+                "abstract": false,
+                "baseContracts": [],
+                "canonicalName": "IReputation",
+                "contractDependencies": [],
+                "contractKind": "interface",
+                "documentation": {
+                    "id": 9513,
+                    "nodeType": "StructuredDocumentation",
+                    "src": "77:75:27",
+                    "text": " @title IReputation\n @dev Interface for the Reputation contract"
+                },
+                "fullyImplemented": false,
+                "id": 9592,
+                "linearizedBaseContracts": [
+                    9592
+                ],
+                "name": "IReputation",
+                "nameLocation": "163:11:27",
+                "nodeType": "ContractDefinition",
+                "nodes": [
+                    {
+                        "documentation": {
+                            "id": 9514,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "181:165:27",
+                            "text": " @dev Increase user's reputation\n @param _user User address\n @param _amount Amount to increase\n @param _source Source description"
+                        },
+                        "functionSelector": "41b880ec",
+                        "id": 9523,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "increaseReputation",
+                        "nameLocation": "360:18:27",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 9521,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9516,
+                                    "mutability": "mutable",
+                                    "name": "_user",
+                                    "nameLocation": "387:5:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9523,
+                                    "src": "379:13:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 9515,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "379:7:27",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9518,
+                                    "mutability": "mutable",
+                                    "name": "_amount",
+                                    "nameLocation": "402:7:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9523,
+                                    "src": "394:15:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9517,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "394:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9520,
+                                    "mutability": "mutable",
+                                    "name": "_source",
+                                    "nameLocation": "427:7:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9523,
+                                    "src": "411:23:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "calldata",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_string_calldata_ptr",
+                                        "typeString": "string"
+                                    },
+                                    "typeName": {
+                                        "id": 9519,
+                                        "name": "string",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "411:6:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_string_storage_ptr",
+                                            "typeString": "string"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "378:57:27"
+                        },
+                        "returnParameters": {
+                            "id": 9522,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "444:0:27"
+                        },
+                        "scope": 9592,
+                        "src": "351:94:27",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 9524,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "451:165:27",
+                            "text": " @dev Decrease user's reputation\n @param _user User address\n @param _amount Amount to decrease\n @param _source Source description"
+                        },
+                        "functionSelector": "64951eb0",
+                        "id": 9533,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "decreaseReputation",
+                        "nameLocation": "630:18:27",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 9531,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9526,
+                                    "mutability": "mutable",
+                                    "name": "_user",
+                                    "nameLocation": "657:5:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9533,
+                                    "src": "649:13:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 9525,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "649:7:27",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9528,
+                                    "mutability": "mutable",
+                                    "name": "_amount",
+                                    "nameLocation": "672:7:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9533,
+                                    "src": "664:15:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9527,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "664:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9530,
+                                    "mutability": "mutable",
+                                    "name": "_source",
+                                    "nameLocation": "697:7:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9533,
+                                    "src": "681:23:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "calldata",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_string_calldata_ptr",
+                                        "typeString": "string"
+                                    },
+                                    "typeName": {
+                                        "id": 9529,
+                                        "name": "string",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "681:6:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_string_storage_ptr",
+                                            "typeString": "string"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "648:57:27"
+                        },
+                        "returnParameters": {
+                            "id": 9532,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "714:0:27"
+                        },
+                        "scope": 9592,
+                        "src": "621:94:27",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 9534,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "721:122:27",
+                            "text": " @dev Record a completed circle for a user\n @param _user User address\n @param _cid Circle ID"
+                        },
+                        "functionSelector": "f732ebc0",
+                        "id": 9541,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "recordCircleCompleted",
+                        "nameLocation": "857:21:27",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 9539,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9536,
+                                    "mutability": "mutable",
+                                    "name": "_user",
+                                    "nameLocation": "887:5:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9541,
+                                    "src": "879:13:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 9535,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "879:7:27",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9538,
+                                    "mutability": "mutable",
+                                    "name": "_cid",
+                                    "nameLocation": "902:4:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9541,
+                                    "src": "894:12:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9537,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "894:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "878:29:27"
+                        },
+                        "returnParameters": {
+                            "id": 9540,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "916:0:27"
+                        },
+                        "scope": 9592,
+                        "src": "848:69:27",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 9542,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "923:182:27",
+                            "text": " @dev Record a late payment for a user\n @param _user User address\n @param _cid Circle ID\n @param _round Round number\n @param _fee Fee amount"
+                        },
+                        "functionSelector": "f703d4ba",
+                        "id": 9553,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "recordLatePayment",
+                        "nameLocation": "1119:17:27",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 9551,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9544,
+                                    "mutability": "mutable",
+                                    "name": "_user",
+                                    "nameLocation": "1145:5:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9553,
+                                    "src": "1137:13:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 9543,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1137:7:27",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9546,
+                                    "mutability": "mutable",
+                                    "name": "_cid",
+                                    "nameLocation": "1160:4:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9553,
+                                    "src": "1152:12:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9545,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1152:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9548,
+                                    "mutability": "mutable",
+                                    "name": "_round",
+                                    "nameLocation": "1174:6:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9553,
+                                    "src": "1166:14:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9547,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1166:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9550,
+                                    "mutability": "mutable",
+                                    "name": "_fee",
+                                    "nameLocation": "1190:4:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9553,
+                                    "src": "1182:12:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9549,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1182:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1136:59:27"
+                        },
+                        "returnParameters": {
+                            "id": 9552,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "1204:0:27"
+                        },
+                        "scope": 9592,
+                        "src": "1110:95:27",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 9554,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1211:121:27",
+                            "text": " @dev Record a completed goal for a user\n @param _user User address\n @param _goalId Goal ID"
+                        },
+                        "functionSelector": "fe38b8d1",
+                        "id": 9561,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "recordGoalCompleted",
+                        "nameLocation": "1346:19:27",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 9559,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9556,
+                                    "mutability": "mutable",
+                                    "name": "_user",
+                                    "nameLocation": "1374:5:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9561,
+                                    "src": "1366:13:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 9555,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1366:7:27",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9558,
+                                    "mutability": "mutable",
+                                    "name": "_goalId",
+                                    "nameLocation": "1389:7:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9561,
+                                    "src": "1381:15:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9557,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1381:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1365:32:27"
+                        },
+                        "returnParameters": {
+                            "id": 9560,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "1406:0:27"
+                        },
+                        "scope": 9592,
+                        "src": "1337:70:27",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 9562,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1413:116:27",
+                            "text": " @dev Get user's reputation score\n @param _user User address\n @return Reputation score"
+                        },
+                        "functionSelector": "9c89a0e2",
+                        "id": 9569,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "getReputation",
+                        "nameLocation": "1543:13:27",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 9565,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9564,
+                                    "mutability": "mutable",
+                                    "name": "_user",
+                                    "nameLocation": "1565:5:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9569,
+                                    "src": "1557:13:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 9563,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1557:7:27",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1556:15:27"
+                        },
+                        "returnParameters": {
+                            "id": 9568,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9567,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9569,
+                                    "src": "1595:7:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9566,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1595:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1594:9:27"
+                        },
+                        "scope": 9592,
+                        "src": "1534:70:27",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 9570,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1610:324:27",
+                            "text": " @dev Get comprehensive reputation data for a user\n @param _user User address\n @return reputation Total reputation score\n @return circlesCompleted Number of circles completed\n @return latePaymentsCount Number of late payments\n @return reputationScore Calculated weighted score"
+                        },
+                        "functionSelector": "810a30ce",
+                        "id": 9583,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "getUserReputationData",
+                        "nameLocation": "1948:21:27",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 9573,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9572,
+                                    "mutability": "mutable",
+                                    "name": "_user",
+                                    "nameLocation": "1978:5:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9583,
+                                    "src": "1970:13:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 9571,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1970:7:27",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1969:15:27"
+                        },
+                        "returnParameters": {
+                            "id": 9582,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9575,
+                                    "mutability": "mutable",
+                                    "name": "reputation",
+                                    "nameLocation": "2040:10:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9583,
+                                    "src": "2032:18:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9574,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2032:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9577,
+                                    "mutability": "mutable",
+                                    "name": "circlesCompleted",
+                                    "nameLocation": "2060:16:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9583,
+                                    "src": "2052:24:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9576,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2052:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9579,
+                                    "mutability": "mutable",
+                                    "name": "latePaymentsCount",
+                                    "nameLocation": "2086:17:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9583,
+                                    "src": "2078:25:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9578,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2078:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 9581,
+                                    "mutability": "mutable",
+                                    "name": "reputationScore",
+                                    "nameLocation": "2113:15:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9583,
+                                    "src": "2105:23:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 9580,
+                                        "name": "uint256",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2105:7:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2031:98:27"
+                        },
+                        "scope": 9592,
+                        "src": "1939:191:27",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "documentation": {
+                            "id": 9584,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "2136:132:27",
+                            "text": " @dev Check if a contract is authorized\n @param _contract Contract address\n @return True if authorized"
+                        },
+                        "functionSelector": "fe9fbb80",
+                        "id": 9591,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "isAuthorized",
+                        "nameLocation": "2282:12:27",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 9587,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9586,
+                                    "mutability": "mutable",
+                                    "name": "_contract",
+                                    "nameLocation": "2303:9:27",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9591,
+                                    "src": "2295:17:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 9585,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2295:7:27",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2294:19:27"
+                        },
+                        "returnParameters": {
+                            "id": 9590,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 9589,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 9591,
+                                    "src": "2337:4:27",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 9588,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2337:4:27",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2336:6:27"
+                        },
+                        "scope": 9592,
+                        "src": "2273:70:27",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    }
+                ],
+                "scope": 9593,
+                "src": "153:2192:27",
+                "usedErrors": [],
+                "usedEvents": []
+            }
+        ],
+        "src": "51:2295:27"
+    },
+    "functionHashes": {
+        "decreaseReputation(address,uint256,string)": "64951eb0",
+        "getReputation(address)": "9c89a0e2",
+        "getUserReputationData(address)": "810a30ce",
+        "increaseReputation(address,uint256,string)": "41b880ec",
+        "isAuthorized(address)": "fe9fbb80",
+        "recordCircleCompleted(address,uint256)": "f732ebc0",
+        "recordGoalCompleted(address,uint256)": "fe38b8d1",
+        "recordLatePayment(address,uint256,uint256,uint256)": "f703d4ba"
+    },
+    "gasEstimates": null
+}

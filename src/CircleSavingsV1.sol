@@ -726,10 +726,7 @@ contract CircleSavingsV1 is
         bool isCreator = c.creator == msg.sender;
         uint256 deadFee = 0;
 
-        if (
-            (isCreator && c.state == CircleState.DEAD) ||
-            c.state == CircleState.ACTIVE
-        ) {
+        if (isCreator) {
             if (c.visibility == Visibility.PRIVATE) {
                 deadFee = PRIVATE_CIRCLE_DEAD_FEE;
             } else {

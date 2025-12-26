@@ -693,6 +693,11 @@ contract CircleSavingsV1 is
     /**
      * @dev Each member can withdraw their collateral if after the ultimatum, circle did not start
      * @param _circleId Circle ID to withdraw from
+     * @notice Withdrawal is allowed in these scenarios:
+     *   1. After voting completes and withdraw votes won (canWithdrawAfterVote)
+     *   2. After ultimatum period AND below 60% threshold (no voting needed)
+     *      - This includes solo creator (1 member < 60% of maxMembers)
+     *      - Or any circle that didn't reach minimum membership
      */
     function WithdrawCollateral(uint256 _circleId) external nonReentrant {
         if (_circleId == 0 || _circleId >= circleCounter) {
@@ -709,9 +714,16 @@ contract CircleSavingsV1 is
         Vote storage vote = circleVotes[_circleId];
 
         bool canWithdraw = false;
+        
+        // Scenario 1: Voting happened and withdraw side won
         if (vote.voteExecuted && canWithdrawAfterVote(_circleId)) {
             canWithdraw = true;
-        } else {
+        } 
+        // Scenario 2: Ultimatum passed AND below 60% threshold (no voting needed)
+        // This handles:
+        // - Solo creator (1 member is always < 60% threshold)
+        // - Failed circles that didn't reach minimum membership
+        else {
             uint256 period = _ultimatum(c.frequency);
             if (block.timestamp > c.createdAt + period) {
                 if (c.currentMembers < (c.maxMembers * 60) / 100) {

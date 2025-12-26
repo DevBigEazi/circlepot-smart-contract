@@ -91,6 +91,7 @@ contract CircleSavingsV1 is
         uint256 createdAt;
         uint256 startedAt;
         uint256 totalPot;
+        uint256 contributionsThisRound; // Track contributions to avoid looping in _checkComplete
     }
 
     struct Member {
@@ -420,7 +421,8 @@ contract CircleSavingsV1 is
             visibility: params.visibility,
             createdAt: block.timestamp,
             startedAt: 0,
-            totalPot: 0
+            totalPot: 0,
+            contributionsThisRound: 0 // Initialize counter
         });
 
         circleMembers[circleId][msg.sender] = Member({
@@ -820,6 +822,7 @@ contract CircleSavingsV1 is
         }
 
         roundContributions[_circleId][round][msg.sender] = true;
+        c.contributionsThisRound++; // Increment contribution counter
         emit ContributionMade(
             _circleId,
             round,
@@ -831,14 +834,14 @@ contract CircleSavingsV1 is
     }
 
     /*
-     * @dev Forfeit all members who haven't contributed after grace period
+     * @dev Forfeit specified members who haven't contributed after grace period
      * @param _circleId Circle ID
-     * @notice Can ONLY be called by the next payout recipient
-     * @notice Can ONLY be called AFTER grace period expires
-     * @notice This incentivizes the next recipient to keep the circle moving
-     * @notice Processes all late members in a single transaction
+     * @param _membersToForfeit Array of member addresses to forfeit
+     * @notice Can be called by any active member after grace period expires
+     * @notice The current round's recipient is exempt from forfeiture
+     * @notice Processes specified late members in a single transaction
      */
-    function forfeitMember(uint256 _circleId) external nonReentrant {
+    function forfeitMember(uint256 _circleId, address[] calldata _membersToForfeit) external nonReentrant {
         Circle storage c = circles[_circleId];
         if (c.state != CircleState.ACTIVE) revert CircleNotActive();
 
@@ -855,56 +858,65 @@ contract CircleSavingsV1 is
 
         if (block.timestamp <= graceDeadline) revert GracePeriodNotExpired();
 
-        // Process all members who haven't contributed yet
-        address[] storage mlist = circleMemberList[_circleId];
+        // Get the current round's recipient (they are exempt from contributing/forfeiture)
+        address recipient = _getByPos(_circleId, round);
         bool anyForfeited = false;
 
-        for (uint256 i = 0; i < mlist.length; i++) {
-            address memberAddr = mlist[i];
+        // Process each member in the provided list
+        for (uint256 i = 0; i < _membersToForfeit.length; i++) {
+            address memberAddr = _membersToForfeit[i];
 
-            // Skip members who already contributed or are not active
+            // Skip if already contributed or not active
             if (
-                !roundContributions[_circleId][round][memberAddr] &&
-                circleMembers[_circleId][memberAddr].isActive
+                roundContributions[_circleId][round][memberAddr] ||
+                !circleMembers[_circleId][memberAddr].isActive
             ) {
-                Member storage m = circleMembers[_circleId][memberAddr];
-
-                // Deduct from collateral
-                uint256 fee = (c.contributionAmount * LATE_FEE_BPS) / 10000;
-                uint256 deduction = c.contributionAmount + fee;
-
-                if (m.collateralLocked < deduction) {
-                    // Not enough collateral - take what's left
-                    deduction = m.collateralLocked;
-                }
-
-                m.collateralLocked -= deduction;
-
-                // Split forfeited amount
-                uint256 toPot = deduction > c.contributionAmount
-                    ? c.contributionAmount
-                    : deduction;
-                uint256 toFees = deduction - toPot;
-
-                c.totalPot += toPot;
-                totalPlatformFees += toFees;
-
-                // Mark as contributed (forfeited counts as contributed)
-                roundContributions[_circleId][round][memberAddr] = true;
-
-                // Update reputation via reputation contract
-                _decreaseReputation(memberAddr, 5, "Late Payment");
-                _recordLatePayment(memberAddr, _circleId, round, fee);
-
-                emit MemberForfeited(
-                    _circleId,
-                    round,
-                    memberAddr,
-                    deduction,
-                    msg.sender
-                );
-                anyForfeited = true;
+                continue;
             }
+
+            // Skip the current round's recipient (they don't need to contribute to their own payout)
+            if (memberAddr == recipient) {
+                continue;
+            }
+
+            Member storage m = circleMembers[_circleId][memberAddr];
+
+            // Deduct from collateral
+            uint256 fee = (c.contributionAmount * LATE_FEE_BPS) / 10000;
+            uint256 deduction = c.contributionAmount + fee;
+
+            if (m.collateralLocked < deduction) {
+                // Not enough collateral - take what's left
+                deduction = m.collateralLocked;
+            }
+
+            m.collateralLocked -= deduction;
+
+            // Split forfeited amount
+            uint256 toPot = deduction > c.contributionAmount
+                ? c.contributionAmount
+                : deduction;
+            uint256 toFees = deduction - toPot;
+
+            c.totalPot += toPot;
+            totalPlatformFees += toFees;
+
+            // Mark as contributed (forfeited counts as contributed)
+            roundContributions[_circleId][round][memberAddr] = true;
+            c.contributionsThisRound++; // Increment contribution counter
+
+            // Update reputation via reputation contract
+            _decreaseReputation(memberAddr, 5, "Late Payment");
+            _recordLatePayment(memberAddr, _circleId, round, fee);
+
+            emit MemberForfeited(
+                _circleId,
+                round,
+                memberAddr,
+                deduction,
+                msg.sender
+            );
+            anyForfeited = true;
         }
 
         // Only check for round completion if at least one member was forfeited
@@ -953,6 +965,7 @@ contract CircleSavingsV1 is
         Circle storage c = circles[cid];
         address[] storage mlist = circleMemberList[cid];
 
+        // Creator always gets position 1
         circleMembers[cid][c.creator].position = 1;
         emit PositionAssigned(cid, c.creator, 1);
 
@@ -960,8 +973,8 @@ contract CircleSavingsV1 is
         address[] memory members = new address[](memberCount);
         uint256[] memory reputationScores = new uint256[](memberCount);
 
+        // Step 1: Build arrays excluding creator
         uint256 idxCounter = 0;
-
         for (uint256 i = 0; i < mlist.length; i++) {
             if (mlist[i] != c.creator) {
                 members[idxCounter] = mlist[i];
@@ -970,20 +983,26 @@ contract CircleSavingsV1 is
             }
         }
 
-        for (uint256 i = 0; i < memberCount; i++) {
-            for (uint256 j = i + 1; j < memberCount; j++) {
-                if (reputationScores[j] > reputationScores[i]) {
-                    uint256 tempScore = reputationScores[i];
-                    reputationScores[i] = reputationScores[j];
-                    reputationScores[j] = tempScore;
-
-                    address tempAddr = members[i];
-                    members[i] = members[j];
-                    members[j] = tempAddr;
-                }
+        // Step 2: Sort using insertion sort (more gas efficient than bubble sort)
+        // Insertion sort is O(n²) worst case but O(n) best case for nearly sorted data
+        // and has better cache locality than bubble sort
+        for (uint256 i = 1; i < memberCount; i++) {
+            uint256 keyScore = reputationScores[i];
+            address keyAddr = members[i];
+            uint256 j = i;
+            
+            // Shift elements with lower reputation scores to the right
+            while (j > 0 && reputationScores[j - 1] < keyScore) {
+                reputationScores[j] = reputationScores[j - 1];
+                members[j] = members[j - 1];
+                j--;
             }
+            
+            reputationScores[j] = keyScore;
+            members[j] = keyAddr;
         }
 
+        // Step 3: Assign positions (position 2 onwards for sorted members)
         for (uint256 i = 0; i < memberCount; i++) {
             uint256 position = i + 2;
             circleMembers[cid][members[i]].position = position;
@@ -1167,6 +1186,7 @@ contract CircleSavingsV1 is
     ) private {
         if (round < c.totalRounds) {
             c.currentRound = round + 1;
+            c.contributionsThisRound = 0; // Reset counter for new round
             circleRoundDeadlines[cid][round + 1] = _nextDeadline(
                 c.frequency,
                 block.timestamp
@@ -1206,23 +1226,15 @@ contract CircleSavingsV1 is
 
     /**
      * @dev Checks if round is complete and trigger payout
+     * @notice Uses contributionsThisRound counter to avoid looping through all members
      */
     function _checkComplete(uint256 cid) private {
         Circle storage c = circles[cid];
-        address[] storage mlist = circleMemberList[cid];
-        uint256 payCount = 0;
 
-        for (uint256 i = 0; i < mlist.length; i++) {
-            address addr = mlist[i];
-            if (
-                circleMembers[cid][addr].isActive &&
-                roundContributions[cid][c.currentRound][addr]
-            ) {
-                payCount++;
-            }
+        // Check if all active members have contributed using the counter
+        if (c.contributionsThisRound == c.currentMembers) {
+            _payoutRound(cid, c.currentRound);
         }
-
-        if (payCount == c.currentMembers) _payoutRound(cid, c.currentRound);
     }
 
     /**
@@ -1395,33 +1407,6 @@ contract CircleSavingsV1 is
         canStart = circle.currentMembers >= (circle.maxMembers * 60) / 100;
 
         return (circle, membersJoined, currentDeadline, canStart);
-    }
-
-    /**
-     * @dev Returns all circles a user is part of
-     */
-    function getUserCircles(
-        address _user
-    ) external view returns (uint256[] memory) {
-        uint256 count = 0;
-
-        for (uint256 i = 1; i < circleCounter; i++) {
-            if (circleMembers[i][_user].isActive) {
-                count++;
-            }
-        }
-
-        uint256[] memory userCircles = new uint256[](count);
-        uint256 idx = 0;
-
-        for (uint256 i = 1; i < circleCounter; i++) {
-            if (circleMembers[i][_user].isActive) {
-                userCircles[idx] = i;
-                idx++;
-            }
-        }
-
-        return userCircles;
     }
 
     /**

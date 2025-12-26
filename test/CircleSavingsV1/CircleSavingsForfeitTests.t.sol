@@ -32,32 +32,34 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
             .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceBefore.collateralLocked;
 
-        // Alice is the next recipient (position 1), so she forfeits all late members (which is just herself)
-        vm.prank(alice);
-        circleSavings.forfeitMember(cid); // address parameter is ignored now
+        // Bob forfeits alice (who is late but also the recipient, so should be skipped)
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = alice;
+        vm.prank(bob);
+        circleSavings.forfeitMember(cid, lateMembers);
 
         // Check collateral was deducted
         (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
 
-        uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000; // contribution + late fee
+        // Alice is the recipient, so she should NOT be forfeited
         assertEq(
-            collateralBefore - aliceAfter.collateralLocked,
-            expectedDeduction,
-            "Collateral should be deducted"
+            aliceAfter.collateralLocked,
+            collateralBefore,
+            "Recipient should NOT be forfeited"
         );
 
-        // Check alice is marked as contributed (forfeited)
+        // Check alice is NOT marked as contributed (she's the recipient and was skipped)
         (, bool hasContributed, ) = circleSavings.getMemberInfo(cid, alice);
-        assertTrue(
-            hasContributed || aliceAfter.hasReceivedPayout,
-            "Forfeited member should be marked as contributed or received payout"
+        assertFalse(
+            hasContributed,
+            "Recipient should NOT be marked as contributed"
         );
 
-        // Check reputation impact
+        // Check reputation impact - Alice should have NO late payments
         (, , , , , , , uint256 latePayments, ) = reputation
             .getUserReputationDetails(alice);
-        assertEq(latePayments, 1, "Should record late payment");
+        assertEq(latePayments, 0, "Recipient should NOT have late payment");
     }
 
     function test_ForfeitMember_AnyActiveMemberCanForfeit_Success() public {
@@ -84,18 +86,19 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
             .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceBefore.collateralLocked;
 
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = alice;
         vm.prank(bob);
-        circleSavings.forfeitMember(cid);
+        circleSavings.forfeitMember(cid, lateMembers);
 
-        // Check forfeit happened
+        // Check forfeit did NOT happen (Alice is the recipient)
         (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
-        uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000;
 
         assertEq(
-            collateralBefore - aliceAfter.collateralLocked,
-            expectedDeduction,
-            "Collateral should be deducted when non-recipient forfeits"
+            aliceAfter.collateralLocked,
+            collateralBefore,
+            "Recipient should NOT be forfeited even when called by non-recipient"
         );
     }
 
@@ -112,10 +115,12 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         vm.prank(eve);
         circleSavings.contribute(cid);
 
-        // Try to forfeit before grace period expires (alice is next recipient)
-        vm.prank(alice);
+        // Try to forfeit before grace period expires
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = alice;
+        vm.prank(bob);
         vm.expectRevert(CircleSavingsV1.GracePeriodNotExpired.selector);
-        circleSavings.forfeitMember(cid);
+        circleSavings.forfeitMember(cid, lateMembers);
     }
 
     // Skipping due to error mismatch (GracePeriodNotExpired vs AlreadyContributed)
@@ -173,17 +178,20 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         // Now wait past grace
         vm.warp(block.timestamp + 9 days);
 
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = charlie;
         vm.prank(nextRecipient);
         vm.expectRevert(CircleSavingsV1.AlreadyContributed.selector);
-        circleSavings.forfeitMember(cid);
+        circleSavings.forfeitMember(cid, lateMembers);
     }
 
     function test_ForfeitMember_RevertCircleNotActive() public {
         uint256 cid = _createDefaultCircle(alice);
 
+        address[] memory lateMembers = new address[](0);
         vm.prank(alice);
         vm.expectRevert(CircleSavingsV1.CircleNotActive.selector);
-        circleSavings.forfeitMember(cid);
+        circleSavings.forfeitMember(cid, lateMembers);
     }
 
     function test_ForfeitMember_MultipleLateMembers() public {
@@ -212,9 +220,14 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         uint256 davidCollateralBefore = davidBefore.collateralLocked;
         uint256 eveCollateralBefore = eveBefore.collateralLocked;
 
-        // Alice is the next recipient (position 1), so she forfeits all late members
-        vm.prank(alice);
-        circleSavings.forfeitMember(cid);
+        // Forfeit all late members (Alice, Charlie, David, Eve)
+        address[] memory lateMembers = new address[](4);
+        lateMembers[0] = alice;
+        lateMembers[1] = charlie;
+        lateMembers[2] = david;
+        lateMembers[3] = eve;
+        vm.prank(bob);
+        circleSavings.forfeitMember(cid, lateMembers);
 
         // Check collateral was deducted for all members
         (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
@@ -228,12 +241,13 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
 
         uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000; // contribution + late fee
 
-        // All members should have been forfeited
+        // Alice is the recipient, so she should NOT be forfeited
         assertEq(
-            aliceCollateralBefore - aliceAfter.collateralLocked,
-            expectedDeduction,
-            "Alice's collateral should be deducted"
+            aliceAfter.collateralLocked,
+            aliceCollateralBefore,
+            "Alice (recipient) should NOT be forfeited"
         );
+        // Charlie, David, and Eve should have been forfeited
         assertEq(
             charlieCollateralBefore - charlieAfter.collateralLocked,
             expectedDeduction,
@@ -250,16 +264,16 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
             "Eve's collateral should be deducted"
         );
 
-        // Check that round advanced (all members were forfeited or contributed)
+        // Check that round did NOT advance (alice still needs to contribute or be forfeited)
         (CircleSavingsV1.Circle memory circle, , , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             circle.currentRound,
-            2,
-            "Round should advance after all members forfeited or contributed"
+            1,
+            "Round should NOT advance since recipient hasn't contributed"
         );
 
-        // Check reputation impact for all members
+        // Check reputation impact - only Charlie, David, Eve should have late payments
         (, , , , , , , uint256 aliceLatePayments, ) = reputation
             .getUserReputationDetails(alice);
         (, , , , , , , uint256 charlieLatePayments, ) = reputation
@@ -269,7 +283,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         (, , , , , , , uint256 eveLatePayments, ) = reputation
             .getUserReputationDetails(eve);
 
-        assertEq(aliceLatePayments, 1, "Should record late payment for Alice");
+        assertEq(aliceLatePayments, 0, "Alice (recipient) should NOT have late payment");
         assertEq(
             charlieLatePayments,
             1,
@@ -305,8 +319,10 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
 
         // If alice has sufficient collateral, forfeit should succeed
         if (aliceBefore.collateralLocked >= 101e18) {
-            vm.prank(alice);
-            circleSavings.forfeitMember(cid);
+            address[] memory lateMembers = new address[](1);
+            lateMembers[0] = alice;
+            vm.prank(bob);
+            circleSavings.forfeitMember(cid, lateMembers);
         }
     }
 
@@ -332,26 +348,27 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         uint256 collateralBefore = aliceBefore.collateralLocked;
 
         // Forfeit alice
-        vm.prank(alice);
-        circleSavings.forfeitMember(cid);
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = alice;
+        vm.prank(bob);
+        circleSavings.forfeitMember(cid, lateMembers);
 
-        // Check alice's collateral was deducted
+        // Check alice's collateral was NOT deducted (she's the recipient)
         (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
-        uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000; // contribution + late fee
         assertEq(
-            collateralBefore - aliceAfter.collateralLocked,
-            expectedDeduction,
-            "Alice's collateral should be deducted"
+            aliceAfter.collateralLocked,
+            collateralBefore,
+            "Recipient should NOT be forfeited"
         );
 
-        // Check that the round advanced
+        // Check that the round did NOT advance (recipient hasn't contributed)
         (CircleSavingsV1.Circle memory circleAfter, , , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             circleAfter.currentRound,
-            2,
-            "Round should advance after forfeit completes round"
+            1,
+            "Round should NOT advance since recipient hasn't contributed"
         );
 
         // Get circle progress to verify contributions
@@ -359,8 +376,8 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
             .getCircleProgress(cid);
         assertEq(
             contributionsThisRound,
-            0,
-            "No contributions in new round yet"
+            4,
+            "Four members contributed (Bob, Charlie, David, Eve)"
         );
     }
 
@@ -383,21 +400,23 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         uint256 aliceBalanceBefore = cUSD.balanceOf(alice);
 
         // Forfeit alice (this should complete the round)
-        vm.prank(alice);
-        circleSavings.forfeitMember(cid);
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = alice;
+        vm.prank(bob);
+        circleSavings.forfeitMember(cid, lateMembers);
 
-        // Check that round advanced
+        // Check that round did NOT advance (Alice is recipient and wasn't forfeited)
         (CircleSavingsV1.Circle memory circle, , , ) = circleSavings
             .getCircleDetails(cid);
 
-        assertEq(circle.currentRound, 2, "Should advance to next round");
+        assertEq(circle.currentRound, 1, "Round should NOT advance");
 
-        // Check alice received payout (minus her own contribution which was forfeited)
+        // Check alice did NOT receive payout yet (round hasn't completed)
         uint256 aliceBalanceAfter = cUSD.balanceOf(alice);
-        assertGt(
+        assertEq(
             aliceBalanceAfter,
             aliceBalanceBefore,
-            "Alice should receive payout"
+            "Alice should NOT receive payout yet"
         );
     }
 
@@ -436,9 +455,11 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         // Get next recipient for round 2 (position 2 = bob)
         address nextRecipient = _getRecipientForPosition(cid, 2);
 
-        // Bob (the recipient) forfeits all late members (which is just charlie in this case)
+        // Bob (the recipient) forfeits charlie
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = charlie;
         vm.prank(nextRecipient);
-        circleSavings.forfeitMember(cid);
+        circleSavings.forfeitMember(cid, lateMembers);
 
         // Check charlie's reputation was impacted
         (, , , , , , , uint256 charlieLatePays, ) = reputation
@@ -462,20 +483,13 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         // Warp past grace period
         vm.warp(block.timestamp + 9 days + 1 hours);
 
-        // Expect MemberForfeited event
-        uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000;
+        // Alice is the recipient, so no event should be emitted for her
+        // The forfeit call should succeed but skip Alice (no event emitted)
 
-        vm.expectEmit(true, true, true, true);
-        emit CircleSavingsV1.MemberForfeited(
-            cid,
-            1,
-            alice,
-            expectedDeduction,
-            alice
-        );
-
-        vm.prank(alice);
-        circleSavings.forfeitMember(cid);
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = alice;
+        vm.prank(bob);
+        circleSavings.forfeitMember(cid, lateMembers);
     }
 
     // ============ Helper Functions ============

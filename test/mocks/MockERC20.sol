@@ -11,8 +11,8 @@ contract MockERC20 is IERC20 {
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
     uint256 private _totalSupply;
-    string public name = "Mock cUSD";
-    string public symbol = "cUSD";
+    string public name = "Mock USDm";
+    string public symbol = "USDm";
     uint256 public decimals = 18;
 
     function totalSupply() external view override returns (uint256) {

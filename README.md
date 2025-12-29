@@ -4,7 +4,7 @@ A comprehensive DeFi savings platform built on Celo blockchain, enabling both co
 
 ## Overview
 
-Circlepot digitizes traditional rotating savings and credit associations (ROSCAs) using blockchain technology. Create or join savings circles where members contribute regularly, and each person receives the full pot when their turn arrives—all with complete transparency and zero gas fees. By combining the simplicity of community savings with Celo's infrastructure, Mento Protocol's stable digital currencies(cUSD first), Thirdweb's account abstraction, gasless transactions, and established partner ecosystem, CirclePot delivers a seamless Web2-like experience with Web3 benefits.
+Circlepot digitizes traditional rotating savings and credit associations (ROSCAs) using blockchain technology. Create or join savings circles where members contribute regularly, and each person receives the full pot when their turn arrives—all with complete transparency and zero gas fees. By combining the simplicity of community savings with Celo's infrastructure, Mento Protocol's stable digital currencies(USDm first), Thirdweb's account abstraction, gasless transactions, and established partner ecosystem, CirclePot delivers a seamless Web2-like experience with Web3 benefits.
 
 ## Smart Contracts
 
@@ -13,6 +13,7 @@ Circlepot digitizes traditional rotating savings and credit associations (ROSCAs
 A community-based savings platform that enables groups of people to create and participate in savings circles. Members contribute funds regularly and take turns receiving the collective pot.
 
 **Key Features:**
+
 - **Private or Public Circles** - Create invitation-only circles or open communities
 - **Collateral-Backed Commitments** - Ensure participation through collateral requirements
 - **Reputation-Based Position Assignment** - Earlier payout positions for trusted members
@@ -21,6 +22,7 @@ A community-based savings platform that enables groups of people to create and p
 - **Flexible Schedules** - Support for daily, weekly, or monthly contribution cycles
 
 **Use Cases:**
+
 - Community savings groups
 - Friend and family savings circles
 - Goal-oriented group savings
@@ -33,6 +35,7 @@ A community-based savings platform that enables groups of people to create and p
 An individual savings solution that helps users save toward personal financial goals with built-in accountability mechanisms.
 
 **Key Features:**
+
 - **Goal-Based Savings** - Set customizable targets and deadlines
 - **Flexible Contributions** - Contribute on your own schedule
 - **Early Withdrawal Options** - Access funds early with a graduated penalty system
@@ -41,6 +44,7 @@ An individual savings solution that helps users save toward personal financial g
 - **Automated Enforcement** - Smart contract ensures commitment to your goals
 
 **Use Cases:**
+
 - Emergency fund building
 - Vacation savings
 - Down payment accumulation
@@ -56,6 +60,7 @@ A credit scoring system that tracks user financial behavior across the platform 
 > **Note:** This contract uses standard FICO and VantageScore models adapted for on-chain credit scoring.
 
 **Key Features:**
+
 - **Score-Based Reputation System** - Multiple tiers based on financial behavior
 - **Positive Behavior Rewards** - Earn points for completing savings goals and timely payments
 - **Negative Action Penalties** - Score reduction for late payments or defaults
@@ -64,6 +69,7 @@ A credit scoring system that tracks user financial behavior across the platform 
 - **Cross-Platform Impact** - Reputation affects all Circlepot products
 
 **Reputation Benefits:**
+
 - Priority positions in savings circles
 - Reduced collateral requirements
 - Access to larger circles
@@ -76,8 +82,10 @@ A credit scoring system that tracks user financial behavior across the platform 
 Manages user identity across the entire Circlepot platform.
 
 **Key Features:**
+
 - **Secure Profile Management** - Secure profile management
 - **Cross-Platform Identity** - Single profile across all Circlepot products
+
 ---
 
 ## Architecture
@@ -98,14 +106,18 @@ Manages user identity across the entire Circlepot platform.
 ## Use Cases
 
 ### Community Savings Circle Example
+
 A group of 10 friends wants to save $1,000 each month. They create a circle where:
+
 - Each member contributes $100 monthly
 - One member receives $1,000 each month (in rotating order)
 - Members with higher reputation get earlier positions
 - Late payments result in collateral forfeiture
 
 ### Personal Savings Goal Example
+
 A user wants to save $5,000 for a vacation in 6 months:
+
 - Sets a goal of $5,000 with a 6-month deadline
 - Commits to $833 monthly contributions
 - Earns reputation points upon completion

@@ -211,9 +211,9 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         vm.warp(t);
         personalSavings.contributeToGoal(gid);
         // Now at 75% progress (150e18 / 200e18) - penalty should apply
-        uint256 balBefore = cUSD.balanceOf(alice);
+        uint256 balBefore = USDm.balanceOf(alice);
         personalSavings.withdrawFromGoal(gid, 50e18);
-        uint256 balAfter = cUSD.balanceOf(alice);
+        uint256 balAfter = USDm.balanceOf(alice);
         assertLt(balAfter - balBefore, 50e18); // penalty applied
         vm.stopPrank();
     }

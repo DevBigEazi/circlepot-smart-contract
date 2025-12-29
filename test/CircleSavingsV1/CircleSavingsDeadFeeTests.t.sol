@@ -25,12 +25,12 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         // WithdrawCollateral is allowed
 
         // SCENARIO 1: Bob withdraws first. This sets state to DEAD.
-        uint256 bobBalBefore = cUSD.balanceOf(bob);
+        uint256 bobBalBefore = USDm.balanceOf(bob);
 
         vm.prank(bob);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 bobBalAfter = cUSD.balanceOf(bob);
+        uint256 bobBalAfter = USDm.balanceOf(bob);
         // Bob should get full collateral back (no fee for non-creator)
         // Note: Check assumes bob has deposited EXACTLY what he gets back or more.
         // Actually, let's just check he gets something substantial back.
@@ -43,7 +43,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
 
         // SCENARIO 2: Alice (creator) withdraws second. State is now DEAD.
         // She should be charged the dead fee.
-        uint256 aliceBalBefore = cUSD.balanceOf(alice);
+        uint256 aliceBalBefore = USDm.balanceOf(alice);
 
         // Get locked amount
         (CircleSavingsV1.Member memory mAlice, , ) = circleSavings
@@ -53,7 +53,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 aliceBalAfter = cUSD.balanceOf(alice);
+        uint256 aliceBalAfter = USDm.balanceOf(alice);
 
         // Verify she got back less than locked amount (due to fee)
         assertLt(
@@ -78,7 +78,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         // State is CREATED (not DEAD yet)
         // Fee condition (isCreator && DEAD) is false.
 
-        uint256 aliceBalBefore = cUSD.balanceOf(alice);
+        uint256 aliceBalBefore = USDm.balanceOf(alice);
         (CircleSavingsV1.Member memory mVal, , ) = circleSavings.getMemberInfo(
             cid,
             alice
@@ -88,7 +88,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 aliceBalAfter = cUSD.balanceOf(alice);
+        uint256 aliceBalAfter = USDm.balanceOf(alice);
 
         // Fee SHOULD be deducted
         assertLt(

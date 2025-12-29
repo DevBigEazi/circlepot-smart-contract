@@ -30,12 +30,12 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
         implementation = new PersonalSavingsV1();
 
         bytes memory initData = abi.encodeWithSelector(
-            PersonalSavingsV1.initialize.selector, address(cUSD), testTreasury, address(reputation), testOwner
+            PersonalSavingsV1.initialize.selector, address(USDm), testTreasury, address(reputation), testOwner
         );
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         personalSavings = PersonalSavingsV1(address(proxy));
 
-        // Approve contract to spend user's cUSD
+        // Approve contract to spend user's USDm
         address[] memory users = new address[](6);
         users[0] = alice;
         users[1] = bob;
@@ -46,7 +46,7 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
 
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
-            cUSD.approve(address(personalSavings), type(uint256).max);
+            USDm.approve(address(personalSavings), type(uint256).max);
         }
 
         // Authorize PersonalSavings in reputation system

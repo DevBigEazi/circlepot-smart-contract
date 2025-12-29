@@ -64,7 +64,7 @@ contract PersonalSavingsV1 is
     }
 
     // ============ Storage ============
-    address public cUSDToken;
+    address public USDmToken;
     IReputation public reputationContract;
     address public treasury;
 
@@ -119,13 +119,13 @@ contract PersonalSavingsV1 is
 
     /**
      * @dev Initializes the contract with initial parameters
-     * @param _cUSDToken Address of the cUSD token contract
+     * @param _USDmToken Address of the USDm token contract
      * @param _treasury Address for platform fees
      * @param _reputationContract Address of the reputation contract
      * @param initialOwner Address of the initial owner (if zero, msg.sender remains owner)
      */
     function initialize(
-        address _cUSDToken,
+        address _USDmToken,
         address _treasury,
         address _reputationContract,
         address initialOwner
@@ -133,14 +133,14 @@ contract PersonalSavingsV1 is
         __Ownable_init(initialOwner);
 
         if (
-            _cUSDToken == address(0) ||
+            _USDmToken == address(0) ||
             _treasury == address(0) ||
             _reputationContract == address(0)
         ) {
             revert AddressZeroNotAllowed();
         }
 
-        cUSDToken = _cUSDToken;
+        USDmToken = _USDmToken;
         reputationContract = IReputation(_reputationContract);
         treasury = _treasury;
         goalCounter = 1;
@@ -153,17 +153,17 @@ contract PersonalSavingsV1 is
 
     /**
      * @dev Function for upgrading the contract to a new version (reinitializer)
-     * @param _cUSDToken Address of cUSD token (if changed)
+     * @param _USDmToken Address of USDm token (if changed)
      * @param _version Reinitializer version number
      */
     function upgrade(
-        address _cUSDToken,
+        address _USDmToken,
         address _treasury,
         address _reputationContract,
         uint8 _version
     ) public reinitializer(_version) onlyOwner {
-        if (_cUSDToken != address(0)) {
-            cUSDToken = _cUSDToken;
+        if (_USDmToken != address(0)) {
+            USDmToken = _USDmToken;
         }
         if (_treasury != address(0)) {
             treasury = _treasury;
@@ -201,7 +201,7 @@ contract PersonalSavingsV1 is
         uint256 gid = goalCounter++;
 
         // Transfer the first contribution immediately
-        IERC20(cUSDToken).safeTransferFrom(
+        IERC20(USDmToken).safeTransferFrom(
             msg.sender,
             address(this),
             params.contributionAmount
@@ -262,7 +262,7 @@ contract PersonalSavingsV1 is
             }
         }
 
-        IERC20(cUSDToken).safeTransferFrom(
+        IERC20(USDmToken).safeTransferFrom(
             msg.sender,
             address(this),
             g.contributionAmount
@@ -303,10 +303,10 @@ contract PersonalSavingsV1 is
         g.currentAmount -= _amount;
 
         if (penalty > 0) {
-            IERC20(cUSDToken).safeTransfer(msg.sender, net);
+            IERC20(USDmToken).safeTransfer(msg.sender, net);
             totalPlatformFees += penalty;
         } else {
-            IERC20(cUSDToken).safeTransfer(msg.sender, _amount);
+            IERC20(USDmToken).safeTransfer(msg.sender, _amount);
         }
 
         reputationContract.decreaseReputation(
@@ -336,7 +336,7 @@ contract PersonalSavingsV1 is
         g.isActive = false;
         g.currentAmount = 0;
 
-        IERC20(cUSDToken).safeTransfer(msg.sender, amt);
+        IERC20(USDmToken).safeTransfer(msg.sender, amt);
         reputationContract.increaseReputation(msg.sender, 10, "Goal completed");
 
         // Record goal completion in reputation contract
@@ -351,7 +351,7 @@ contract PersonalSavingsV1 is
     function withdrawPlatformFees() external onlyOwner {
         uint256 amt = totalPlatformFees;
         totalPlatformFees = 0;
-        IERC20(cUSDToken).safeTransfer(treasury, amt);
+        IERC20(USDmToken).safeTransfer(treasury, amt);
     }
 
     /**

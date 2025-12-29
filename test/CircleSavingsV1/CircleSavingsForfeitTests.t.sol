@@ -372,7 +372,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         );
 
         // Get circle progress to verify contributions
-        (, , uint256 contributionsThisRound, ) = circleSavings
+        (, , uint256 contributionsThisRound, , , ) = circleSavings
             .getCircleProgress(cid);
         assertEq(
             contributionsThisRound,
@@ -397,7 +397,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         // Warp past grace period
         vm.warp(block.timestamp + 9 days + 1 hours);
 
-        uint256 aliceBalanceBefore = cUSD.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
 
         // Forfeit alice (this should complete the round)
         address[] memory lateMembers = new address[](1);
@@ -412,7 +412,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         assertEq(circle.currentRound, 1, "Round should NOT advance");
 
         // Check alice did NOT receive payout yet (round hasn't completed)
-        uint256 aliceBalanceAfter = cUSD.balanceOf(alice);
+        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
         assertEq(
             aliceBalanceAfter,
             aliceBalanceBefore,

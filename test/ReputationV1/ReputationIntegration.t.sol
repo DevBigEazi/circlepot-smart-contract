@@ -19,7 +19,7 @@ contract ReputationIntegration is ReputationSetup {
     uint256 public constant DEADLINE = 30 days;
 
     // Test contracts
-    MockERC20 public mockCUSD;
+    MockERC20 public mockUSDm;
     PersonalSavingsV1 public personalSavingsImpl;
     PersonalSavingsProxy public savingsProxy;
     PersonalSavingsV1 public personalSavings;
@@ -31,12 +31,12 @@ contract ReputationIntegration is ReputationSetup {
         super.setUp();
 
         // Deploy mock token
-        mockCUSD = new MockERC20();
+        mockUSDm = new MockERC20();
 
         // Mint tokens to users (enough for collateral + contributions)
-        mockCUSD.mint(user1, 10000e18);
-        mockCUSD.mint(user2, 10000e18);
-        mockCUSD.mint(user3, 10000e18);
+        mockUSDm.mint(user1, 10000e18);
+        mockUSDm.mint(user2, 10000e18);
+        mockUSDm.mint(user3, 10000e18);
 
         vm.startPrank(owner);
 
@@ -47,7 +47,7 @@ contract ReputationIntegration is ReputationSetup {
         // Deploy proxies
         savingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
-            address(mockCUSD),
+            address(mockUSDm),
             treasury,
             address(reputation),
             owner
@@ -56,9 +56,10 @@ contract ReputationIntegration is ReputationSetup {
 
         circleProxy = new CircleSavingsProxy(
             address(circleSavingsImpl),
-            address(mockCUSD),
+            address(mockUSDm),
             treasury,
             address(reputation),
+            address(0), // No vault needed for these reputation tests
             owner
         );
         circleSavings = CircleSavingsV1(address(circleProxy));
@@ -76,7 +77,7 @@ contract ReputationIntegration is ReputationSetup {
     function test_personalSavings_goalCompletion_increasesReputation() public {
         vm.skip(true);
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         // Create goal
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
@@ -119,7 +120,7 @@ contract ReputationIntegration is ReputationSetup {
     function test_personalSavings_targetReached_increasesReputation() public {
         vm.skip(true);
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
             .CreateGoalParams({
@@ -154,7 +155,7 @@ contract ReputationIntegration is ReputationSetup {
     function test_personalSavings_earlyWithdrawal_decreasesReputation() public {
         vm.skip(true);
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
             .CreateGoalParams({
@@ -190,7 +191,7 @@ contract ReputationIntegration is ReputationSetup {
     {
         vm.skip(true);
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         // Create and complete 3 goals
         for (uint256 i = 0; i < 3; i++) {
@@ -240,9 +241,9 @@ contract ReputationIntegration is ReputationSetup {
 
         // Give tokens and approvals
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         // Create circle
@@ -299,9 +300,9 @@ contract ReputationIntegration is ReputationSetup {
         users[4] = makeAddr("user5");
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(user1);
@@ -362,9 +363,9 @@ contract ReputationIntegration is ReputationSetup {
         users[4] = makeAddr("user5");
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 10000e18);
+            mockUSDm.mint(users[i], 10000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(user1);
@@ -441,9 +442,9 @@ contract ReputationIntegration is ReputationSetup {
         users[4] = makeAddr("user5");
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(user2);
@@ -490,7 +491,7 @@ contract ReputationIntegration is ReputationSetup {
         vm.skip(true);
         // Complete a personal goal
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
             .CreateGoalParams({
@@ -525,9 +526,9 @@ contract ReputationIntegration is ReputationSetup {
         users[4] = makeAddr("user5");
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(user1);
@@ -596,9 +597,9 @@ contract ReputationIntegration is ReputationSetup {
         users[3] = user3; // Should be position 4 (lowest rep)
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(users[0]);

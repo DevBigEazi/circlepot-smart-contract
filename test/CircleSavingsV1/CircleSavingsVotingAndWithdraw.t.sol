@@ -64,10 +64,10 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         circleSavings.executeVote(cid);
 
         // after failed vote, members can withdraw collateral
-        uint256 before = cUSD.balanceOf(alice);
+        uint256 before = USDm.balanceOf(alice);
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
-        uint256 afterBalance = cUSD.balanceOf(alice);
+        uint256 afterBalance = USDm.balanceOf(alice);
 
         assertTrue(afterBalance > before, "Alice should have received collateral after failed vote");
     }
@@ -194,10 +194,10 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
     function test_WithdrawCollateral_UltimatumPath() public {
         uint256 cid = _createDefaultCircle(alice);
         vm.warp(block.timestamp + 8 days);
-        uint256 balBefore = cUSD.balanceOf(alice);
+        uint256 balBefore = USDm.balanceOf(alice);
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
-        uint256 balAfter = cUSD.balanceOf(alice);
+        uint256 balAfter = USDm.balanceOf(alice);
         assertGt(balAfter, balBefore);
     }
 

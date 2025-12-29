@@ -18,6 +18,7 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /**
  * @title CircleSavingsV1
@@ -101,6 +102,7 @@ contract CircleSavingsV1 is
         bool isActive;
         uint256 collateralLocked;
         uint256 joinedAt;
+        uint256 performancePoints;
     }
 
     struct CreateCircleParams {
@@ -122,7 +124,7 @@ contract CircleSavingsV1 is
     }
 
     // ============ Storage ============
-    address public cUSDToken;
+    address public USDmToken;
     address public treasury;
     address public reputationContract;
 
@@ -146,6 +148,13 @@ contract CircleSavingsV1 is
     uint256 public totalPlatformFees;
     uint256 public platformFeeBps;
     uint256 public fixedFeeThreshold;
+
+    // Yield and Performance storage
+    address public vault;
+    mapping(uint256 => uint256) public circleShares;
+    mapping(uint256 => uint256) public circleLateFeePool;
+    mapping(uint256 => uint256) public totalCirclePoints;
+    uint256 public constant PLATFORM_YIELD_SHARE_BPS = 1000; // 10%
 
     // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
@@ -239,6 +248,29 @@ contract CircleSavingsV1 is
         uint256 indexed amount
     );
     event ReputationContractUpdated(address indexed newContract);
+    event PointsAwarded(
+        uint256 indexed circleId,
+        address indexed member,
+        uint256 points,
+        string reason
+    );
+    event YieldDistributed(
+        uint256 indexed circleId,
+        uint256 totalSurplus,
+        uint256 platformShare,
+        uint256 communityShare
+    );
+    event LateFeeAddedToPool(
+        uint256 indexed circleId,
+        address indexed member,
+        uint256 amount
+    );
+    event MemberRewardClaimed(
+        uint256 indexed circleId,
+        address indexed member,
+        uint256 rewardAmount
+    );
+    event VaultUpdated(address indexed newVault);
 
     // ============ Errors ============
     error InvalidContributionAmount();
@@ -277,30 +309,32 @@ contract CircleSavingsV1 is
 
     /**
      * @dev Initializes the contract with initial parameters
-     * @param _cUSDToken Address of the cUSD token contract
+     * @param _USDmToken Address of the USDm token contract
      * @param _treasury Address of the treasury for platform fees
      * @param _reputationContract Address of the reputation contract
      * @param initialOwner Address of the initial owner (if zero, msg.sender remains owner)
      */
     function initialize(
-        address _cUSDToken,
+        address _USDmToken,
         address _treasury,
         address _reputationContract,
+        address _vault,
         address initialOwner
     ) public initializer {
         __Ownable_init(initialOwner);
 
         if (
-            _cUSDToken == address(0) ||
+            _USDmToken == address(0) ||
             _treasury == address(0) ||
             _reputationContract == address(0)
         ) {
             revert AddressZeroNotAllowed();
         }
 
-        cUSDToken = _cUSDToken;
+        USDmToken = _USDmToken;
         treasury = _treasury;
         reputationContract = _reputationContract;
+        vault = _vault;
         circleCounter = 1;
         platformFeeBps = PLATFORM_FEE_BPS;
         fixedFeeThreshold = FIXED_FEE_THRESHOLD;
@@ -312,19 +346,19 @@ contract CircleSavingsV1 is
 
     /**
      * @dev Function for upgrading the contract to a new version (reinitializer)
-     * @param _cUSDToken Address of cUSD token (if changed)
+     * @param _USDmToken Address of USDm token (if changed)
      * @param _treasury Address of treasury (if changed)
      * @param _reputationContract Address of reputation contract (if changed)
      * @param _version Reinitializer version number
      */
     function upgrade(
-        address _cUSDToken,
+        address _USDmToken,
         address _treasury,
         address _reputationContract,
         uint8 _version
     ) public reinitializer(_version) onlyOwner {
-        if (_cUSDToken != address(0)) {
-            cUSDToken = _cUSDToken;
+        if (_USDmToken != address(0)) {
+            USDmToken = _USDmToken;
         }
         if (_treasury != address(0)) {
             treasury = _treasury;
@@ -332,6 +366,17 @@ contract CircleSavingsV1 is
         if (_reputationContract != address(0)) {
             reputationContract = _reputationContract;
         }
+        // Vault is handled separately or in next upgrade
+    }
+
+    /**
+     * @dev Update the vault address (admin only)
+     * @param _newVault New vault address
+     */
+    function updateVault(address _newVault) external onlyOwner {
+        if (_newVault == address(0)) revert AddressZeroNotAllowed();
+        vault = _newVault;
+        emit VaultUpdated(_newVault);
     }
 
     /**
@@ -400,7 +445,7 @@ contract CircleSavingsV1 is
             emit VisibilityUpdated(circleId, msg.sender, params.visibility);
         }
 
-        IERC20(cUSDToken).safeTransferFrom(
+        IERC20(USDmToken).safeTransferFrom(
             msg.sender,
             address(this),
             totalRequired
@@ -425,13 +470,22 @@ contract CircleSavingsV1 is
             contributionsThisRound: 0 // Initialize counter
         });
 
+        if (vault != address(0) && collateral > 0) {
+            IERC20(USDmToken).approve(vault, collateral);
+            circleShares[circleId] = IERC4626(vault).deposit(
+                collateral,
+                address(this)
+            );
+        }
+
         circleMembers[circleId][msg.sender] = Member({
             position: 0,
             totalContributed: 0,
             hasReceivedPayout: false,
             isActive: true,
             collateralLocked: collateral,
-            joinedAt: block.timestamp
+            joinedAt: block.timestamp,
+            performancePoints: 0
         });
 
         circleMemberList[circleId].push(msg.sender);
@@ -471,7 +525,7 @@ contract CircleSavingsV1 is
         if (c.state != CircleState.CREATED) revert CircleNotExist();
         if (c.visibility == _newVisibility) revert SameVisibility();
 
-        IERC20(cUSDToken).safeTransferFrom(
+        IERC20(USDmToken).safeTransferFrom(
             msg.sender,
             address(this),
             VISIBILITY_UPDATE_FEE
@@ -538,7 +592,7 @@ contract CircleSavingsV1 is
             c.maxMembers
         );
 
-        IERC20(cUSDToken).safeTransferFrom(
+        IERC20(USDmToken).safeTransferFrom(
             msg.sender,
             address(this),
             collateral
@@ -550,8 +604,17 @@ contract CircleSavingsV1 is
             hasReceivedPayout: false,
             isActive: true,
             collateralLocked: collateral,
-            joinedAt: block.timestamp
+            joinedAt: block.timestamp,
+            performancePoints: 0
         });
+        
+        if (vault != address(0) && collateral > 0) {
+            IERC20(USDmToken).approve(vault, collateral);
+            circleShares[_circleId] += IERC4626(vault).deposit(
+                collateral,
+                address(this)
+            );
+        }
 
         circleMemberList[_circleId].push(msg.sender);
 
@@ -760,7 +823,33 @@ contract CircleSavingsV1 is
         m.isActive = false;
         c.state = CircleState.DEAD;
 
-        IERC20(cUSDToken).safeTransfer(msg.sender, amt);
+        if (vault != address(0) && circleShares[_circleId] > 0) {
+            uint256 sharesToBurn = IERC4626(vault).withdraw(amt, address(this), address(this));
+            circleShares[_circleId] -= sharesToBurn;
+
+            // Yield Sweep: If this was the last active member with collateral, platform takes remaining yield
+            bool anyLeft = false;
+            address[] storage mlist = circleMemberList[_circleId];
+            for (uint256 i = 0; i < mlist.length; i++) {
+                if (circleMembers[_circleId][mlist[i]].isActive && circleMembers[_circleId][mlist[i]].collateralLocked > 0) {
+                    anyLeft = true;
+                    break;
+                }
+            }
+
+            if (!anyLeft && circleShares[_circleId] > 0) {
+                // Redeem everything else (the yield) for the platform
+                uint256 yieldShares = circleShares[_circleId];
+                circleShares[_circleId] = 0;
+                uint256 balanceBefore = IERC20(USDmToken).balanceOf(address(this));
+                IERC4626(vault).redeem(yieldShares, address(this), address(this));
+                uint256 balanceAfter = IERC20(USDmToken).balanceOf(address(this));
+                uint256 yieldAmt = balanceAfter - balanceBefore;
+                totalPlatformFees += yieldAmt;
+            }
+        }
+
+        IERC20(USDmToken).safeTransfer(msg.sender, amt);
 
         emit CollateralWithdrawn(_circleId, msg.sender, amt);
     }
@@ -823,7 +912,7 @@ contract CircleSavingsV1 is
         if (afterGrace) {
             _handleLate(_circleId, round, c.contributionAmount);
         } else {
-            IERC20(cUSDToken).safeTransferFrom(
+            IERC20(USDmToken).safeTransferFrom(
                 msg.sender,
                 address(this),
                 c.contributionAmount
@@ -831,6 +920,11 @@ contract CircleSavingsV1 is
 
             c.totalPot += c.contributionAmount;
             m.totalContributed += c.contributionAmount;
+
+            // Award performance points for on-time payment (not after grace)
+            m.performancePoints += 10;
+            totalCirclePoints[_circleId] += 10;
+            emit PointsAwarded(_circleId, msg.sender, 10, "On-Time Payment");
         }
 
         roundContributions[_circleId][round][msg.sender] = true;
@@ -911,7 +1005,9 @@ contract CircleSavingsV1 is
             uint256 toFees = deduction - toPot;
 
             c.totalPot += toPot;
-            totalPlatformFees += toFees;
+            circleLateFeePool[_circleId] += toFees;
+
+            emit LateFeeAddedToPool(_circleId, memberAddr, toFees);
 
             // Mark as contributed (forfeited counts as contributed)
             roundContributions[_circleId][round][memberAddr] = true;
@@ -1176,7 +1272,21 @@ contract CircleSavingsV1 is
             totalPlatformFees += fee;
         }
 
-        IERC20(cUSDToken).safeTransfer(recip, amt);
+        // Vault Integration: If contract balance is low (due to forfeitures covered by collateral), withdraw from vault
+        uint256 currentBalance = IERC20(USDmToken).balanceOf(address(this));
+        if (currentBalance < totalAmount && vault != address(0) && circleShares[cid] > 0) {
+            uint256 needed = totalAmount - currentBalance;
+            // Ensure we don't try to withdraw more than available shares represent
+            uint256 maxWithdraw = IERC4626(vault).previewRedeem(circleShares[cid]);
+            uint256 toWithdraw = needed > maxWithdraw ? maxWithdraw : needed;
+            
+            if (toWithdraw > 0) {
+                uint256 sharesToBurn = IERC4626(vault).withdraw(toWithdraw, address(this), address(this));
+                circleShares[cid] -= sharesToBurn;
+            }
+        }
+
+        IERC20(USDmToken).safeTransfer(recip, amt);
         m.hasReceivedPayout = true;
         c.totalPot = 0;
 
@@ -1215,15 +1325,67 @@ contract CircleSavingsV1 is
      */
     function _releaseAllCollateral(uint256 cid) private {
         address[] storage mlist = circleMemberList[cid];
+        uint256 shares = circleShares[cid];
+        uint256 totalPrincipal = 0;
+        
+        // Calculate total principal that was invested
+        for (uint256 i = 0; i < mlist.length; i++) {
+            totalPrincipal += circleMembers[cid][mlist[i]].collateralLocked;
+        }
+
+        uint256 totalWithdrawn = totalPrincipal;
+        uint256 totalSurplus = 0;
+
+        if (vault != address(0) && shares > 0) {
+            uint256 balanceBefore = IERC20(USDmToken).balanceOf(address(this));
+            IERC4626(vault).redeem(shares, address(this), address(this));
+            uint256 balanceAfter = IERC20(USDmToken).balanceOf(address(this));
+            totalWithdrawn = balanceAfter - balanceBefore;
+            
+            // Interest earned in vault
+            uint256 interest = totalWithdrawn > totalPrincipal ? totalWithdrawn - totalPrincipal : 0;
+            // Total surplus = Interest + Penalties collected
+            totalSurplus = interest + circleLateFeePool[cid];
+        } else {
+            // No vault used, surplus is just the penalty pool
+            totalSurplus = circleLateFeePool[cid];
+        }
+
+        uint256 platformShare = 0;
+        uint256 communityShare = 0;
+
+        if (totalSurplus > 0) {
+            platformShare = (totalSurplus * PLATFORM_YIELD_SHARE_BPS) / 10000;
+            communityShare = totalSurplus - platformShare;
+            totalPlatformFees += platformShare;
+            
+            emit YieldDistributed(cid, totalSurplus, platformShare, communityShare);
+        }
+
+        uint256 tPoints = totalCirclePoints[cid];
 
         for (uint256 i = 0; i < mlist.length; i++) {
             Member storage m = circleMembers[cid][mlist[i]];
 
-            if (m.isActive && m.collateralLocked > 0) {
+            if (m.isActive && (m.collateralLocked > 0 || (tPoints > 0 && m.performancePoints > 0))) {
                 uint256 amt = m.collateralLocked;
+                uint256 reward = 0;
+
+                // Calculate performance reward
+                if (tPoints > 0 && communityShare > 0 && m.performancePoints > 0) {
+                    reward = (m.performancePoints * communityShare) / tPoints;
+                }
+
+                uint256 totalToReturn = amt + reward;
                 m.collateralLocked = 0;
-                IERC20(cUSDToken).safeTransfer(mlist[i], amt);
-                emit CollateralReturned(cid, mlist[i], amt);
+                
+                if (totalToReturn > 0) {
+                    IERC20(USDmToken).safeTransfer(mlist[i], totalToReturn);
+                    if (reward > 0) {
+                        emit MemberRewardClaimed(cid, mlist[i], reward);
+                    }
+                    emit CollateralReturned(cid, mlist[i], amt);
+                }
             }
         }
     }
@@ -1272,7 +1434,9 @@ contract CircleSavingsV1 is
 
         m.collateralLocked -= deduction;
         circles[cid].totalPot += amt;
-        totalPlatformFees += fee;
+        circleLateFeePool[cid] += fee;
+
+        emit LateFeeAddedToPool(cid, msg.sender, fee);
 
         // Update reputation via reputation contract
         _decreaseReputation(msg.sender, 5, "Late Payment");
@@ -1286,7 +1450,7 @@ contract CircleSavingsV1 is
     function withdrawPlatformFees() external onlyOwner {
         uint256 amt = totalPlatformFees;
         totalPlatformFees = 0;
-        IERC20(cUSDToken).safeTransfer(treasury, amt);
+        IERC20(USDmToken).safeTransfer(treasury, amt);
     }
 
     /**
@@ -1461,13 +1625,17 @@ contract CircleSavingsV1 is
             uint256 currentRound,
             uint256 totalRounds,
             uint256 contributionsThisRound,
-            uint256 totalMembers
+            uint256 totalMembers,
+            uint256 lateFeePool,
+            uint256 totalPoints
         )
     {
         Circle storage c = circles[_circleId];
         currentRound = c.currentRound;
         totalRounds = c.totalRounds;
         totalMembers = c.currentMembers;
+        lateFeePool = circleLateFeePool[_circleId];
+        totalPoints = totalCirclePoints[_circleId];
 
         if (c.state == CircleState.ACTIVE) {
             address[] storage mlist = circleMemberList[_circleId];
@@ -1481,7 +1649,9 @@ contract CircleSavingsV1 is
             currentRound,
             totalRounds,
             contributionsThisRound,
-            totalMembers
+            totalMembers,
+            lateFeePool,
+            totalPoints
         );
     }
 

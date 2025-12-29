@@ -56,29 +56,29 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
 
         // Fund accounts for joining
         uint256 collateral = 100e18 * 5 + ((100e18 * 5 * 100) / 10000); // contributionAmount * maxMembers + 1% buffer
-        deal(address(cUSD), bob, collateral);
-        deal(address(cUSD), charlie, collateral);
-        deal(address(cUSD), david, collateral);
-        deal(address(cUSD), eve, collateral);
+        deal(address(USDm), bob, collateral);
+        deal(address(USDm), charlie, collateral);
+        deal(address(USDm), david, collateral);
+        deal(address(USDm), eve, collateral);
 
         // Approve token spending
         vm.startPrank(bob);
-        cUSD.approve(address(circleSavings), collateral);
+        USDm.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(charlie);
-        cUSD.approve(address(circleSavings), collateral);
+        USDm.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(david);
-        cUSD.approve(address(circleSavings), collateral);
+        USDm.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(eve);
-        cUSD.approve(address(circleSavings), collateral);
+        USDm.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
@@ -194,14 +194,14 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
     function test_Initialize_RevertZeroAddresses() public {
         CircleSavingsV1 impl = new CircleSavingsV1();
         vm.expectRevert();
-        impl.initialize(address(0), testTreasury, address(reputation), testOwner);
+        impl.initialize(address(0), testTreasury, address(reputation), address(0), testOwner);
     }
 
     function test_Upgrade_UpdatesAddresses() public {
         address newToken = makeAddr("newToken");
         vm.prank(testOwner);
         circleSavings.upgrade(newToken, address(0), address(0), 2);
-        assertEq(circleSavings.cUSDToken(), newToken);
+        assertEq(circleSavings.USDmToken(), newToken);
     }
 
     function test_CreateCircle_PublicVisibility() public {

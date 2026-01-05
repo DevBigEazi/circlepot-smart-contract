@@ -71,7 +71,8 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
             contributionAmount: 100e18,
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PRIVATE
+            visibility: CircleSavingsV1.Visibility.PRIVATE,
+            enableYield: true
         });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -122,7 +123,8 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
             contributionAmount: 100e18,
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC
+            visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
         });
 
         return circleSavings.createCircle(params);

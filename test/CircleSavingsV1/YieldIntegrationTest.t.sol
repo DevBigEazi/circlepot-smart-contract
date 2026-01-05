@@ -18,7 +18,8 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             contributionAmount: 100e18,
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC
+            visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
         });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -84,11 +85,12 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             contributionAmount: 100e18,
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC
+            visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
         }));
         vm.stopPrank();
 
-        uint256 initialShares = circleSavings.circleShares(cid);
+        // uint256 initialShares = circleSavings.circleShares(cid);
         // Alice shares = 505 for 505 assets.
 
         // Add 10e18 yield to the vault while it's pending
@@ -124,7 +126,8 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             contributionAmount: 100e18,
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC
+            visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
         }));
 
         address[] memory others = new address[](4);

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT LICENSE
 pragma solidity ^0.8.27;
 
 import {ReputationSetup} from "./ReputationSetup.t.sol";
@@ -255,7 +255,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
             })
         );
 
@@ -313,7 +314,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
             })
         );
 
@@ -376,7 +378,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
             })
         );
 
@@ -455,7 +458,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
             })
         );
 
@@ -539,7 +543,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
             })
         );
 
@@ -610,7 +615,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 4,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
             })
         );
 

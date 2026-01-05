@@ -108,9 +108,9 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         circleSavings.contribute(cid);
 
         // Check that round advanced
-        (CircleSavingsV1.Circle memory c, , , ) = circleSavings
+        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
-        assertEq(c.currentRound, 2);
+        assertEq(status.currentRound, 2);
 
         // Check that first position holder got reputation increase
         uint256 rep = reputation.getReputation(alice);

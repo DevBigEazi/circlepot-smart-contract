@@ -39,27 +39,33 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Check collateral was deducted
-        (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
-            .getMemberInfo(cid, alice);
+        {
+            (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
+                .getMemberInfo(cid, alice);
 
-        // Alice is the recipient, so she should NOT be forfeited
-        assertEq(
-            aliceAfter.collateralLocked,
-            collateralBefore,
-            "Recipient should NOT be forfeited"
-        );
+            // Alice is the recipient, so she should NOT be forfeited
+            assertEq(
+                aliceAfter.collateralLocked,
+                collateralBefore,
+                "Recipient should NOT be forfeited"
+            );
+        }
 
         // Check alice is NOT marked as contributed (she's the recipient and was skipped)
-        (, bool hasContributed, ) = circleSavings.getMemberInfo(cid, alice);
-        assertFalse(
-            hasContributed,
-            "Recipient should NOT be marked as contributed"
-        );
+        {
+            (, bool hasContributed, ) = circleSavings.getMemberInfo(cid, alice);
+            assertFalse(
+                hasContributed,
+                "Recipient should NOT be marked as contributed"
+            );
+        }
 
         // Check reputation impact - Alice should have NO late payments
-        (, , , , , , , uint256 latePayments, ) = reputation
-            .getUserReputationDetails(alice);
-        assertEq(latePayments, 0, "Recipient should NOT have late payment");
+        {
+            (, , , , , , , uint256 latePayments, ) = reputation
+                .getUserReputationDetails(alice);
+            assertEq(latePayments, 0, "Recipient should NOT have late payment");
+        }
     }
 
     function test_ForfeitMember_AnyActiveMemberCanForfeit_Success() public {
@@ -265,32 +271,25 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         );
 
         // Check that round did NOT advance (alice still needs to contribute or be forfeited)
-        (CircleSavingsV1.Circle memory circle, , , ) = circleSavings
-            .getCircleDetails(cid);
-        assertEq(
-            circle.currentRound,
-            1,
-            "Round should NOT advance since recipient hasn't contributed"
-        );
+        _checkRoundStatus(cid, 1);
 
         // Check reputation impact - only Charlie, David, Eve should have late payments
-        (, , , , , , , uint256 aliceLatePayments, ) = reputation
-            .getUserReputationDetails(alice);
-        (, , , , , , , uint256 charlieLatePayments, ) = reputation
-            .getUserReputationDetails(charlie);
-        (, , , , , , , uint256 davidLatePayments, ) = reputation
-            .getUserReputationDetails(david);
-        (, , , , , , , uint256 eveLatePayments, ) = reputation
-            .getUserReputationDetails(eve);
-
-        assertEq(aliceLatePayments, 0, "Alice (recipient) should NOT have late payment");
-        assertEq(
-            charlieLatePayments,
-            1,
-            "Should record late payment for Charlie"
-        );
-        assertEq(davidLatePayments, 1, "Should record late payment for David");
-        assertEq(eveLatePayments, 1, "Should record late payment for Eve");
+        {
+            (, , , , , , , uint256 aliceLatePayments, ) = reputation.getUserReputationDetails(alice);
+            assertEq(aliceLatePayments, 0, "Alice (recipient) should NOT have late payment");
+        }
+        {
+            (, , , , , , , uint256 charlieLatePayments, ) = reputation.getUserReputationDetails(charlie);
+            assertEq(charlieLatePayments, 1, "Should record late payment for Charlie");
+        }
+        {
+            (, , , , , , , uint256 davidLatePayments, ) = reputation.getUserReputationDetails(david);
+            assertEq(davidLatePayments, 1, "Should record late payment for David");
+        }
+        {
+            (, , , , , , , uint256 eveLatePayments, ) = reputation.getUserReputationDetails(eve);
+            assertEq(eveLatePayments, 1, "Should record late payment for Eve");
+        }
     }
 
     function test_ForfeitMember_InsufficientCollateral() public {
@@ -363,10 +362,10 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         );
 
         // Check that the round did NOT advance (recipient hasn't contributed)
-        (CircleSavingsV1.Circle memory circleAfter, , , ) = circleSavings
+        (, CircleSavingsV1.CircleStatus memory statusAfter, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
-            circleAfter.currentRound,
+            statusAfter.currentRound,
             1,
             "Round should NOT advance since recipient hasn't contributed"
         );
@@ -406,10 +405,10 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Check that round did NOT advance (Alice is recipient and wasn't forfeited)
-        (CircleSavingsV1.Circle memory circle, , , ) = circleSavings
+        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
 
-        assertEq(circle.currentRound, 1, "Round should NOT advance");
+        assertEq(status.currentRound, 1, "Round should NOT advance");
 
         // Check alice did NOT receive payout yet (round hasn't completed)
         uint256 aliceBalanceAfter = USDm.balanceOf(alice);
@@ -511,5 +510,16 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         }
 
         return address(0);
+    }
+
+
+    function _checkRoundStatus(uint256 cid, uint256 expectedRound) internal view {
+        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings.getCircleDetails(cid);
+        assertEq(status.currentRound, expectedRound, "Incorrect current round");
+    }
+
+    function _getMemberCollateral(uint256 cid, address member) internal view returns (uint256) {
+        (CircleSavingsV1.Member memory m, , ) = circleSavings.getMemberInfo(cid, member);
+        return m.collateralLocked;
     }
 }

@@ -17,7 +17,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -76,7 +77,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 500e18,
                 contributionAmount: 10e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
         uint256 gid = personalSavings.createPersonalGoal(params);
         // First contribution made (10e18)
@@ -95,7 +97,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 1e17,
                 contributionAmount: 1e17,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
     }
@@ -109,7 +112,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 0,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
     }
@@ -123,7 +127,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp - 1
+                deadline: block.timestamp - 1,
+                enableYield: false
             })
         );
     }
@@ -175,7 +180,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
         // First contribution made (50e18), progress = 25%
@@ -194,7 +200,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
         // First contribution made (50e18), progress = 50%

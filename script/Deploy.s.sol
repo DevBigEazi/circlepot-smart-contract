@@ -2,7 +2,9 @@
 pragma solidity ^0.8.27;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {
+    ERC1967Proxy
+} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {UserProfileV1} from "../src/UserProfileV1.sol";
 import {PersonalSavingsV1} from "../src/PersonalSavingsV1.sol";
 import {CircleSavingsV1} from "../src/CircleSavingsV1.sol";
@@ -18,8 +20,11 @@ contract Deploy is Script {
 
     function run() external {
         address treasury = vm.envOr("TREASURY_ADDRESS", msg.sender);
-        // Celo Sepolia USDm (cUSD) address
-        address USDm = vm.envOr("USDm_ADDRESS", address(0x6B172e333e2978484261D7eCC3DE491E79764BbC));
+        // Celo Sepolia USDm (formerly cUSD) address
+        address USDm = vm.envOr(
+            "USDm_ADDRESS",
+            address(0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b)
+        );
 
         vm.startBroadcast();
 
@@ -53,6 +58,7 @@ contract Deploy is Script {
             USDm, // USDm token address
             treasury, // treasury address
             address(reputationProxy), // reputation contract address
+            address(yieldVault), // vault address for yield
             msg.sender // initialOwner
         );
 

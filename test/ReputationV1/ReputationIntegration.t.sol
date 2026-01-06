@@ -50,6 +50,7 @@ contract ReputationIntegration is ReputationSetup {
             address(mockUSDm),
             treasury,
             address(reputation),
+            address(0), // No vault needed for these reputation tests
             owner
         );
         personalSavings = PersonalSavingsV1(address(savingsProxy));
@@ -86,7 +87,8 @@ contract ReputationIntegration is ReputationSetup {
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
+                deadline: block.timestamp + DEADLINE,
+                enableYield: false
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -128,7 +130,8 @@ contract ReputationIntegration is ReputationSetup {
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
+                deadline: block.timestamp + DEADLINE,
+                enableYield: false
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -163,7 +166,8 @@ contract ReputationIntegration is ReputationSetup {
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
+                deadline: block.timestamp + DEADLINE,
+                enableYield: false
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -201,7 +205,8 @@ contract ReputationIntegration is ReputationSetup {
                     targetAmount: TARGET_AMOUNT,
                     contributionAmount: CONTRIBUTION_AMOUNT,
                     frequency: PersonalSavingsV1.Frequency.DAILY,
-                    deadline: block.timestamp + DEADLINE
+                    deadline: block.timestamp + DEADLINE,
+                    enableYield: false
                 });
             uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -256,7 +261,7 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+                enableYield: true
             })
         );
 
@@ -315,7 +320,7 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+                enableYield: true
             })
         );
 
@@ -379,7 +384,7 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+                enableYield: true
             })
         );
 
@@ -459,7 +464,7 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+                enableYield: true
             })
         );
 
@@ -503,7 +508,8 @@ contract ReputationIntegration is ReputationSetup {
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
+                deadline: block.timestamp + DEADLINE,
+                enableYield: false
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -544,7 +550,7 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+                enableYield: true
             })
         );
 
@@ -616,7 +622,7 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 4,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+                enableYield: true
             })
         );
 

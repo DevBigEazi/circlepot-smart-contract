@@ -1,7 +1,9 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT LICENSE
 pragma solidity ^0.8.27;
 
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {
+    ERC1967Proxy
+} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {PersonalSavingsV1} from "../PersonalSavingsV1.sol";
 
 /**
@@ -15,12 +17,18 @@ contract PersonalSavingsProxy is ERC1967Proxy {
         address _USDmToken,
         address _treasury,
         address _reputationContract,
+        address _vault,
         address _initialOwner
     )
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                PersonalSavingsV1.initialize.selector, _USDmToken, _treasury, _reputationContract, _initialOwner
+                PersonalSavingsV1.initialize.selector,
+                _USDmToken,
+                _treasury,
+                _reputationContract,
+                _vault,
+                _initialOwner
             )
         )
     {}
@@ -31,6 +39,7 @@ contract PersonalSavingsProxy is ERC1967Proxy {
  * @param _USDmToken Address of USDm token on Celo L2
  * @param _treasury Address for platform fees
  * @param _reputationContract Address of the reputation contract
+ * @param _vault Address of the ERC4626 vault for yield generation
  * @param _initialOwner Address of contract owner
  * @return proxy Address of the deployed proxy (which delegates to PersonalSavingsV1)
  */
@@ -38,14 +47,21 @@ function createPersonalSavings(
     address _USDmToken,
     address _treasury,
     address _reputationContract,
+    address _vault,
     address _initialOwner
 ) returns (PersonalSavingsV1 proxy) {
     // Deploy implementation
     PersonalSavingsV1 implementation = new PersonalSavingsV1();
 
     // Deploy proxy pointing to the implementation
-    PersonalSavingsProxy _proxy =
-        new PersonalSavingsProxy(address(implementation), _USDmToken, _treasury, _reputationContract, _initialOwner);
+    PersonalSavingsProxy _proxy = new PersonalSavingsProxy(
+        address(implementation),
+        _USDmToken,
+        _treasury,
+        _reputationContract,
+        _vault,
+        _initialOwner
+    );
 
     // Return proxy as PersonalSavingsV1 interface
     proxy = PersonalSavingsV1(address(_proxy));

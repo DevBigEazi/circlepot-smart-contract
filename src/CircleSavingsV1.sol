@@ -579,7 +579,10 @@ contract CircleSavingsV1 is
 
         if (conf.creator != msg.sender) revert OnlyCreator();
         if (conf.visibility != Visibility.PRIVATE) revert CircleNotPrivate();
-        if (stat.state != CircleState.CREATED) revert InvalidCircle();
+        if (
+            stat.state != CircleState.CREATED &&
+            stat.state != CircleState.VOTING
+        ) revert InvalidCircle();
 
         for (uint256 i = 0; i < _invitees.length; i++) {
             circleInvitations[_circleId][_invitees[i]] = true;
@@ -696,7 +699,7 @@ contract CircleSavingsV1 is
         vote.withdrawVoteCount = 0;
         vote.votingActive = true;
         vote.voteExecuted = false;
-        vote.totalEligibleVoters = stat.currentMembers; // NEW: Track total for early execution
+        vote.totalEligibleVoters = stat.currentMembers; // Track total for early execution
 
         stat.state = CircleState.VOTING;
 
@@ -741,7 +744,7 @@ contract CircleSavingsV1 is
 
         emit VoteCast(_circleId, msg.sender, _choice);
 
-        // NEW: Check if all members have voted for early execution
+        // Check if all members have voted for early execution
         uint256 totalVotes = vote.startVoteCount + vote.withdrawVoteCount;
         if (totalVotes == vote.totalEligibleVoters) {
             // All members voted - execute immediately
@@ -767,45 +770,6 @@ contract CircleSavingsV1 is
         if (vote.voteExecuted) revert VoteAlreadyExecuted();
 
         _executeVoteInternal(_circleId);
-    }
-
-    /**
-     * @dev Internal function to execute vote (called by executeVote or early execution)
-     * @param _circleId Circle ID
-     */
-    function _executeVoteInternal(uint256 _circleId) private {
-        CircleStatus storage stat = circleStatus[_circleId];
-        Vote storage vote = circleVotes[_circleId];
-
-        if (vote.voteExecuted) return; // Already executed
-
-        vote.votingActive = false;
-        vote.voteExecuted = true;
-
-        // Tie-breaking: Status quo wins (circle continues)
-        // Only end circle if WITHDRAW has STRICT majority
-        bool shouldWithdraw = vote.withdrawVoteCount > vote.startVoteCount;
-
-        if (shouldWithdraw) {
-            // Majority wants to end circle - release everything immediately
-            _releaseDeadCircleCollateral(_circleId);
-            emit VoteExecuted(
-                _circleId,
-                false, // false = circle ended
-                vote.startVoteCount,
-                vote.withdrawVoteCount
-            );
-        } else {
-            // Tie or majority wants to start - start the circle
-            stat.state = CircleState.CREATED;
-            _startCircleInternal(_circleId);
-            emit VoteExecuted(
-                _circleId,
-                true, // true = circle started
-                vote.startVoteCount,
-                vote.withdrawVoteCount
-            );
-        }
     }
 
     /**
@@ -860,9 +824,8 @@ contract CircleSavingsV1 is
      * @param _circleId Circle ID
      */
     function contribute(uint256 _circleId) external {
-        if (_circleId == 0 || _circleId >= circleCounter) {
+        if (_circleId == 0 || _circleId >= circleCounter)
             revert InvalidCircle();
-        }
 
         CircleConfig storage conf = circleConfigs[_circleId];
         CircleStatus storage stat = circleStatus[_circleId];
@@ -874,9 +837,8 @@ contract CircleSavingsV1 is
 
         uint256 round = stat.currentRound;
 
-        if (roundContributions[_circleId][round][msg.sender]) {
+        if (roundContributions[_circleId][round][msg.sender])
             revert AlreadyContributed();
-        }
 
         uint256 deadline = circleRoundDeadlines[_circleId][round];
         uint256 gracePeriod = _getGracePeriod(conf.frequency);
@@ -896,10 +858,17 @@ contract CircleSavingsV1 is
             stat.totalPot += conf.contributionAmount;
             m.totalContributed += conf.contributionAmount;
 
-            // Award performance points for on-time payment (not after grace)
-            m.performancePoints += 10;
-            totalCirclePoints[_circleId] += 10;
-            emit PointsAwarded(_circleId, msg.sender, 10, "On-Time Payment");
+            // Award performance points for on-time payment (not after grace), if yield is enabled
+            if (conf.isYieldEnabled && vault != address(0)) {
+                m.performancePoints += 10;
+                totalCirclePoints[_circleId] += 10;
+                emit PointsAwarded(
+                    _circleId,
+                    msg.sender,
+                    10,
+                    "On-Time Payment"
+                );
+            }
         }
 
         roundContributions[_circleId][round][msg.sender] = true;
@@ -967,6 +936,44 @@ contract CircleSavingsV1 is
 
         if (anyForfeited) {
             _checkComplete(_circleId);
+        }
+    }
+
+    // ============ Internal Functions ============
+    /**
+     * @dev Internal function to execute vote (called by executeVote or early execution)
+     * @param _circleId Circle ID
+     */
+    function _executeVoteInternal(uint256 _circleId) private {
+        Vote storage vote = circleVotes[_circleId];
+
+        if (vote.voteExecuted) return; // Already executed
+
+        vote.votingActive = false;
+        vote.voteExecuted = true;
+
+        // Tie-breaking: Status quo wins (circle continues)
+        // Only end circle if WITHDRAW has STRICT majority
+        bool shouldWithdraw = vote.withdrawVoteCount > vote.startVoteCount;
+
+        if (shouldWithdraw) {
+            // Majority wants to end circle - release everything immediately
+            _releaseDeadCircleCollateral(_circleId);
+            emit VoteExecuted(
+                _circleId,
+                false, // false = circle ended
+                vote.startVoteCount,
+                vote.withdrawVoteCount
+            );
+        } else {
+            // Tie or majority wants to start - start the circle
+            _startCircleInternal(_circleId);
+            emit VoteExecuted(
+                _circleId,
+                true, // true = circle started
+                vote.startVoteCount,
+                vote.withdrawVoteCount
+            );
         }
     }
 

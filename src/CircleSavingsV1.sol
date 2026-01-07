@@ -836,6 +836,7 @@ contract CircleSavingsV1 is
         if (!m.isActive) revert NotActiveMember();
 
         uint256 round = stat.currentRound;
+        address recipient = _getByPos(_circleId, round);
 
         if (roundContributions[_circleId][round][msg.sender])
             revert AlreadyContributed();
@@ -846,7 +847,7 @@ contract CircleSavingsV1 is
 
         bool afterGrace = block.timestamp > graceDeadline;
 
-        if (afterGrace) {
+        if (afterGrace && msg.sender != recipient) {
             _handleLate(_circleId, round, conf.contributionAmount);
         } else {
             IERC20(USDmToken).safeTransferFrom(
@@ -859,7 +860,7 @@ contract CircleSavingsV1 is
             m.totalContributed += conf.contributionAmount;
 
             // Award performance points for on-time payment (not after grace), if yield is enabled
-            if (conf.isYieldEnabled && vault != address(0)) {
+            if (!afterGrace && conf.isYieldEnabled && vault != address(0)) {
                 m.performancePoints += 10;
                 totalCirclePoints[_circleId] += 10;
                 emit PointsAwarded(
@@ -934,9 +935,8 @@ contract CircleSavingsV1 is
             anyForfeited = true;
         }
 
-        if (anyForfeited) {
-            _checkComplete(_circleId);
-        }
+        // Always check completion if the loop ran (grace period is already verified above)
+        _checkComplete(_circleId);
     }
 
     // ============ Internal Functions ============
@@ -1502,10 +1502,27 @@ contract CircleSavingsV1 is
      */
     function _checkComplete(uint256 cid) private {
         CircleStatus storage stat = circleStatus[cid];
+        CircleConfig storage conf = circleConfigs[cid];
+        uint256 round = stat.currentRound;
 
-        // Check if all active members have contributed using the counter
+        // Condition 1: All active members have contributed
         if (stat.contributionsThisRound == stat.currentMembers) {
-            _payoutRound(cid, stat.currentRound);
+            _payoutRound(cid, round);
+            return;
+        }
+
+        // Condition 2: After grace period, if only recipient hasn't contributed
+        uint256 deadline = circleRoundDeadlines[cid][round];
+        uint256 graceDeadline = deadline + _getGracePeriod(conf.frequency);
+
+        if (block.timestamp > graceDeadline) {
+            // Only recipient is missing
+            if (stat.contributionsThisRound == stat.currentMembers - 1) {
+                address recipient = _getByPos(cid, round);
+                if (!roundContributions[cid][round][recipient]) {
+                    _payoutRound(cid, round);
+                }
+            }
         }
     }
 

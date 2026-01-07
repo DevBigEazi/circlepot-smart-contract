@@ -410,7 +410,7 @@ contract ReputationIntegration is ReputationSetup {
                     "On-time contribution"
                 );
             }
-            vm.warp(block.timestamp + 2 days);
+            vm.warp(block.timestamp + 1 days);
         }
 
         // All members should have increased reputation

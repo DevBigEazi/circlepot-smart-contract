@@ -22,7 +22,7 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         deal(address(USDm), eve, contribution);
 
         // other members contribute
-        vm.prank(bob);
+        vm.prank(alice);
         circleSavings.contribute(cid);
         vm.prank(charlie);
         circleSavings.contribute(cid);
@@ -34,23 +34,23 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         // warp to after grace period
         vm.warp(block.timestamp + 8 days + 49 hours);
 
-        (CircleSavingsV1.Member memory aliceMemberBefore, , ) = circleSavings
-            .getMemberInfo(cid, alice);
-        uint256 collateralBefore = aliceMemberBefore.collateralLocked;
+        (CircleSavingsV1.Member memory bobMemberBefore, , ) = circleSavings
+            .getMemberInfo(cid, bob);
+        uint256 collateralBefore = bobMemberBefore.collateralLocked;
 
-        vm.prank(alice);
+        vm.prank(bob);
         circleSavings.contribute(cid);
 
-        (CircleSavingsV1.Member memory aliceMemberAfter, , ) = circleSavings
-            .getMemberInfo(cid, alice);
-        uint256 collateralAfter = aliceMemberAfter.collateralLocked;
+        (CircleSavingsV1.Member memory bobMemberAfter, , ) = circleSavings
+            .getMemberInfo(cid, bob);
+        uint256 collateralAfter = bobMemberAfter.collateralLocked;
 
         uint256 expectedDeduction = 100e18 +
             (100e18 * circleSavings.LATE_FEE_BPS()) /
             10000;
         assertEq(collateralBefore - collateralAfter, expectedDeduction);
         (, , , , , , , uint256 latePayments, ) = reputation
-            .getUserReputationDetails(alice);
+            .getUserReputationDetails(bob);
         assertEq(latePayments, 1);
     }
 

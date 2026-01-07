@@ -270,24 +270,40 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
             "Eve's collateral should be deducted"
         );
 
-        // Check that round did NOT advance (alice still needs to contribute or be forfeited)
-        _checkRoundStatus(cid, 1);
+        // Check that round DID advance via auto-resolution (Alice recipient was missing)
+        _checkRoundStatus(cid, 2);
 
         // Check reputation impact - only Charlie, David, Eve should have late payments
         {
-            (, , , , , , , uint256 aliceLatePayments, ) = reputation.getUserReputationDetails(alice);
-            assertEq(aliceLatePayments, 0, "Alice (recipient) should NOT have late payment");
+            (, , , , , , , uint256 aliceLatePayments, ) = reputation
+                .getUserReputationDetails(alice);
+            assertEq(
+                aliceLatePayments,
+                0,
+                "Alice (recipient) should NOT have late payment"
+            );
         }
         {
-            (, , , , , , , uint256 charlieLatePayments, ) = reputation.getUserReputationDetails(charlie);
-            assertEq(charlieLatePayments, 1, "Should record late payment for Charlie");
+            (, , , , , , , uint256 charlieLatePayments, ) = reputation
+                .getUserReputationDetails(charlie);
+            assertEq(
+                charlieLatePayments,
+                1,
+                "Should record late payment for Charlie"
+            );
         }
         {
-            (, , , , , , , uint256 davidLatePayments, ) = reputation.getUserReputationDetails(david);
-            assertEq(davidLatePayments, 1, "Should record late payment for David");
+            (, , , , , , , uint256 davidLatePayments, ) = reputation
+                .getUserReputationDetails(david);
+            assertEq(
+                davidLatePayments,
+                1,
+                "Should record late payment for David"
+            );
         }
         {
-            (, , , , , , , uint256 eveLatePayments, ) = reputation.getUserReputationDetails(eve);
+            (, , , , , , , uint256 eveLatePayments, ) = reputation
+                .getUserReputationDetails(eve);
             assertEq(eveLatePayments, 1, "Should record late payment for Eve");
         }
     }
@@ -361,22 +377,22 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
             "Recipient should NOT be forfeited"
         );
 
-        // Check that the round did NOT advance (recipient hasn't contributed)
+        // Check that the round DID advance via auto-resolution
         (, CircleSavingsV1.CircleStatus memory statusAfter, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             statusAfter.currentRound,
-            1,
-            "Round should NOT advance since recipient hasn't contributed"
+            2,
+            "Round should advance via auto-resolution"
         );
 
-        // Get circle progress to verify contributions
+        // In Round 2, contributionsThisRound resets to 0
         (, , uint256 contributionsThisRound, , , ) = circleSavings
             .getCircleProgress(cid);
         assertEq(
             contributionsThisRound,
-            4,
-            "Four members contributed (Bob, Charlie, David, Eve)"
+            0,
+            "Contributions should reset in New Round"
         );
     }
 
@@ -404,18 +420,22 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         vm.prank(bob);
         circleSavings.forfeitMember(cid, lateMembers);
 
-        // Check that round did NOT advance (Alice is recipient and wasn't forfeited)
+        // Check that round DID advance (Alice is recipient and triggered auto-resolution)
         (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
 
-        assertEq(status.currentRound, 1, "Round should NOT advance");
+        assertEq(
+            status.currentRound,
+            2,
+            "Round should advance via auto-payout"
+        );
 
-        // Check alice did NOT receive payout yet (round hasn't completed)
+        // Check alice DID receive payout (Creator gets full 400 pot)
         uint256 aliceBalanceAfter = USDm.balanceOf(alice);
         assertEq(
             aliceBalanceAfter,
-            aliceBalanceBefore,
-            "Alice should NOT receive payout yet"
+            aliceBalanceBefore + 400e18,
+            "Alice should have received the payout"
         );
     }
 
@@ -512,14 +532,23 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         return address(0);
     }
 
-
-    function _checkRoundStatus(uint256 cid, uint256 expectedRound) internal view {
-        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings.getCircleDetails(cid);
+    function _checkRoundStatus(
+        uint256 cid,
+        uint256 expectedRound
+    ) internal view {
+        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+            .getCircleDetails(cid);
         assertEq(status.currentRound, expectedRound, "Incorrect current round");
     }
 
-    function _getMemberCollateral(uint256 cid, address member) internal view returns (uint256) {
-        (CircleSavingsV1.Member memory m, , ) = circleSavings.getMemberInfo(cid, member);
+    function _getMemberCollateral(
+        uint256 cid,
+        address member
+    ) internal view returns (uint256) {
+        (CircleSavingsV1.Member memory m, , ) = circleSavings.getMemberInfo(
+            cid,
+            member
+        );
         return m.collateralLocked;
     }
 }

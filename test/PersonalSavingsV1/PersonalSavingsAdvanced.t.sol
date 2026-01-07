@@ -17,7 +17,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -37,12 +38,12 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         personalSavings.contributeToGoal(gid);
         vm.stopPrank();
 
-        uint256 balBefore = cUSD.balanceOf(alice);
+        uint256 balBefore = USDm.balanceOf(alice);
 
         vm.prank(alice);
         personalSavings.completeGoal(gid);
 
-        uint256 balAfter = cUSD.balanceOf(alice);
+        uint256 balAfter = USDm.balanceOf(alice);
         assertEq(balAfter - balBefore, 200e18);
     }
 
@@ -50,10 +51,10 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         uint256 gid = _createDefaultGoal(alice);
         // First contribution already made (100e18)
 
-        uint256 balBefore = cUSD.balanceOf(alice);
+        uint256 balBefore = USDm.balanceOf(alice);
         vm.prank(alice);
         personalSavings.withdrawFromGoal(gid, 50e18);
-        uint256 balAfter = cUSD.balanceOf(alice);
+        uint256 balAfter = USDm.balanceOf(alice);
         // Progress is 100/500 = 20% (< 25%), so penalty is 1% = 0.5e18
         assertEq(balAfter - balBefore, 49.5e18);
     }
@@ -76,7 +77,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 500e18,
                 contributionAmount: 10e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
         uint256 gid = personalSavings.createPersonalGoal(params);
         // First contribution made (10e18)
@@ -95,7 +97,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 1e17,
                 contributionAmount: 1e17,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
     }
@@ -109,7 +112,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 0,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
     }
@@ -123,7 +127,8 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp - 1
+                deadline: block.timestamp - 1,
+                enableYield: false
             })
         );
     }
@@ -175,14 +180,15 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
         // First contribution made (50e18), progress = 25%
-        uint256 balBefore = cUSD.balanceOf(alice);
+        uint256 balBefore = USDm.balanceOf(alice);
         vm.prank(alice);
         personalSavings.withdrawFromGoal(gid, 25e18);
-        uint256 balAfter = cUSD.balanceOf(alice);
+        uint256 balAfter = USDm.balanceOf(alice);
         assertLt(balAfter - balBefore, 25e18);
     }
 
@@ -194,14 +200,15 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
         // First contribution made (50e18), progress = 50%
-        uint256 balBefore = cUSD.balanceOf(alice);
+        uint256 balBefore = USDm.balanceOf(alice);
         vm.prank(alice);
         personalSavings.withdrawFromGoal(gid, 25e18);
-        uint256 balAfter = cUSD.balanceOf(alice);
+        uint256 balAfter = USDm.balanceOf(alice);
         assertLt(balAfter - balBefore, 25e18);
         vm.stopPrank();
     }

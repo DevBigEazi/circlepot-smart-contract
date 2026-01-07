@@ -22,12 +22,14 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         uint256 cid = _createDefaultCircle(alice);
 
         // Check initial state
-        (CircleSavingsV1.Circle memory circle, , , ) = circleSavings.getCircleDetails(cid);
-        assertEq(circle.currentMembers, 1, "Should only have creator");
-        assertEq(uint256(circle.state), 1, "Should be in CREATED state (1)");
+        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+            .getCircleDetails(cid);
+        assertEq(status.currentMembers, 1, "Should only have creator");
+        assertEq(uint256(status.state), 1, "Should be in CREATED state (1)");
 
         // Get Alice's collateral before
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings.getMemberInfo(cid, alice);
+        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings
+            .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceBefore.collateralLocked;
         assertGt(collateralBefore, 0, "Creator should have collateral locked");
 
@@ -40,20 +42,25 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 7 days + 1 hours);
 
         // Now Alice should be able to withdraw (solo creator, below 60% threshold)
-        uint256 aliceBalanceBefore = cUSD.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
 
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
         // Verify withdrawal
-        uint256 aliceBalanceAfter = cUSD.balanceOf(alice);
-        (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings.getMemberInfo(cid, alice);
+        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
+            .getMemberInfo(cid, alice);
 
         // Creator pays dead circle fee
-        uint256 expectedFee = 0.5 * 10**18; // PUBLIC_CIRCLE_DEAD_FEE = 0.5 cUSD
+        uint256 expectedFee = 0.5 * 10 ** 18; // PUBLIC_CIRCLE_DEAD_FEE = 0.5 USDm
         uint256 expectedReturn = collateralBefore - expectedFee;
 
-        assertEq(aliceAfter.collateralLocked, 0, "Collateral should be zero after withdrawal");
+        assertEq(
+            aliceAfter.collateralLocked,
+            0,
+            "Collateral should be zero after withdrawal"
+        );
         assertFalse(aliceAfter.isActive, "Member should be inactive");
         assertEq(
             aliceBalanceAfter - aliceBalanceBefore,
@@ -62,8 +69,9 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         );
 
         // Check circle state
-        (CircleSavingsV1.Circle memory circleAfter, , , ) = circleSavings.getCircleDetails(cid);
-        assertEq(uint256(circleAfter.state), 5, "Circle should be DEAD (5)");
+        (, CircleSavingsV1.CircleStatus memory statusAfter, , ) = circleSavings
+            .getCircleDetails(cid);
+        assertEq(uint256(statusAfter.state), 5, "Circle should be DEAD (5)");
     }
 
     /**
@@ -79,15 +87,25 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         circleSavings.joinCircle(cid);
 
         // Verify state
-        (CircleSavingsV1.Circle memory circle, , , ) = circleSavings.getCircleDetails(cid);
-        assertEq(circle.currentMembers, 2, "Should have 2 members");
-        
+        (
+            CircleSavingsV1.CircleConfig memory config,
+            CircleSavingsV1.CircleStatus memory status,
+            ,
+
+        ) = circleSavings.getCircleDetails(cid);
+        assertEq(status.currentMembers, 2, "Should have 2 members");
+
         // Calculate threshold: 2 < (5 * 60 / 100) = 2 < 3 = true
-        assertTrue(circle.currentMembers < (circle.maxMembers * 60) / 100, "Below 60% threshold");
+        assertTrue(
+            status.currentMembers < (config.maxMembers * 60) / 100,
+            "Below 60% threshold"
+        );
 
         // Get collateral amounts
-        (CircleSavingsV1.Member memory aliceMember, , ) = circleSavings.getMemberInfo(cid, alice);
-        (CircleSavingsV1.Member memory bobMember, , ) = circleSavings.getMemberInfo(cid, bob);
+        (CircleSavingsV1.Member memory aliceMember, , ) = circleSavings
+            .getMemberInfo(cid, alice);
+        (CircleSavingsV1.Member memory bobMember, , ) = circleSavings
+            .getMemberInfo(cid, bob);
         uint256 aliceCollateral = aliceMember.collateralLocked;
         uint256 bobCollateral = bobMember.collateralLocked;
 
@@ -95,23 +113,24 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 7 days + 1 hours);
 
         // Both should be able to withdraw WITHOUT voting
-        uint256 aliceBalanceBefore = cUSD.balanceOf(alice);
-        uint256 bobBalanceBefore = cUSD.balanceOf(bob);
+        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 bobBalanceBefore = USDm.balanceOf(bob);
 
-        // Alice (creator) withdraws
+        // Alice (creator) withdraws - this triggers bulk release for everyone
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
-        // Bob (member) withdraws
+        // Bob (member) should ALREADY have his funds, so his call should revert
         vm.prank(bob);
+        vm.expectRevert(CircleSavingsV1.NotActiveMember.selector);
         circleSavings.WithdrawCollateral(cid);
 
         // Verify withdrawals
-        uint256 aliceBalanceAfter = cUSD.balanceOf(alice);
-        uint256 bobBalanceAfter = cUSD.balanceOf(bob);
+        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        uint256 bobBalanceAfter = USDm.balanceOf(bob);
 
         // Alice pays dead fee, Bob doesn't
-        uint256 expectedFee = 0.5 * 10**18; // PUBLIC_CIRCLE_DEAD_FEE = 0.5 cUSD
+        uint256 expectedFee = 0.5 * 10 ** 18; // PUBLIC_CIRCLE_DEAD_FEE = 0.5 USDm
         assertEq(
             aliceBalanceAfter - aliceBalanceBefore,
             aliceCollateral - expectedFee,
@@ -139,12 +158,17 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         circleSavings.joinCircle(cid);
 
         // Verify state
-        (CircleSavingsV1.Circle memory circle, , , ) = circleSavings.getCircleDetails(cid);
-        assertEq(circle.currentMembers, 3, "Should have 3 members");
-        
+        (
+            CircleSavingsV1.CircleConfig memory config,
+            CircleSavingsV1.CircleStatus memory status,
+            ,
+
+        ) = circleSavings.getCircleDetails(cid);
+        assertEq(status.currentMembers, 3, "Should have 3 members");
+
         // Calculate threshold: 3 >= (5 * 60 / 100) = 3 >= 3 = true (AT or ABOVE threshold)
         assertFalse(
-            circle.currentMembers < (circle.maxMembers * 60) / 100,
+            status.currentMembers < (config.maxMembers * 60) / 100,
             "AT or above 60% threshold"
         );
 
@@ -165,13 +189,14 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         // Create circle with maxMembers = 10 for clearer percentage
         CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
             .CreateCircleParams({
-            title: "Test Circle",
-            description: "Test",
-            contributionAmount: 100 * 10 ** 18,
-            frequency: CircleSavingsV1.Frequency.WEEKLY,
-            maxMembers: 10,
-            visibility: CircleSavingsV1.Visibility.PUBLIC
-        });
+                title: "Test Circle",
+                description: "Test",
+                contributionAmount: 100 * 10 ** 18,
+                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                maxMembers: 10,
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                enableYield: true
+            });
 
         vm.prank(alice);
         uint256 cid = circleSavings.createCircle(params);
@@ -185,21 +210,26 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         members[4] = makeAddr("member6");
 
         for (uint256 i = 0; i < 5; i++) {
-            // Mint cUSD for the member (collateral requirement)
-            cUSD.mint(members[i], 1100 * 10**18); // Enough for collateral
-            
+            // Mint USDm for the member (collateral requirement)
+            USDm.mint(members[i], 1100 * 10 ** 18); // Enough for collateral
+
             vm.prank(members[i]);
-            cUSD.approve(address(circleSavings), type(uint256).max);
-            
+            USDm.approve(address(circleSavings), type(uint256).max);
+
             vm.prank(members[i]);
             circleSavings.joinCircle(cid);
         }
 
         // Verify: 6 members = 60% of 10 (AT threshold, not below)
-        (CircleSavingsV1.Circle memory circle, , , ) = circleSavings.getCircleDetails(cid);
-        assertEq(circle.currentMembers, 6, "Should have 6 members (60%)");
+        (
+            CircleSavingsV1.CircleConfig memory config,
+            CircleSavingsV1.CircleStatus memory status,
+            ,
+
+        ) = circleSavings.getCircleDetails(cid);
+        assertEq(status.currentMembers, 6, "Should have 6 members (60%)");
         assertFalse(
-            circle.currentMembers < (circle.maxMembers * 60) / 100,
+            status.currentMembers < (config.maxMembers * 60) / 100,
             "Not below 60%"
         );
 

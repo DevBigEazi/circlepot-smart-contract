@@ -8,11 +8,14 @@ import {ReputationV1} from "../../src/ReputationV1.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {TestHelpers} from "../helpers/TestHelpers.sol";
 
+import {YieldVault} from "../../src/mocks/YieldVault.sol";
+
 contract CircleSavingsV1Setup is Test, TestHelpers {
     CircleSavingsV1 public implementation;
     CircleSavingsV1 public circleSavings;
     ReputationV1 public reputationImpl;
     ReputationV1 public reputation;
+    YieldVault public yieldVault;
 
     address public testOwner = address(1);
     address public testTreasury = address(2);
@@ -29,14 +32,17 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
         // Deploy implementation and proxy
         implementation = new CircleSavingsV1();
 
+        // Deploy yield vault
+        yieldVault = new YieldVault(address(USDm), "Yield Bearing USDm", "yUSDm");
+
         bytes memory initData = abi.encodeWithSelector(
-            CircleSavingsV1.initialize.selector, address(cUSD), testTreasury, address(reputation), testOwner
+            CircleSavingsV1.initialize.selector, address(USDm), testTreasury, address(reputation), address(yieldVault), testOwner
         );
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         circleSavings = CircleSavingsV1(address(proxy));
 
-        // Approve contract to spend user's cUSD
+        // Approve contract to spend user's USDm
         address[] memory users = new address[](6);
         users[0] = alice;
         users[1] = bob;
@@ -47,7 +53,7 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
 
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
-            cUSD.approve(address(circleSavings), type(uint256).max);
+            USDm.approve(address(circleSavings), type(uint256).max);
         }
 
         // Authorize CircleSavings in reputation system
@@ -65,7 +71,8 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
             contributionAmount: 100e18,
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PRIVATE
+            visibility: CircleSavingsV1.Visibility.PRIVATE,
+            enableYield: true
         });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -83,16 +90,16 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
 
         // Fund accounts for joining
         uint256 collateral = 100e18 * 5 + ((100e18 * 5 * 100) / 10000); // contributionAmount * maxMembers + 1% buffer
-        deal(address(cUSD), bob, collateral);
-        deal(address(cUSD), charlie, collateral);
-        deal(address(cUSD), david, collateral);
-        deal(address(cUSD), eve, collateral);
+        deal(address(USDm), bob, collateral);
+        deal(address(USDm), charlie, collateral);
+        deal(address(USDm), david, collateral);
+        deal(address(USDm), eve, collateral);
 
         // Provide additional funds for contributions across rounds
-        cUSD.mint(bob, 1000e18);
-        cUSD.mint(charlie, 1000e18);
-        cUSD.mint(david, 1000e18);
-        cUSD.mint(eve, 1000e18);
+        USDm.mint(bob, 1000e18);
+        USDm.mint(charlie, 1000e18);
+        USDm.mint(david, 1000e18);
+        USDm.mint(eve, 1000e18);
 
         // Have members join
         vm.prank(bob);
@@ -116,7 +123,8 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
             contributionAmount: 100e18,
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC
+            visibility: CircleSavingsV1.Visibility.PUBLIC,
+            enableYield: true
         });
 
         return circleSavings.createCircle(params);

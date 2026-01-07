@@ -30,14 +30,13 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         vm.prank(charlie);
         circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
 
-        // warp past voting period
-        vm.warp(block.timestamp + 3 days);
-
-        vm.prank(alice);
-        circleSavings.executeVote(cid);
-
-        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
-        assertEq(uint256(c.state), uint256(CircleSavingsV1.CircleState.ACTIVE));
+        // Voting should have executed immediately since all members (3/3) voted
+        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+            .getCircleDetails(cid);
+        assertEq(
+            uint256(status.state),
+            uint256(CircleSavingsV1.CircleState.ACTIVE)
+        );
     }
 
     function test_ExecuteVoteWithdrawAndCollateralWithdraw() public {
@@ -60,16 +59,32 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
 
         vm.warp(block.timestamp + 3 days);
 
+        // after failed vote, members are automatically paid out during execution
+        uint256 aliceBalBefore = USDm.balanceOf(alice);
+        uint256 bobBalBefore = USDm.balanceOf(bob);
+
         vm.prank(alice);
         circleSavings.executeVote(cid);
 
-        // after failed vote, members can withdraw collateral
-        uint256 before = cUSD.balanceOf(alice);
-        vm.prank(alice);
-        circleSavings.WithdrawCollateral(cid);
-        uint256 afterBalance = cUSD.balanceOf(alice);
+        uint256 aliceBalAfter = USDm.balanceOf(alice);
+        uint256 bobBalAfter = USDm.balanceOf(bob);
 
-        assertTrue(afterBalance > before, "Alice should have received collateral after failed vote");
+        assertTrue(
+            aliceBalAfter > aliceBalBefore,
+            "Alice should have received collateral automatically"
+        );
+        assertTrue(
+            bobBalAfter > bobBalBefore,
+            "Bob should have received collateral automatically"
+        );
+
+        // Verify circle is dead
+        (, CircleSavingsV1.CircleStatus memory stat, , ) = circleSavings
+            .getCircleDetails(cid);
+        assertEq(
+            uint256(stat.state),
+            uint256(CircleSavingsV1.CircleState.DEAD)
+        );
     }
 
     function test_RevertInitiateVotingBeforeUltimatumOrBelowThreshold() public {
@@ -98,14 +113,16 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
 
     function test_InviteAndJoinPrivateCircleReverts() public {
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
-            title: "Test Circle",
-            description: "Test Description",
-            contributionAmount: 100e18,
-            frequency: CircleSavingsV1.Frequency.WEEKLY,
-            maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PRIVATE
-        });
+        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
+            .CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
+                contributionAmount: 100e18,
+                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                maxMembers: 5,
+                visibility: CircleSavingsV1.Visibility.PRIVATE,
+                enableYield: true
+            });
 
         uint256 cid = circleSavings.createCircle(params);
 
@@ -123,7 +140,10 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         vm.prank(bob);
         circleSavings.joinCircle(cid);
 
-        (CircleSavingsV1.Member memory m,,) = circleSavings.getMemberInfo(cid, bob);
+        (CircleSavingsV1.Member memory m, , ) = circleSavings.getMemberInfo(
+            cid,
+            bob
+        );
         assertTrue(m.isActive);
     }
 
@@ -194,24 +214,39 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
     function test_WithdrawCollateral_UltimatumPath() public {
         uint256 cid = _createDefaultCircle(alice);
         vm.warp(block.timestamp + 8 days);
-        uint256 balBefore = cUSD.balanceOf(alice);
+        uint256 balBefore = USDm.balanceOf(alice);
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
-        uint256 balAfter = cUSD.balanceOf(alice);
+        uint256 balAfter = USDm.balanceOf(alice);
         assertGt(balAfter, balBefore);
     }
 
-    function test_StartCircle_ManualStart() public {
+    function test_StartCircle_ViaVoting() public {
         uint256 cid = _createDefaultCircle(alice);
         vm.prank(bob);
         circleSavings.joinCircle(cid);
         vm.prank(charlie);
         circleSavings.joinCircle(cid);
         vm.warp(block.timestamp + 8 days);
+
+        // Initiate voting
         vm.prank(alice);
-        circleSavings.startCircle(cid);
-        (CircleSavingsV1.Circle memory c,,,) = circleSavings.getCircleDetails(cid);
-        assertEq(uint256(c.state), uint256(CircleSavingsV1.CircleState.ACTIVE));
+        circleSavings.initiateVoting(cid);
+
+        // All members vote to start (triggers early execution)
+        vm.prank(alice);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+        vm.prank(bob);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+        vm.prank(charlie);
+        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+
+        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+            .getCircleDetails(cid);
+        assertEq(
+            uint256(status.state),
+            uint256(CircleSavingsV1.CircleState.ACTIVE)
+        );
     }
 
     function test_UpdateReputationContract() public {
@@ -260,16 +295,24 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsV1Setup {
         circleSavings.WithdrawCollateral(cid);
     }
 
-    function test_StartCircle_RevertNotCreator() public {
+    function test_InitiateVoting_AnyMemberCanInitiate() public {
         uint256 cid = _createDefaultCircle(alice);
         vm.prank(bob);
         circleSavings.joinCircle(cid);
         vm.prank(charlie);
         circleSavings.joinCircle(cid);
         vm.warp(block.timestamp + 8 days);
+
+        // Any member can initiate voting (not just creator)
         vm.prank(bob);
-        vm.expectRevert(CircleSavingsV1.OnlyCreator.selector);
-        circleSavings.startCircle(cid);
+        circleSavings.initiateVoting(cid);
+
+        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+            .getCircleDetails(cid);
+        assertEq(
+            uint256(status.state),
+            uint256(CircleSavingsV1.CircleState.VOTING)
+        );
     }
 
     function test_JoinCircle_RevertCircleNotOpen() public {

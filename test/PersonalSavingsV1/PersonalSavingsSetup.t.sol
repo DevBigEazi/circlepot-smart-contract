@@ -2,7 +2,9 @@
 pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {
+    ERC1967Proxy
+} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {PersonalSavingsV1} from "../../src/PersonalSavingsV1.sol";
 import {ReputationV1} from "../../src/ReputationV1.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
@@ -22,20 +24,34 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
 
         // Deploy reputation system first
         reputationImpl = new ReputationV1();
-        bytes memory repInitData = abi.encodeWithSelector(ReputationV1.initialize.selector, testOwner);
-        ERC1967Proxy repProxy = new ERC1967Proxy(address(reputationImpl), repInitData);
+        bytes memory repInitData = abi.encodeWithSelector(
+            ReputationV1.initialize.selector,
+            testOwner
+        );
+        ERC1967Proxy repProxy = new ERC1967Proxy(
+            address(reputationImpl),
+            repInitData
+        );
         reputation = ReputationV1(address(repProxy));
 
         // Deploy personal savings
         implementation = new PersonalSavingsV1();
 
         bytes memory initData = abi.encodeWithSelector(
-            PersonalSavingsV1.initialize.selector, address(cUSD), testTreasury, address(reputation), testOwner
+            PersonalSavingsV1.initialize.selector,
+            address(USDm),
+            testTreasury,
+            address(reputation),
+            address(0),
+            testOwner
         );
-        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(implementation),
+            initData
+        );
         personalSavings = PersonalSavingsV1(address(proxy));
 
-        // Approve contract to spend user's cUSD
+        // Approve contract to spend user's USDm
         address[] memory users = new address[](6);
         users[0] = alice;
         users[1] = bob;
@@ -46,7 +62,7 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
 
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
-            cUSD.approve(address(personalSavings), type(uint256).max);
+            USDm.approve(address(personalSavings), type(uint256).max);
         }
 
         // Authorize PersonalSavings in reputation system
@@ -57,13 +73,15 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
     // Helper to create a default personal goal for a creator
     function _createDefaultGoal(address creator) internal returns (uint256) {
         vm.prank(creator);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1.CreateGoalParams({
-            name: "Default Goal",
-            targetAmount: 500e18,
-            contributionAmount: 100e18,
-            frequency: PersonalSavingsV1.Frequency.WEEKLY,
-            deadline: block.timestamp + 30 days
-        });
+        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+            .CreateGoalParams({
+                name: "Default Goal",
+                targetAmount: 500e18,
+                contributionAmount: 100e18,
+                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                deadline: block.timestamp + 30 days,
+                enableYield: false
+            });
 
         return personalSavings.createPersonalGoal(params);
     }

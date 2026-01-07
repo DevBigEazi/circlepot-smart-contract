@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 
 contract TestHelpers is Test {
-    MockERC20 internal cUSD;
+    MockERC20 internal USDm;
 
     address internal alice;
     address internal bob;
@@ -22,7 +22,7 @@ contract TestHelpers is Test {
         eve = address(7);
         frank = address(8);
 
-        cUSD = new MockERC20();
+        USDm = new MockERC20();
 
         address[] memory users = new address[](6);
         users[0] = alice;
@@ -33,7 +33,7 @@ contract TestHelpers is Test {
         users[5] = frank;
 
         for (uint256 i = 0; i < users.length; i++) {
-            cUSD.mint(users[i], 100000e18);
+            USDm.mint(users[i], 100000e18);
         }
     }
 }

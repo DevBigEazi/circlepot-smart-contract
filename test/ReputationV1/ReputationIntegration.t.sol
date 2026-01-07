@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT LICENSE
 pragma solidity ^0.8.27;
 
 import {ReputationSetup} from "./ReputationSetup.t.sol";
@@ -19,7 +19,7 @@ contract ReputationIntegration is ReputationSetup {
     uint256 public constant DEADLINE = 30 days;
 
     // Test contracts
-    MockERC20 public mockCUSD;
+    MockERC20 public mockUSDm;
     PersonalSavingsV1 public personalSavingsImpl;
     PersonalSavingsProxy public savingsProxy;
     PersonalSavingsV1 public personalSavings;
@@ -31,12 +31,12 @@ contract ReputationIntegration is ReputationSetup {
         super.setUp();
 
         // Deploy mock token
-        mockCUSD = new MockERC20();
+        mockUSDm = new MockERC20();
 
         // Mint tokens to users (enough for collateral + contributions)
-        mockCUSD.mint(user1, 10000e18);
-        mockCUSD.mint(user2, 10000e18);
-        mockCUSD.mint(user3, 10000e18);
+        mockUSDm.mint(user1, 10000e18);
+        mockUSDm.mint(user2, 10000e18);
+        mockUSDm.mint(user3, 10000e18);
 
         vm.startPrank(owner);
 
@@ -47,18 +47,20 @@ contract ReputationIntegration is ReputationSetup {
         // Deploy proxies
         savingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
-            address(mockCUSD),
+            address(mockUSDm),
             treasury,
             address(reputation),
+            address(0), // No vault needed for these reputation tests
             owner
         );
         personalSavings = PersonalSavingsV1(address(savingsProxy));
 
         circleProxy = new CircleSavingsProxy(
             address(circleSavingsImpl),
-            address(mockCUSD),
+            address(mockUSDm),
             treasury,
             address(reputation),
+            address(0), // No vault needed for these reputation tests
             owner
         );
         circleSavings = CircleSavingsV1(address(circleProxy));
@@ -76,7 +78,7 @@ contract ReputationIntegration is ReputationSetup {
     function test_personalSavings_goalCompletion_increasesReputation() public {
         vm.skip(true);
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         // Create goal
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
@@ -85,7 +87,8 @@ contract ReputationIntegration is ReputationSetup {
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
+                deadline: block.timestamp + DEADLINE,
+                enableYield: false
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -119,7 +122,7 @@ contract ReputationIntegration is ReputationSetup {
     function test_personalSavings_targetReached_increasesReputation() public {
         vm.skip(true);
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
             .CreateGoalParams({
@@ -127,7 +130,8 @@ contract ReputationIntegration is ReputationSetup {
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
+                deadline: block.timestamp + DEADLINE,
+                enableYield: false
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -154,7 +158,7 @@ contract ReputationIntegration is ReputationSetup {
     function test_personalSavings_earlyWithdrawal_decreasesReputation() public {
         vm.skip(true);
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
             .CreateGoalParams({
@@ -162,7 +166,8 @@ contract ReputationIntegration is ReputationSetup {
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
+                deadline: block.timestamp + DEADLINE,
+                enableYield: false
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -190,7 +195,7 @@ contract ReputationIntegration is ReputationSetup {
     {
         vm.skip(true);
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         // Create and complete 3 goals
         for (uint256 i = 0; i < 3; i++) {
@@ -200,7 +205,8 @@ contract ReputationIntegration is ReputationSetup {
                     targetAmount: TARGET_AMOUNT,
                     contributionAmount: CONTRIBUTION_AMOUNT,
                     frequency: PersonalSavingsV1.Frequency.DAILY,
-                    deadline: block.timestamp + DEADLINE
+                    deadline: block.timestamp + DEADLINE,
+                    enableYield: false
                 });
             uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -240,9 +246,9 @@ contract ReputationIntegration is ReputationSetup {
 
         // Give tokens and approvals
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         // Create circle
@@ -254,7 +260,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                enableYield: true
             })
         );
 
@@ -299,9 +306,9 @@ contract ReputationIntegration is ReputationSetup {
         users[4] = makeAddr("user5");
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(user1);
@@ -312,7 +319,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                enableYield: true
             })
         );
 
@@ -362,9 +370,9 @@ contract ReputationIntegration is ReputationSetup {
         users[4] = makeAddr("user5");
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 10000e18);
+            mockUSDm.mint(users[i], 10000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(user1);
@@ -375,7 +383,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                enableYield: true
             })
         );
 
@@ -401,7 +410,7 @@ contract ReputationIntegration is ReputationSetup {
                     "On-time contribution"
                 );
             }
-            vm.warp(block.timestamp + 2 days);
+            vm.warp(block.timestamp + 1 days);
         }
 
         // All members should have increased reputation
@@ -441,9 +450,9 @@ contract ReputationIntegration is ReputationSetup {
         users[4] = makeAddr("user5");
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(user2);
@@ -454,7 +463,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                enableYield: true
             })
         );
 
@@ -490,7 +500,7 @@ contract ReputationIntegration is ReputationSetup {
         vm.skip(true);
         // Complete a personal goal
         vm.startPrank(user1);
-        mockCUSD.approve(address(savingsProxy), type(uint256).max);
+        mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
             .CreateGoalParams({
@@ -498,7 +508,8 @@ contract ReputationIntegration is ReputationSetup {
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + DEADLINE
+                deadline: block.timestamp + DEADLINE,
+                enableYield: false
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -525,9 +536,9 @@ contract ReputationIntegration is ReputationSetup {
         users[4] = makeAddr("user5");
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(user1);
@@ -538,7 +549,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                enableYield: true
             })
         );
 
@@ -596,9 +608,9 @@ contract ReputationIntegration is ReputationSetup {
         users[3] = user3; // Should be position 4 (lowest rep)
 
         for (uint256 i = 0; i < users.length; i++) {
-            mockCUSD.mint(users[i], 5000e18);
+            mockUSDm.mint(users[i], 5000e18);
             vm.prank(users[i]);
-            mockCUSD.approve(address(circleProxy), type(uint256).max);
+            mockUSDm.approve(address(circleProxy), type(uint256).max);
         }
 
         vm.prank(users[0]);
@@ -609,7 +621,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 4,
-                visibility: CircleSavingsV1.Visibility.PUBLIC
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                enableYield: true
             })
         );
 

@@ -12,15 +12,16 @@ import {CircleSavingsV1} from "../CircleSavingsV1.sol";
 contract CircleSavingsProxy is ERC1967Proxy {
     constructor(
         address _implementation,
-        address _cUSDToken,
+        address _USDmToken,
         address _treasury,
         address _reputationContract,
+        address _vault,
         address _initialOwner
     )
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                CircleSavingsV1.initialize.selector, _cUSDToken, _treasury, _reputationContract, _initialOwner
+                CircleSavingsV1.initialize.selector, _USDmToken, _treasury, _reputationContract, _vault, _initialOwner
             )
         )
     {}
@@ -28,13 +29,14 @@ contract CircleSavingsProxy is ERC1967Proxy {
 
 /**
  * @dev Factory function to deploy CircleSavings with proxy
- * @param _cUSDToken Address of cUSD token on Celo L2
+ * @param _USDmToken Address of USDm token on Celo L2
  * @param _treasury Address for platform fees
  * @param _reputationContract Address of the reputation contract
+ * @param _vault Address of the yield vault
  * @param _initialOwner Address of contract owner
  * @return proxy Address of the deployed proxy (which delegates to CircleSavingsV1)
  */
-function createCircleSavings(address _cUSDToken, address _treasury, address _reputationContract, address _initialOwner)
+function createCircleSavings(address _USDmToken, address _treasury, address _reputationContract, address _vault, address _initialOwner)
     returns (CircleSavingsV1 proxy)
 {
     // Deploy implementation
@@ -42,7 +44,7 @@ function createCircleSavings(address _cUSDToken, address _treasury, address _rep
 
     // Deploy proxy pointing to the implementation
     CircleSavingsProxy _proxy =
-        new CircleSavingsProxy(address(implementation), _cUSDToken, _treasury, _reputationContract, _initialOwner);
+        new CircleSavingsProxy(address(implementation), _USDmToken, _treasury, _reputationContract, _vault, _initialOwner);
 
     // Return proxy as CircleSavingsV1 interface
     proxy = CircleSavingsV1(address(_proxy));

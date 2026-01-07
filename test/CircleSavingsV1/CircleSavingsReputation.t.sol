@@ -99,7 +99,7 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         circleSavings.joinCircle(cid);
 
         // Get member info to check positions
-        (uint256 bobPosition, , , , , ) = circleSavings.circleMembers(cid, bob);
+        (uint256 bobPosition, , , , , , ) = circleSavings.circleMembers(cid, bob);
 
         assertEq(
             bobPosition,

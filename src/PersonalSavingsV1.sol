@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT LICENSE
 pragma solidity ^0.8.27;
 
 import {
@@ -18,6 +18,7 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /**
  * @title PersonalSavingsV1
@@ -53,6 +54,7 @@ contract PersonalSavingsV1 is
         uint256 createdAt;
         bool isActive;
         uint256 lastContributionAt;
+        bool isYieldEnabled; // true = yield goal, false = standard (no DeFi risk)
     }
 
     struct CreateGoalParams {
@@ -61,10 +63,11 @@ contract PersonalSavingsV1 is
         uint256 contributionAmount;
         Frequency frequency;
         uint256 deadline;
+        bool enableYield; // User choice - true for yield, false for standard
     }
 
     // ============ Storage ============
-    address public cUSDToken;
+    address public USDmToken;
     IReputation public reputationContract;
     address public treasury;
 
@@ -74,6 +77,11 @@ contract PersonalSavingsV1 is
 
     mapping(uint256 => PersonalGoal) public personalGoals;
     mapping(address => uint256[]) public userGoals;
+
+    // Yield storage
+    address public vault;
+    mapping(uint256 => uint256) public goalShares; // goalId => vault shares
+    uint256 public constant PLATFORM_YIELD_SHARE_BPS = 1000; // 10%
 
     //   ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
@@ -99,7 +107,13 @@ contract PersonalSavingsV1 is
         uint256 amount,
         uint256 penalty
     );
-
+    event VaultUpdated(address indexed newVault);
+    event YieldDistributed(
+        uint256 indexed goalId,
+        address indexed owner,
+        uint256 yieldAmount,
+        uint256 platformShare
+    );
     // ============ Errors ============
     error InvalidTreasuryAddress();
     error InvalidContributionAmount();
@@ -119,30 +133,33 @@ contract PersonalSavingsV1 is
 
     /**
      * @dev Initializes the contract with initial parameters
-     * @param _cUSDToken Address of the cUSD token contract
+     * @param _USDmToken Address of the USDm token contract
      * @param _treasury Address for platform fees
      * @param _reputationContract Address of the reputation contract
+     * @param _vault Address of the ERC4626 vault for yield generation
      * @param initialOwner Address of the initial owner (if zero, msg.sender remains owner)
      */
     function initialize(
-        address _cUSDToken,
+        address _USDmToken,
         address _treasury,
         address _reputationContract,
+        address _vault,
         address initialOwner
     ) public initializer {
         __Ownable_init(initialOwner);
 
         if (
-            _cUSDToken == address(0) ||
+            _USDmToken == address(0) ||
             _treasury == address(0) ||
             _reputationContract == address(0)
         ) {
             revert AddressZeroNotAllowed();
         }
 
-        cUSDToken = _cUSDToken;
+        USDmToken = _USDmToken;
         reputationContract = IReputation(_reputationContract);
         treasury = _treasury;
+        vault = _vault;
         goalCounter = 1;
 
         // transfer ownership if a different initialOwner was provided
@@ -153,17 +170,19 @@ contract PersonalSavingsV1 is
 
     /**
      * @dev Function for upgrading the contract to a new version (reinitializer)
-     * @param _cUSDToken Address of cUSD token (if changed)
+     * @param _USDmToken Address of USDm token (if changed)
+     * @param _treasury Address of treasury (if changed)
+     * @param _reputationContract Address of reputation contract (if changed)
      * @param _version Reinitializer version number
      */
     function upgrade(
-        address _cUSDToken,
+        address _USDmToken,
         address _treasury,
         address _reputationContract,
         uint8 _version
     ) public reinitializer(_version) onlyOwner {
-        if (_cUSDToken != address(0)) {
-            cUSDToken = _cUSDToken;
+        if (_USDmToken != address(0)) {
+            USDmToken = _USDmToken;
         }
         if (_treasury != address(0)) {
             treasury = _treasury;
@@ -171,6 +190,17 @@ contract PersonalSavingsV1 is
         if (_reputationContract != address(0)) {
             reputationContract = IReputation(_reputationContract);
         }
+        // Vault is handled separately via updateVault
+    }
+
+    /**
+     * @dev Update the vault address (admin only)
+     * @param _newVault New vault address
+     */
+    function updateVault(address _newVault) external onlyOwner {
+        if (_newVault == address(0)) revert AddressZeroNotAllowed();
+        vault = _newVault;
+        emit VaultUpdated(_newVault);
     }
 
     /**
@@ -201,7 +231,7 @@ contract PersonalSavingsV1 is
         uint256 gid = goalCounter++;
 
         // Transfer the first contribution immediately
-        IERC20(cUSDToken).safeTransferFrom(
+        IERC20(USDmToken).safeTransferFrom(
             msg.sender,
             address(this),
             params.contributionAmount
@@ -214,6 +244,19 @@ contract PersonalSavingsV1 is
             params.contributionAmount
         );
 
+        // Deposit to vault if yield is enabled
+        if (
+            params.enableYield &&
+            vault != address(0) &&
+            params.contributionAmount > 0
+        ) {
+            IERC20(USDmToken).approve(vault, params.contributionAmount);
+            goalShares[gid] = IERC4626(vault).deposit(
+                params.contributionAmount,
+                address(this)
+            );
+        }
+
         personalGoals[gid] = PersonalGoal({
             owner: msg.sender,
             name: params.name,
@@ -224,7 +267,8 @@ contract PersonalSavingsV1 is
             deadline: params.deadline,
             createdAt: block.timestamp,
             isActive: true,
-            lastContributionAt: block.timestamp
+            lastContributionAt: block.timestamp,
+            isYieldEnabled: params.enableYield
         });
 
         userGoals[msg.sender].push(gid);
@@ -262,11 +306,22 @@ contract PersonalSavingsV1 is
             }
         }
 
-        IERC20(cUSDToken).safeTransferFrom(
+        IERC20(USDmToken).safeTransferFrom(
             msg.sender,
             address(this),
             g.contributionAmount
         );
+
+        // Deposit to vault if yield is enabled for this goal
+        if (
+            g.isYieldEnabled && vault != address(0) && g.contributionAmount > 0
+        ) {
+            IERC20(USDmToken).approve(vault, g.contributionAmount);
+            goalShares[_goalId] += IERC4626(vault).deposit(
+                g.contributionAmount,
+                address(this)
+            );
+        }
 
         g.currentAmount += g.contributionAmount;
         g.lastContributionAt = block.timestamp;
@@ -300,13 +355,57 @@ contract PersonalSavingsV1 is
         uint256 penalty = (_amount * penaltyBps) / 10000;
         uint256 net = _amount - penalty;
 
+        // Handle vault redemption for yield-enabled goals
+        uint256 yieldEarned = 0;
+        if (
+            g.isYieldEnabled && vault != address(0) && goalShares[_goalId] > 0
+        ) {
+            // Calculate proportional shares to redeem
+            uint256 shares = goalShares[_goalId];
+            uint256 sharesToRedeem = (shares * _amount) / g.currentAmount;
+
+            if (sharesToRedeem > 0) {
+                uint256 balanceBefore = IERC20(USDmToken).balanceOf(
+                    address(this)
+                );
+                IERC4626(vault).redeem(
+                    sharesToRedeem,
+                    address(this),
+                    address(this)
+                );
+                uint256 balanceAfter = IERC20(USDmToken).balanceOf(
+                    address(this)
+                );
+
+                uint256 withdrawn = balanceAfter - balanceBefore;
+                goalShares[_goalId] -= sharesToRedeem;
+
+                // Calculate yield (any excess over principal)
+                if (withdrawn > _amount) {
+                    yieldEarned = withdrawn - _amount;
+                    // Platform takes 10% of yield
+                    uint256 platformYield = (yieldEarned *
+                        PLATFORM_YIELD_SHARE_BPS) / 10000;
+                    totalPlatformFees += platformYield;
+                    yieldEarned -= platformYield;
+
+                    emit YieldDistributed(
+                        _goalId,
+                        msg.sender,
+                        yieldEarned,
+                        platformYield
+                    );
+                }
+            }
+        }
+
         g.currentAmount -= _amount;
 
         if (penalty > 0) {
-            IERC20(cUSDToken).safeTransfer(msg.sender, net);
+            IERC20(USDmToken).safeTransfer(msg.sender, net + yieldEarned);
             totalPlatformFees += penalty;
         } else {
-            IERC20(cUSDToken).safeTransfer(msg.sender, _amount);
+            IERC20(USDmToken).safeTransfer(msg.sender, _amount + yieldEarned);
         }
 
         reputationContract.decreaseReputation(
@@ -317,11 +416,14 @@ contract PersonalSavingsV1 is
 
         emit GoalWithdrawn(_goalId, msg.sender, _amount, penalty);
 
-        if (g.currentAmount == 0) g.isActive = false;
+        if (g.currentAmount == 0) {
+            g.isActive = false;
+            goalShares[_goalId] = 0; // Clear any remaining shares
+        }
     }
 
     /**
-     * @dev Complete a goal and withdraw full amount
+     * @dev Complete a goal and withdraw full amount plus any yield earned
      * @param _goalId Goal ID
      */
     function completeGoal(uint256 _goalId) external nonReentrant {
@@ -332,16 +434,49 @@ contract PersonalSavingsV1 is
         if (!g.isActive) revert GoalNotActive();
         if (g.currentAmount < g.targetAmount) revert InsufficientBalance();
 
-        uint256 amt = g.currentAmount;
+        uint256 principal = g.currentAmount;
         g.isActive = false;
         g.currentAmount = 0;
 
-        IERC20(cUSDToken).safeTransfer(msg.sender, amt);
+        uint256 yieldEarned = 0;
+        uint256 platformYield = 0;
+
+        // Handle vault redemption for yield-enabled goals
+        if (
+            g.isYieldEnabled && vault != address(0) && goalShares[_goalId] > 0
+        ) {
+            uint256 shares = goalShares[_goalId];
+            goalShares[_goalId] = 0;
+
+            uint256 balanceBefore = IERC20(USDmToken).balanceOf(address(this));
+            IERC4626(vault).redeem(shares, address(this), address(this));
+            uint256 balanceAfter = IERC20(USDmToken).balanceOf(address(this));
+
+            uint256 withdrawn = balanceAfter - balanceBefore;
+
+            // Calculate yield (any excess over principal)
+            if (withdrawn > principal) {
+                uint256 totalYield = withdrawn - principal;
+                // Platform takes 10% of yield
+                platformYield = (totalYield * PLATFORM_YIELD_SHARE_BPS) / 10000;
+                totalPlatformFees += platformYield;
+                yieldEarned = totalYield - platformYield;
+
+                emit YieldDistributed(
+                    _goalId,
+                    msg.sender,
+                    yieldEarned,
+                    platformYield
+                );
+            }
+        }
+
+        IERC20(USDmToken).safeTransfer(msg.sender, principal + yieldEarned);
         reputationContract.increaseReputation(msg.sender, 10, "Goal completed");
 
         // Record goal completion in reputation contract
         _recordGoalCompleted(msg.sender, _goalId);
-        emit GoalWithdrawn(_goalId, msg.sender, amt, 0);
+        emit GoalWithdrawn(_goalId, msg.sender, principal + yieldEarned, 0);
     }
 
     // ============ Admin Functions ============
@@ -351,7 +486,7 @@ contract PersonalSavingsV1 is
     function withdrawPlatformFees() external onlyOwner {
         uint256 amt = totalPlatformFees;
         totalPlatformFees = 0;
-        IERC20(cUSDToken).safeTransfer(treasury, amt);
+        IERC20(USDmToken).safeTransfer(treasury, amt);
     }
 
     /**

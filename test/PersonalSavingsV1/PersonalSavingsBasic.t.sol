@@ -17,7 +17,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 1000e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -27,6 +28,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
             ,
             uint256 targetAmount,
             uint256 currentAmount,
+            ,
             ,
             ,
             ,
@@ -50,7 +52,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -61,7 +64,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         vm.prank(alice);
         personalSavings.contributeToGoal(gid);
 
-        (, , , uint256 currentAmount, , , , , , ) = personalSavings
+        (, , , uint256 currentAmount, , , , , , , ) = personalSavings
             .personalGoals(gid);
         assertEq(currentAmount, 100e18); // First contribution (50) + second contribution (50)
 
@@ -77,7 +80,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -105,7 +109,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -128,7 +133,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
 
         uint256 gid1 = personalSavings.createPersonalGoal(params1);
@@ -142,7 +148,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 100e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             });
 
         uint256 gid2 = personalSavings.createPersonalGoal(params2);
@@ -179,7 +186,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.MONTHLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
         // Goal created with MONTHLY frequency - first contribution already made
@@ -198,7 +206,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
         // First contribution already made (50e18)
@@ -211,9 +220,9 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         vm.warp(t);
         personalSavings.contributeToGoal(gid);
         // Now at 75% progress (150e18 / 200e18) - penalty should apply
-        uint256 balBefore = cUSD.balanceOf(alice);
+        uint256 balBefore = USDm.balanceOf(alice);
         personalSavings.withdrawFromGoal(gid, 50e18);
-        uint256 balAfter = cUSD.balanceOf(alice);
+        uint256 balAfter = USDm.balanceOf(alice);
         assertLt(balAfter - balBefore, 50e18); // penalty applied
         vm.stopPrank();
     }
@@ -227,7 +236,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
         uint256[] memory goals = personalSavings.getUserGoals(alice);
@@ -244,7 +254,8 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 targetAmount: 100e18,
                 contributionAmount: 10e18,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
-                deadline: block.timestamp + 365 days
+                deadline: block.timestamp + 365 days,
+                enableYield: false
             })
         );
         // First contribution already made

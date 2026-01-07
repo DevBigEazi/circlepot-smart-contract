@@ -2,7 +2,9 @@
 pragma solidity ^0.8.27;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {
+    ERC1967Proxy
+} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {UserProfileV1} from "../src/UserProfileV1.sol";
 import {PersonalSavingsV1} from "../src/PersonalSavingsV1.sol";
 import {CircleSavingsV1} from "../src/CircleSavingsV1.sol";
@@ -11,13 +13,18 @@ import {CircleSavingsProxy} from "../src/proxies/CircleSavingsProxy.sol";
 import {PersonalSavingsProxy} from "../src/proxies/PersonalSavingsProxy.sol";
 import {UserProfileProxy} from "../src/proxies/UserProfileProxy.sol";
 import {ReputationProxy} from "../src/proxies/ReputationProxy.sol";
+import {YieldVault} from "../src/mocks/YieldVault.sol";
 
 contract Deploy is Script {
     function setUp() public {}
 
     function run() external {
-        address treasury = vm.envAddress("TREASURY_ADDRESS");
-        address cUSD = vm.envAddress("CUSD_ADDRESS");
+        address treasury = vm.envOr("TREASURY_ADDRESS", msg.sender);
+        // Celo Sepolia USDm (formerly cUSD) address
+        address USDm = vm.envOr(
+            "USDm_ADDRESS",
+            address(0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b)
+        );
 
         vm.startBroadcast();
 
@@ -26,6 +33,13 @@ contract Deploy is Script {
         PersonalSavingsV1 personalSavingsImpl = new PersonalSavingsV1();
         CircleSavingsV1 circleSavingsImpl = new CircleSavingsV1();
         ReputationV1 reputationImpl = new ReputationV1();
+
+        // Deploy yield vault
+        YieldVault yieldVault = new YieldVault(
+            USDm,
+            "Yield Bearing USDm",
+            "yUSDm"
+        );
 
         // Deploy reputation proxy first as it's needed by other contracts
         ReputationProxy reputationProxy = new ReputationProxy(
@@ -41,17 +55,19 @@ contract Deploy is Script {
 
         PersonalSavingsProxy personalSavingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
-            cUSD, // cUSD token address
+            USDm, // USDm token address
             treasury, // treasury address
             address(reputationProxy), // reputation contract address
+            address(yieldVault), // vault address for yield
             msg.sender // initialOwner
         );
 
         CircleSavingsProxy circleSavingsProxy = new CircleSavingsProxy(
             address(circleSavingsImpl),
-            cUSD, // cUSD token address
+            USDm, // USDm token address
             treasury, // treasury address
             address(reputationProxy), // reputation contract address
+            address(yieldVault), // vault address
             msg.sender // initialOwner
         );
 
@@ -78,6 +94,7 @@ contract Deploy is Script {
             address(circleSavingsImpl)
         );
         console2.log("CircleSavings Proxy:", address(circleSavingsProxy));
+        console2.log("YieldVault:", address(yieldVault));
         console2.log("Reputation Implementation:", address(reputationImpl));
         console2.log("Reputation Proxy:", address(reputationProxy));
 

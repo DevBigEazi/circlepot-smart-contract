@@ -1,1263 +1,1221 @@
 {
-    "contractName": "CircleSavingsProxy",
-    "abi": [
+  "contractName": "CircleSavingsProxy",
+  "abi": [
+    {
+      "inputs": [
         {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "_implementation",
-                    "type": "address"
-                },
-                {
-                    "internalType": "address",
-                    "name": "_cUSDToken",
-                    "type": "address"
-                },
-                {
-                    "internalType": "address",
-                    "name": "_treasury",
-                    "type": "address"
-                },
-                {
-                    "internalType": "address",
-                    "name": "_reputationContract",
-                    "type": "address"
-                },
-                {
-                    "internalType": "address",
-                    "name": "_initialOwner",
-                    "type": "address"
-                }
-            ],
-            "stateMutability": "nonpayable",
-            "type": "constructor"
+          "internalType": "address",
+          "name": "_implementation",
+          "type": "address"
         },
         {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "target",
-                    "type": "address"
-                }
-            ],
-            "name": "AddressEmptyCode",
-            "type": "error"
+          "internalType": "address",
+          "name": "_USDmToken",
+          "type": "address"
         },
         {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "implementation",
-                    "type": "address"
-                }
-            ],
-            "name": "ERC1967InvalidImplementation",
-            "type": "error"
+          "internalType": "address",
+          "name": "_treasury",
+          "type": "address"
         },
         {
-            "inputs": [],
-            "name": "ERC1967NonPayable",
-            "type": "error"
+          "internalType": "address",
+          "name": "_reputationContract",
+          "type": "address"
         },
         {
-            "inputs": [],
-            "name": "FailedCall",
-            "type": "error"
-        },
-        {
-            "anonymous": false,
-            "inputs": [
-                {
-                    "indexed": true,
-                    "internalType": "address",
-                    "name": "implementation",
-                    "type": "address"
-                }
-            ],
-            "name": "Upgraded",
-            "type": "event"
-        },
-        {
-            "stateMutability": "payable",
-            "type": "fallback"
+          "internalType": "address",
+          "name": "_initialOwner",
+          "type": "address"
         }
-    ],
-    "metadata": "{\"compiler\":{\"version\":\"0.8.33+commit.64118f21\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_implementation\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_cUSDToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_treasury\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_reputationContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_initialOwner\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"AddressEmptyCode\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"ERC1967InvalidImplementation\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ERC1967NonPayable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedCall\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"stateMutability\":\"payable\",\"type\":\"fallback\"}],\"devdoc\":{\"details\":\"ERC1967 Proxy for CircleSavings (UUPS pattern)\",\"errors\":{\"AddressEmptyCode(address)\":[{\"details\":\"There's no code at `target` (it is not a contract).\"}],\"ERC1967InvalidImplementation(address)\":[{\"details\":\"The `implementation` of the proxy is invalid.\"}],\"ERC1967NonPayable()\":[{\"details\":\"An upgrade function sees `msg.value > 0` that may be lost.\"}],\"FailedCall()\":[{\"details\":\"A call to an address target failed. The target may have reverted.\"}]},\"events\":{\"Upgraded(address)\":{\"details\":\"Emitted when the implementation is upgraded.\"}},\"kind\":\"dev\",\"methods\":{},\"title\":\"CircleSavingsProxy\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"Ownership and upgrades are managed by the implementation (CircleSavingsV1)\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/proxies/CircleSavingsProxy.sol\":\"CircleSavingsProxy\"},\"evmVersion\":\"osaka\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol\":{\"keccak256\":\"0x1c49045cd9e64ce4fca5e0eaab4a1e58667c2047070a0c430524797913179afa\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2ba1461bc0bd95af5bcdecc398cc28eb30172899ee58184db41efa49ecc92f29\",\"dweb:/ipfs/QmfYVePPhio24CUeXCKkmFTAccyFaHNSvZ4Lm7EkqKMxDZ\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol\":{\"keccak256\":\"0xe9b48d5b8f5af131c7d9217fca2542179f5ad3b5e39d445317b95403e1a2ec38\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://61315006eb2a5fb0566995e1b9be894cd464b846ab5e69b0e81688a897b8cd30\",\"dweb:/ipfs/QmPC6utN28YUNywQRAFjxR2VBbyjh5RZ9oh8xJhCgJPWrA\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol\":{\"keccak256\":\"0x68fd01f7822e71746378b4353a37e5223e4363621bf0da26980dad779abd7d20\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8329e9859e863e4ba18849570de7a57248a32c8f7e40188784de7cef8b021925\",\"dweb:/ipfs/QmXJL4U7wErFz8T37szY9ZPihud6BAYsEKgp4dtXGA9T1q\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol\":{\"keccak256\":\"0xfe33c663b1804c1c1ba2b1481b96cd2649c9c152d258680d45070be1f911ff0b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4c75b1b83804a07a9f72e6eb68385cfe8045f1dc8fa248295ba63f9c703cf54c\",\"dweb:/ipfs/Qmbg9ui5zk4ojehWKMrpTiy4fRjbGmpuh5ShCEtFVq1HTP\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol\":{\"keccak256\":\"0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da5e832b40fc5c3145d3781e2e5fa60ac2052c9d08af7e300dc8ab80c4343100\",\"dweb:/ipfs/QmTzf7N5ZUdh5raqtzbM11yexiUoLC9z3Ws632MCuycq1d\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol\":{\"keccak256\":\"0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1c299900ac4ec268d4570ecef0d697a3013cd11a6eb74e295ee3fbc945056037\",\"dweb:/ipfs/Qmab9owJoxcA7vJT5XNayCMaUR1qxqj1NDzzisduwaJMcZ\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/IERC1967.sol\":{\"keccak256\":\"0xbf2aefe54b76d7f7bcd4f6da1080b7b1662611937d870b880db584d09cea56b5\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f5e7e2f12e0feec75296e57f51f82fdaa8bd1551f4b8cc6560442c0bf60f818c\",\"dweb:/ipfs/QmcW9wDMaQ8RbQibMarfp17a3bABzY5KraWe2YDwuUrUoz\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol\":{\"keccak256\":\"0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1bb2332a7ee26dd0b0de9b7fe266749f54820c99ab6a3bcb6f7e6b751d47ee2d\",\"dweb:/ipfs/QmcRWpaBeCYkhy68PR3B4AgD7asuQk7PwkWxrvJbZcikLF\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol\":{\"keccak256\":\"0x82f757819bf2429a0d4db141b99a4bbe5039e4ef86dfb94e2e6d40577ed5b28b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://37c30ed931e19fb71fdb806bb504cfdb9913b7127545001b64d4487783374422\",\"dweb:/ipfs/QmUBHpv4hm3ZmwJ4GH8BeVzK4mv41Q6vBbWXxn8HExPXza\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol\":{\"keccak256\":\"0xa3066ff86b94128a9d3956a63a0511fa1aae41bd455772ab587b32ff322acb2e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bf7b192fd82acf6187970c80548f624b1b9c80425b62fa49e7fdb538a52de049\",\"dweb:/ipfs/QmWXG1YCde1tqDYTbNwjkZDWVgPEjzaQGSDqWkyKLzaNua\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol\":{\"keccak256\":\"0xa1ad192cd45317c788618bef5cb1fb3ca4ce8b230f6433ac68cc1d850fb81618\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b43447bb85a53679d269a403c693b9d88d6c74177dfb35eddca63abaf7cf110a\",\"dweb:/ipfs/QmXSDmpd4bNZj1PDgegr6C4w1jDaWHXCconC3rYiw9TSkQ\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/Proxy.sol\":{\"keccak256\":\"0x80935e4fae2c414f4e7789e13a820d06901182a5733ab006f8d68b5b09db993f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://752d991d6ca1087587b48103bc623f74888054f58581ff29166d90889c4765c5\",\"dweb:/ipfs/QmRBsa6K2ChKxVWYY54YiyYhDBPbmY5HyKCtij5LoWh56o\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol\":{\"keccak256\":\"0x20462ddb2665e9521372c76b001d0ce196e59dbbd989de9af5576cad0bd5628b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f417fd12aeec8fbfaceaa30e3a08a0724c0bc39de363e2acf6773c897abbaf6d\",\"dweb:/ipfs/QmU4Hko6sApdweVM92CsiuLKkCk8HfyBeutF89PCTz5Tye\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol\":{\"keccak256\":\"0xdb4d24ee2c087c391d587cd17adfe5b3f9d93b3110b1388c2ab6c7c0ad1dcd05\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ab7b6d5b9e2b88176312967fe0f0e78f3d9a1422fa5e4b64e2440c35869b5d08\",\"dweb:/ipfs/QmXKYWWyzcLg1B2k7Sb1qkEXgLCYfXecR9wYW5obRzWP1Q\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol\":{\"keccak256\":\"0x1a26353563a2c63b4120ea0b94727253eeff84fe2241d42c1452308b9080e66a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://49a95e36d267828b4357186a79917002d616d8634e25d1f9818e2354cd2e7d34\",\"dweb:/ipfs/QmWDkqE4KkyLAS2UkLsRgXE1FGB1qfEgBC3zMXBVsVWfdk\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5282825a626cfe924e504274b864a652b0023591fa66f06a067b25b51ba9b303\",\"dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol\":{\"keccak256\":\"0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://299ced486011781dc98f638059678323c03079fefae1482abaa2135b22fa92d0\",\"dweb:/ipfs/QmbZNbcPTBxNvwChavN2kkZZs7xHhYL7mv51KrxMhsMs3j\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/Address.sol\":{\"keccak256\":\"0x0fa9e0d3a859900b5a46f70a03c73adf259603d5e05027a37fe0b45529d85346\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c2add4da0240c9f2ce47649c8bb6b11b40e98cf6f88b8bdc76b2704e89391710\",\"dweb:/ipfs/QmNQTwF2uVzu4CRtNxr8bxyP9XuW6VsZuo2Nr4KR2bZr3d\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/Errors.sol\":{\"keccak256\":\"0x6afa713bfd42cf0f7656efa91201007ac465e42049d7de1d50753a373648c123\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ba1d02f4847670a1b83dec9f7d37f0b0418d6043447b69f3a29a5f9efc547fcf\",\"dweb:/ipfs/QmQ7iH2keLNUKgq2xSWcRmuBE5eZ3F5whYAkAGzCNNoEWB\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/LowLevelCall.sol\":{\"keccak256\":\"0x5b4802a4352474792df3107e961d1cc593e47b820c14f69d3505cb28f5a6a583\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6f86fd01f829499fe0545ff5dda07d4521988e88bfe0bf801fc15650921ed56\",\"dweb:/ipfs/QmUUKu4ZDffHAmfkf3asuQfmLTyfpuy2Amdncc3SqfzKPG\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol\":{\"keccak256\":\"0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1e1d079e8edfb58efd23a311e315a4807b01b5d1cf153f8fa2d0608b9dec3e99\",\"dweb:/ipfs/QmTBExeX2SDTkn5xbk5ssbYSx7VqRp9H4Ux1CY4uQM4b9N\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol\":{\"keccak256\":\"0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9f660b1f351b757dfe01438e59888f31f33ded3afcf5cb5b0d9bf9aa6f320a8b\",\"dweb:/ipfs/QmarDJ5hZEgBtCmmrVzEZWjub9769eD686jmzb2XpSU1cM\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617\",\"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/CircleSavingsV1.sol\":{\"keccak256\":\"0x1f83e25cb8577ce93521874aeb1d273f39a4f20c48393ec7cfca607acf7a5aa2\",\"license\":\"SEE LICENSE IN LICENSE\",\"urls\":[\"bzz-raw://e9afc76bc403f500b900cc23b90a213199eb42a347ada1110df69db4810cb977\",\"dweb:/ipfs/QmWJH66cioNfBSUUouvDeoWYxJaoSQtvRDv2QVPXMzE9sW\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/interfaces/IReputation.sol\":{\"keccak256\":\"0x2b261962e621e15a244c2392326ed7e4dc39c9453a5a050c16d1bb5aac3be742\",\"license\":\"SEE LICENSE IN LICENSE\",\"urls\":[\"bzz-raw://699b36fd65ecebd4fdd2d374427ebcc423d161894f6ec9e67888846ba21a89cf\",\"dweb:/ipfs/QmbuAXGoCgj3SPf8ubvyiZuECFcAu3AGp8hXsRSvawLd6m\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/proxies/CircleSavingsProxy.sol\":{\"keccak256\":\"0x8314bf4c640173ca406345173edbf91dbb19af2127375cac8aeb0f55e965e8f7\",\"license\":\"SEE LICENSE IN LICENSE\",\"urls\":[\"bzz-raw://2e813aab392e1a92fd2eee671467991d76a2006a6b869a48182970fdaeb69192\",\"dweb:/ipfs/QmVMz8zmUuiH6r3UjdKyiZt7NPDZm96t3NuUhBG2zKJFWs\"]}},\"version\":1}",
-    "bytecode": "6080806040523461015e5760a0816102bc803803809161001f8285610162565b83398101031261015e5761003281610199565b9061003f60208201610199565b9061004c60408201610199565b90610065608061005e60608401610199565b9201610199565b604051637c643b2f60e11b60208201526001600160a01b0394851660248201529284166044840152908316606483015290911660848083019190915281526100ae60a482610162565b813b1561013d577f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc80546001600160a01b0319166001600160a01b0384169081179091557fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b5f80a280511561013657610126916101ad565b505b6040516082908161023a8239f35b5050610128565b50634c9c8ce360e01b5f9081526001600160a01b0391909116600452602490fd5b5f80fd5b601f909101601f19168101906001600160401b0382119082101761018557604052565b634e487b7160e01b5f52604160045260245ffd5b51906001600160a01b038216820361015e57565b905f8091602081519101845af48080610226575b156101e15750506040513d81523d5f602083013e60203d82010160405290565b1561020657639996b31560e01b5f9081526001600160a01b0391909116600452602490fd5b3d15610217576040513d5f823e3d90fd5b63d6bda27560e01b5f5260045ffd5b503d1515806101c15750813b15156101c156fe60806040527f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545f9081906001600160a01b0316368280378136915af43d5f803e156048573d5ff35b3d5ffdfea2646970667358221220e04b03140ac68953f1620db9f429802cb967a1e0c4fd3ed2df79d4fef01f7bcd64736f6c63430008210033",
-    "deployedBytecode": "60806040527f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545f9081906001600160a01b0316368280378136915af43d5f803e156048573d5ff35b3d5ffdfea2646970667358221220e04b03140ac68953f1620db9f429802cb967a1e0c4fd3ed2df79d4fef01f7bcd64736f6c63430008210033",
-    "sourceMap": "468:454:28:-:0;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;;;:::i;:::-;;;;:::i;:::-;;;-1:-1:-1;;;468:454:28;755:148;;;-1:-1:-1;;;;;468:454:28;;;755:148;;;468:454;;;;;;;;;;;;;;;;;;;;;;;;;;755:148;;;;468:454;755:148;:::i;:::-;1748:29:10;;:34;1744:119;;811:66;;;-1:-1:-1;;;;;;811:66:10;-1:-1:-1;;;;;468:454:28;;811:66:10;;;;;;2407:36;-1:-1:-1;;2407:36:10;468:454:28;;2458:15:10;:11;;2489:53;;;:::i;:::-;;2454:148;468:454:28;;;;;;;;;2454:148:10;6159:70;;2454:148;;1744:119;-1:-1:-1;;;;;1805:47:10;;;-1:-1:-1;;;;;468:454:28;;;;1805:47:10;468:454:28;755:148;;1805:47:10;468:454:28;-1:-1:-1;468:454:28;;;;;;;-1:-1:-1;;468:454:28;;;;-1:-1:-1;;;;;468:454:28;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;468:454:28;;;;;-1:-1:-1;468:454:28;;;;-1:-1:-1;;;;;468:454:28;;;;;;:::o;4691:549:17:-;;-1:-1:-1;4691:549:17;;3490:129:19;;;;;;;;;;4874:72:17;;4691:549;4870:364;;;4774:252:19;;;;;;;;-1:-1:-1;3490:129:19;4774:252;;;3490:129;4774:252;;;;;;4962:32:17;:::o;4870:364::-;5011:223;;;-1:-1:-1;;;;5045:24:17;;;-1:-1:-1;;;;;468:454:28;;;;5045:24:17;468:454:28;;;5045:24:17;5011:223;4536:73:19;5090:33:17;4536:73:19;;5147:169;;;-1:-1:-1;5147:169:19;;;;;5086:148:17;5204:19;;;-1:-1:-1;5204:19:17;;-1:-1:-1;5204:19:17;4874:72;-1:-1:-1;4536:73:19;4886:33:17;;;4874:72;4886:59;4923:18;;;:22;;4874:72;",
-    "deployedSourceMap": "468:454:28:-:0;;;811:66:10;;-1:-1:-1;;;;;;;;;811:66:10;1019:846:11;-1:-1:-1;;1019:846:11;;;;;;;-1:-1:-1;1019:846:11;;;;;;-1:-1:-1;1019:846:11;;;-1:-1:-1;1019:846:11",
-    "sourcePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/proxies/CircleSavingsProxy.sol",
-    "compiler": {
-        "name": "solc",
-        "version": "0.8.33+commit.64118f21"
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
     },
-    "ast": {
-        "absolutePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/proxies/CircleSavingsProxy.sol",
-        "exportedSymbols": {
-            "CircleSavingsProxy": [
-                9629
-            ],
-            "CircleSavingsV1": [
-                6298
-            ],
-            "ERC1967Proxy": [
-                407
-            ],
-            "createCircleSavings": [
-                9680
-            ]
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "AddressEmptyCode",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "ERC1967InvalidImplementation",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ERC1967NonPayable",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "FailedCall",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "Upgraded",
+      "type": "event"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "fallback"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.8.33+commit.64118f21\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_implementation\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_USDmToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_treasury\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_reputationContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_initialOwner\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"AddressEmptyCode\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"ERC1967InvalidImplementation\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ERC1967NonPayable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedCall\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"stateMutability\":\"payable\",\"type\":\"fallback\"}],\"devdoc\":{\"details\":\"ERC1967 Proxy for CircleSavings (UUPS pattern)\",\"errors\":{\"AddressEmptyCode(address)\":[{\"details\":\"There's no code at `target` (it is not a contract).\"}],\"ERC1967InvalidImplementation(address)\":[{\"details\":\"The `implementation` of the proxy is invalid.\"}],\"ERC1967NonPayable()\":[{\"details\":\"An upgrade function sees `msg.value > 0` that may be lost.\"}],\"FailedCall()\":[{\"details\":\"A call to an address target failed. The target may have reverted.\"}]},\"events\":{\"Upgraded(address)\":{\"details\":\"Emitted when the implementation is upgraded.\"}},\"kind\":\"dev\",\"methods\":{},\"title\":\"CircleSavingsProxy\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"Ownership and upgrades are managed by the implementation (CircleSavingsV1)\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/proxies/CircleSavingsProxy.sol\":\"CircleSavingsProxy\"},\"evmVersion\":\"osaka\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol\":{\"keccak256\":\"0x1c49045cd9e64ce4fca5e0eaab4a1e58667c2047070a0c430524797913179afa\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://2ba1461bc0bd95af5bcdecc398cc28eb30172899ee58184db41efa49ecc92f29\",\"dweb:/ipfs/QmfYVePPhio24CUeXCKkmFTAccyFaHNSvZ4Lm7EkqKMxDZ\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol\":{\"keccak256\":\"0xe9b48d5b8f5af131c7d9217fca2542179f5ad3b5e39d445317b95403e1a2ec38\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://61315006eb2a5fb0566995e1b9be894cd464b846ab5e69b0e81688a897b8cd30\",\"dweb:/ipfs/QmPC6utN28YUNywQRAFjxR2VBbyjh5RZ9oh8xJhCgJPWrA\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol\":{\"keccak256\":\"0x68fd01f7822e71746378b4353a37e5223e4363621bf0da26980dad779abd7d20\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8329e9859e863e4ba18849570de7a57248a32c8f7e40188784de7cef8b021925\",\"dweb:/ipfs/QmXJL4U7wErFz8T37szY9ZPihud6BAYsEKgp4dtXGA9T1q\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol\":{\"keccak256\":\"0xfe33c663b1804c1c1ba2b1481b96cd2649c9c152d258680d45070be1f911ff0b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4c75b1b83804a07a9f72e6eb68385cfe8045f1dc8fa248295ba63f9c703cf54c\",\"dweb:/ipfs/Qmbg9ui5zk4ojehWKMrpTiy4fRjbGmpuh5ShCEtFVq1HTP\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol\":{\"keccak256\":\"0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da5e832b40fc5c3145d3781e2e5fa60ac2052c9d08af7e300dc8ab80c4343100\",\"dweb:/ipfs/QmTzf7N5ZUdh5raqtzbM11yexiUoLC9z3Ws632MCuycq1d\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol\":{\"keccak256\":\"0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1c299900ac4ec268d4570ecef0d697a3013cd11a6eb74e295ee3fbc945056037\",\"dweb:/ipfs/Qmab9owJoxcA7vJT5XNayCMaUR1qxqj1NDzzisduwaJMcZ\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/IERC1967.sol\":{\"keccak256\":\"0xbf2aefe54b76d7f7bcd4f6da1080b7b1662611937d870b880db584d09cea56b5\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f5e7e2f12e0feec75296e57f51f82fdaa8bd1551f4b8cc6560442c0bf60f818c\",\"dweb:/ipfs/QmcW9wDMaQ8RbQibMarfp17a3bABzY5KraWe2YDwuUrUoz\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol\":{\"keccak256\":\"0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1bb2332a7ee26dd0b0de9b7fe266749f54820c99ab6a3bcb6f7e6b751d47ee2d\",\"dweb:/ipfs/QmcRWpaBeCYkhy68PR3B4AgD7asuQk7PwkWxrvJbZcikLF\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol\":{\"keccak256\":\"0x82f757819bf2429a0d4db141b99a4bbe5039e4ef86dfb94e2e6d40577ed5b28b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://37c30ed931e19fb71fdb806bb504cfdb9913b7127545001b64d4487783374422\",\"dweb:/ipfs/QmUBHpv4hm3ZmwJ4GH8BeVzK4mv41Q6vBbWXxn8HExPXza\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol\":{\"keccak256\":\"0xa3066ff86b94128a9d3956a63a0511fa1aae41bd455772ab587b32ff322acb2e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bf7b192fd82acf6187970c80548f624b1b9c80425b62fa49e7fdb538a52de049\",\"dweb:/ipfs/QmWXG1YCde1tqDYTbNwjkZDWVgPEjzaQGSDqWkyKLzaNua\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol\":{\"keccak256\":\"0xa1ad192cd45317c788618bef5cb1fb3ca4ce8b230f6433ac68cc1d850fb81618\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b43447bb85a53679d269a403c693b9d88d6c74177dfb35eddca63abaf7cf110a\",\"dweb:/ipfs/QmXSDmpd4bNZj1PDgegr6C4w1jDaWHXCconC3rYiw9TSkQ\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/Proxy.sol\":{\"keccak256\":\"0x80935e4fae2c414f4e7789e13a820d06901182a5733ab006f8d68b5b09db993f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://752d991d6ca1087587b48103bc623f74888054f58581ff29166d90889c4765c5\",\"dweb:/ipfs/QmRBsa6K2ChKxVWYY54YiyYhDBPbmY5HyKCtij5LoWh56o\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol\":{\"keccak256\":\"0x20462ddb2665e9521372c76b001d0ce196e59dbbd989de9af5576cad0bd5628b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f417fd12aeec8fbfaceaa30e3a08a0724c0bc39de363e2acf6773c897abbaf6d\",\"dweb:/ipfs/QmU4Hko6sApdweVM92CsiuLKkCk8HfyBeutF89PCTz5Tye\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol\":{\"keccak256\":\"0xdb4d24ee2c087c391d587cd17adfe5b3f9d93b3110b1388c2ab6c7c0ad1dcd05\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ab7b6d5b9e2b88176312967fe0f0e78f3d9a1422fa5e4b64e2440c35869b5d08\",\"dweb:/ipfs/QmXKYWWyzcLg1B2k7Sb1qkEXgLCYfXecR9wYW5obRzWP1Q\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol\":{\"keccak256\":\"0x1a26353563a2c63b4120ea0b94727253eeff84fe2241d42c1452308b9080e66a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://49a95e36d267828b4357186a79917002d616d8634e25d1f9818e2354cd2e7d34\",\"dweb:/ipfs/QmWDkqE4KkyLAS2UkLsRgXE1FGB1qfEgBC3zMXBVsVWfdk\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5282825a626cfe924e504274b864a652b0023591fa66f06a067b25b51ba9b303\",\"dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol\":{\"keccak256\":\"0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://299ced486011781dc98f638059678323c03079fefae1482abaa2135b22fa92d0\",\"dweb:/ipfs/QmbZNbcPTBxNvwChavN2kkZZs7xHhYL7mv51KrxMhsMs3j\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/Address.sol\":{\"keccak256\":\"0x0fa9e0d3a859900b5a46f70a03c73adf259603d5e05027a37fe0b45529d85346\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://c2add4da0240c9f2ce47649c8bb6b11b40e98cf6f88b8bdc76b2704e89391710\",\"dweb:/ipfs/QmNQTwF2uVzu4CRtNxr8bxyP9XuW6VsZuo2Nr4KR2bZr3d\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/Errors.sol\":{\"keccak256\":\"0x6afa713bfd42cf0f7656efa91201007ac465e42049d7de1d50753a373648c123\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ba1d02f4847670a1b83dec9f7d37f0b0418d6043447b69f3a29a5f9efc547fcf\",\"dweb:/ipfs/QmQ7iH2keLNUKgq2xSWcRmuBE5eZ3F5whYAkAGzCNNoEWB\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/LowLevelCall.sol\":{\"keccak256\":\"0x5b4802a4352474792df3107e961d1cc593e47b820c14f69d3505cb28f5a6a583\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a6f86fd01f829499fe0545ff5dda07d4521988e88bfe0bf801fc15650921ed56\",\"dweb:/ipfs/QmUUKu4ZDffHAmfkf3asuQfmLTyfpuy2Amdncc3SqfzKPG\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol\":{\"keccak256\":\"0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1e1d079e8edfb58efd23a311e315a4807b01b5d1cf153f8fa2d0608b9dec3e99\",\"dweb:/ipfs/QmTBExeX2SDTkn5xbk5ssbYSx7VqRp9H4Ux1CY4uQM4b9N\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol\":{\"keccak256\":\"0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9f660b1f351b757dfe01438e59888f31f33ded3afcf5cb5b0d9bf9aa6f320a8b\",\"dweb:/ipfs/QmarDJ5hZEgBtCmmrVzEZWjub9769eD686jmzb2XpSU1cM\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617\",\"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/CircleSavingsV1.sol\":{\"keccak256\":\"0x1f83e25cb8577ce93521874aeb1d273f39a4f20c48393ec7cfca607acf7a5aa2\",\"license\":\"SEE LICENSE IN LICENSE\",\"urls\":[\"bzz-raw://e9afc76bc403f500b900cc23b90a213199eb42a347ada1110df69db4810cb977\",\"dweb:/ipfs/QmWJH66cioNfBSUUouvDeoWYxJaoSQtvRDv2QVPXMzE9sW\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/interfaces/IReputation.sol\":{\"keccak256\":\"0x2b261962e621e15a244c2392326ed7e4dc39c9453a5a050c16d1bb5aac3be742\",\"license\":\"SEE LICENSE IN LICENSE\",\"urls\":[\"bzz-raw://699b36fd65ecebd4fdd2d374427ebcc423d161894f6ec9e67888846ba21a89cf\",\"dweb:/ipfs/QmbuAXGoCgj3SPf8ubvyiZuECFcAu3AGp8hXsRSvawLd6m\"]},\"/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/proxies/CircleSavingsProxy.sol\":{\"keccak256\":\"0x8314bf4c640173ca406345173edbf91dbb19af2127375cac8aeb0f55e965e8f7\",\"license\":\"SEE LICENSE IN LICENSE\",\"urls\":[\"bzz-raw://2e813aab392e1a92fd2eee671467991d76a2006a6b869a48182970fdaeb69192\",\"dweb:/ipfs/QmVMz8zmUuiH6r3UjdKyiZt7NPDZm96t3NuUhBG2zKJFWs\"]}},\"version\":1}",
+  "bytecode": "6080806040523461015e5760a0816102bc803803809161001f8285610162565b83398101031261015e5761003281610199565b9061003f60208201610199565b9061004c60408201610199565b90610065608061005e60608401610199565b9201610199565b604051637c643b2f60e11b60208201526001600160a01b0394851660248201529284166044840152908316606483015290911660848083019190915281526100ae60a482610162565b813b1561013d577f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc80546001600160a01b0319166001600160a01b0384169081179091557fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b5f80a280511561013657610126916101ad565b505b6040516082908161023a8239f35b5050610128565b50634c9c8ce360e01b5f9081526001600160a01b0391909116600452602490fd5b5f80fd5b601f909101601f19168101906001600160401b0382119082101761018557604052565b634e487b7160e01b5f52604160045260245ffd5b51906001600160a01b038216820361015e57565b905f8091602081519101845af48080610226575b156101e15750506040513d81523d5f602083013e60203d82010160405290565b1561020657639996b31560e01b5f9081526001600160a01b0391909116600452602490fd5b3d15610217576040513d5f823e3d90fd5b63d6bda27560e01b5f5260045ffd5b503d1515806101c15750813b15156101c156fe60806040527f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545f9081906001600160a01b0316368280378136915af43d5f803e156048573d5ff35b3d5ffdfea2646970667358221220e04b03140ac68953f1620db9f429802cb967a1e0c4fd3ed2df79d4fef01f7bcd64736f6c63430008210033",
+  "deployedBytecode": "60806040527f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc545f9081906001600160a01b0316368280378136915af43d5f803e156048573d5ff35b3d5ffdfea2646970667358221220e04b03140ac68953f1620db9f429802cb967a1e0c4fd3ed2df79d4fef01f7bcd64736f6c63430008210033",
+  "sourceMap": "468:454:28:-:0;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;;;:::i;:::-;;;;:::i;:::-;;;-1:-1:-1;;;468:454:28;755:148;;;-1:-1:-1;;;;;468:454:28;;;755:148;;;468:454;;;;;;;;;;;;;;;;;;;;;;;;;;755:148;;;;468:454;755:148;:::i;:::-;1748:29:10;;:34;1744:119;;811:66;;;-1:-1:-1;;;;;;811:66:10;-1:-1:-1;;;;;468:454:28;;811:66:10;;;;;;2407:36;-1:-1:-1;;2407:36:10;468:454:28;;2458:15:10;:11;;2489:53;;;:::i;:::-;;2454:148;468:454:28;;;;;;;;;2454:148:10;6159:70;;2454:148;;1744:119;-1:-1:-1;;;;;1805:47:10;;;-1:-1:-1;;;;;468:454:28;;;;1805:47:10;468:454:28;755:148;;1805:47:10;468:454:28;-1:-1:-1;468:454:28;;;;;;;-1:-1:-1;;468:454:28;;;;-1:-1:-1;;;;;468:454:28;;;;;;;;;;:::o;:::-;;;;-1:-1:-1;468:454:28;;;;;-1:-1:-1;468:454:28;;;;-1:-1:-1;;;;;468:454:28;;;;;;:::o;4691:549:17:-;;-1:-1:-1;4691:549:17;;3490:129:19;;;;;;;;;;4874:72:17;;4691:549;4870:364;;;4774:252:19;;;;;;;;-1:-1:-1;3490:129:19;4774:252;;;3490:129;4774:252;;;;;;4962:32:17;:::o;4870:364::-;5011:223;;;-1:-1:-1;;;;5045:24:17;;;-1:-1:-1;;;;;468:454:28;;;;5045:24:17;468:454:28;;;5045:24:17;5011:223;4536:73:19;5090:33:17;4536:73:19;;5147:169;;;-1:-1:-1;5147:169:19;;;;;5086:148:17;5204:19;;;-1:-1:-1;5204:19:17;;-1:-1:-1;5204:19:17;4874:72;-1:-1:-1;4536:73:19;4886:33:17;;;4874:72;4886:59;4923:18;;;:22;;4874:72;",
+  "deployedSourceMap": "468:454:28:-:0;;;811:66:10;;-1:-1:-1;;;;;;;;;811:66:10;1019:846:11;-1:-1:-1;;1019:846:11;;;;;;;-1:-1:-1;1019:846:11;;;;;;-1:-1:-1;1019:846:11;;;-1:-1:-1;1019:846:11",
+  "sourcePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/proxies/CircleSavingsProxy.sol",
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.33+commit.64118f21"
+  },
+  "ast": {
+    "absolutePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/proxies/CircleSavingsProxy.sol",
+    "exportedSymbols": {
+      "CircleSavingsProxy": [9629],
+      "CircleSavingsV1": [6298],
+      "ERC1967Proxy": [407],
+      "createCircleSavings": [9680]
+    },
+    "id": 9681,
+    "license": "SEE LICENSE IN LICENSE",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 9594,
+        "literals": ["solidity", "^", "0.8", ".27"],
+        "nodeType": "PragmaDirective",
+        "src": "51:24:28"
+      },
+      {
+        "absolutePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol",
+        "file": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol",
+        "id": 9596,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 9681,
+        "sourceUnit": 408,
+        "src": "77:155:28",
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 9595,
+              "name": "ERC1967Proxy",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 407,
+              "src": "85:12:28",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/CircleSavingsV1.sol",
+        "file": "../CircleSavingsV1.sol",
+        "id": 9598,
+        "nameLocation": "-1:-1:-1",
+        "nodeType": "ImportDirective",
+        "scope": 9681,
+        "sourceUnit": 6299,
+        "src": "233:55:28",
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 9597,
+              "name": "CircleSavingsV1",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 6298,
+              "src": "241:15:28",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 9600,
+              "name": "ERC1967Proxy",
+              "nameLocations": ["499:12:28"],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 407,
+              "src": "499:12:28"
+            },
+            "id": 9601,
+            "nodeType": "InheritanceSpecifier",
+            "src": "499:12:28"
+          }
+        ],
+        "canonicalName": "CircleSavingsProxy",
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": {
+          "id": 9599,
+          "nodeType": "StructuredDocumentation",
+          "src": "290:177:28",
+          "text": " @title CircleSavingsProxy\n @dev ERC1967 Proxy for CircleSavings (UUPS pattern)\n @notice Ownership and upgrades are managed by the implementation (CircleSavingsV1)"
         },
-        "id": 9681,
-        "license": "SEE LICENSE IN LICENSE",
-        "nodeType": "SourceUnit",
+        "fullyImplemented": true,
+        "id": 9629,
+        "linearizedBaseContracts": [9629, 407, 737],
+        "name": "CircleSavingsProxy",
+        "nameLocation": "477:18:28",
+        "nodeType": "ContractDefinition",
         "nodes": [
-            {
-                "id": 9594,
-                "literals": [
-                    "solidity",
-                    "^",
-                    "0.8",
-                    ".27"
-                ],
-                "nodeType": "PragmaDirective",
-                "src": "51:24:28"
+          {
+            "body": {
+              "id": 9627,
+              "nodeType": "Block",
+              "src": "918:2:28",
+              "statements": []
             },
-            {
-                "absolutePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol",
-                "file": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol",
-                "id": 9596,
-                "nameLocation": "-1:-1:-1",
-                "nodeType": "ImportDirective",
-                "scope": 9681,
-                "sourceUnit": 408,
-                "src": "77:155:28",
-                "symbolAliases": [
-                    {
-                        "foreign": {
-                            "id": 9595,
-                            "name": "ERC1967Proxy",
-                            "nodeType": "Identifier",
-                            "overloadedDeclarations": [],
-                            "referencedDeclaration": 407,
-                            "src": "85:12:28",
-                            "typeDescriptions": {}
-                        },
-                        "nameLocation": "-1:-1:-1"
+            "id": 9628,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [
+              {
+                "arguments": [
+                  {
+                    "id": 9614,
+                    "name": "_implementation",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 9603,
+                    "src": "726:15:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
                     }
-                ],
-                "unitAlias": ""
-            },
-            {
-                "absolutePath": "/Users/macuser/Desktop/workspace/circlepot/smart-contract/src/CircleSavingsV1.sol",
-                "file": "../CircleSavingsV1.sol",
-                "id": 9598,
-                "nameLocation": "-1:-1:-1",
-                "nodeType": "ImportDirective",
-                "scope": 9681,
-                "sourceUnit": 6299,
-                "src": "233:55:28",
-                "symbolAliases": [
-                    {
-                        "foreign": {
-                            "id": 9597,
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "expression": {
+                            "id": 9617,
                             "name": "CircleSavingsV1",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
                             "referencedDeclaration": 6298,
-                            "src": "241:15:28",
-                            "typeDescriptions": {}
-                        },
-                        "nameLocation": "-1:-1:-1"
-                    }
-                ],
-                "unitAlias": ""
-            },
-            {
-                "abstract": false,
-                "baseContracts": [
-                    {
-                        "baseName": {
-                            "id": 9600,
-                            "name": "ERC1967Proxy",
-                            "nameLocations": [
-                                "499:12:28"
-                            ],
-                            "nodeType": "IdentifierPath",
-                            "referencedDeclaration": 407,
-                            "src": "499:12:28"
-                        },
-                        "id": 9601,
-                        "nodeType": "InheritanceSpecifier",
-                        "src": "499:12:28"
-                    }
-                ],
-                "canonicalName": "CircleSavingsProxy",
-                "contractDependencies": [],
-                "contractKind": "contract",
-                "documentation": {
-                    "id": 9599,
-                    "nodeType": "StructuredDocumentation",
-                    "src": "290:177:28",
-                    "text": " @title CircleSavingsProxy\n @dev ERC1967 Proxy for CircleSavings (UUPS pattern)\n @notice Ownership and upgrades are managed by the implementation (CircleSavingsV1)"
-                },
-                "fullyImplemented": true,
-                "id": 9629,
-                "linearizedBaseContracts": [
-                    9629,
-                    407,
-                    737
-                ],
-                "name": "CircleSavingsProxy",
-                "nameLocation": "477:18:28",
-                "nodeType": "ContractDefinition",
-                "nodes": [
-                    {
-                        "body": {
-                            "id": 9627,
-                            "nodeType": "Block",
-                            "src": "918:2:28",
-                            "statements": []
-                        },
-                        "id": 9628,
-                        "implemented": true,
-                        "kind": "constructor",
-                        "modifiers": [
-                            {
-                                "arguments": [
-                                    {
-                                        "id": 9614,
-                                        "name": "_implementation",
-                                        "nodeType": "Identifier",
-                                        "overloadedDeclarations": [],
-                                        "referencedDeclaration": 9603,
-                                        "src": "726:15:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    {
-                                        "arguments": [
-                                            {
-                                                "expression": {
-                                                    "expression": {
-                                                        "id": 9617,
-                                                        "name": "CircleSavingsV1",
-                                                        "nodeType": "Identifier",
-                                                        "overloadedDeclarations": [],
-                                                        "referencedDeclaration": 6298,
-                                                        "src": "795:15:28",
-                                                        "typeDescriptions": {
-                                                            "typeIdentifier": "t_type$_t_contract$_CircleSavingsV1_$6298_$",
-                                                            "typeString": "type(contract CircleSavingsV1)"
-                                                        }
-                                                    },
-                                                    "id": 9618,
-                                                    "isConstant": false,
-                                                    "isLValue": false,
-                                                    "isPure": true,
-                                                    "lValueRequested": false,
-                                                    "memberLocation": "811:10:28",
-                                                    "memberName": "initialize",
-                                                    "nodeType": "MemberAccess",
-                                                    "referencedDeclaration": 3037,
-                                                    "src": "795:26:28",
-                                                    "typeDescriptions": {
-                                                        "typeIdentifier": "t_function_declaration_nonpayable$_t_address_$_t_address_$_t_address_$_t_address_$returns$__$",
-                                                        "typeString": "function CircleSavingsV1.initialize(address,address,address,address)"
-                                                    }
-                                                },
-                                                "id": 9619,
-                                                "isConstant": false,
-                                                "isLValue": false,
-                                                "isPure": true,
-                                                "lValueRequested": false,
-                                                "memberLocation": "822:8:28",
-                                                "memberName": "selector",
-                                                "nodeType": "MemberAccess",
-                                                "src": "795:35:28",
-                                                "typeDescriptions": {
-                                                    "typeIdentifier": "t_bytes4",
-                                                    "typeString": "bytes4"
-                                                }
-                                            },
-                                            {
-                                                "id": 9620,
-                                                "name": "_cUSDToken",
-                                                "nodeType": "Identifier",
-                                                "overloadedDeclarations": [],
-                                                "referencedDeclaration": 9605,
-                                                "src": "832:10:28",
-                                                "typeDescriptions": {
-                                                    "typeIdentifier": "t_address",
-                                                    "typeString": "address"
-                                                }
-                                            },
-                                            {
-                                                "id": 9621,
-                                                "name": "_treasury",
-                                                "nodeType": "Identifier",
-                                                "overloadedDeclarations": [],
-                                                "referencedDeclaration": 9607,
-                                                "src": "844:9:28",
-                                                "typeDescriptions": {
-                                                    "typeIdentifier": "t_address",
-                                                    "typeString": "address"
-                                                }
-                                            },
-                                            {
-                                                "id": 9622,
-                                                "name": "_reputationContract",
-                                                "nodeType": "Identifier",
-                                                "overloadedDeclarations": [],
-                                                "referencedDeclaration": 9609,
-                                                "src": "855:19:28",
-                                                "typeDescriptions": {
-                                                    "typeIdentifier": "t_address",
-                                                    "typeString": "address"
-                                                }
-                                            },
-                                            {
-                                                "id": 9623,
-                                                "name": "_initialOwner",
-                                                "nodeType": "Identifier",
-                                                "overloadedDeclarations": [],
-                                                "referencedDeclaration": 9611,
-                                                "src": "876:13:28",
-                                                "typeDescriptions": {
-                                                    "typeIdentifier": "t_address",
-                                                    "typeString": "address"
-                                                }
-                                            }
-                                        ],
-                                        "expression": {
-                                            "argumentTypes": [
-                                                {
-                                                    "typeIdentifier": "t_bytes4",
-                                                    "typeString": "bytes4"
-                                                },
-                                                {
-                                                    "typeIdentifier": "t_address",
-                                                    "typeString": "address"
-                                                },
-                                                {
-                                                    "typeIdentifier": "t_address",
-                                                    "typeString": "address"
-                                                },
-                                                {
-                                                    "typeIdentifier": "t_address",
-                                                    "typeString": "address"
-                                                },
-                                                {
-                                                    "typeIdentifier": "t_address",
-                                                    "typeString": "address"
-                                                }
-                                            ],
-                                            "expression": {
-                                                "id": 9615,
-                                                "name": "abi",
-                                                "nodeType": "Identifier",
-                                                "overloadedDeclarations": [],
-                                                "referencedDeclaration": 4294967295,
-                                                "src": "755:3:28",
-                                                "typeDescriptions": {
-                                                    "typeIdentifier": "t_magic_abi",
-                                                    "typeString": "abi"
-                                                }
-                                            },
-                                            "id": 9616,
-                                            "isConstant": false,
-                                            "isLValue": false,
-                                            "isPure": true,
-                                            "lValueRequested": false,
-                                            "memberLocation": "759:18:28",
-                                            "memberName": "encodeWithSelector",
-                                            "nodeType": "MemberAccess",
-                                            "src": "755:22:28",
-                                            "typeDescriptions": {
-                                                "typeIdentifier": "t_function_abiencodewithselector_pure$_t_bytes4_$returns$_t_bytes_memory_ptr_$",
-                                                "typeString": "function (bytes4) pure returns (bytes memory)"
-                                            }
-                                        },
-                                        "id": 9624,
-                                        "isConstant": false,
-                                        "isLValue": false,
-                                        "isPure": false,
-                                        "kind": "functionCall",
-                                        "lValueRequested": false,
-                                        "nameLocations": [],
-                                        "names": [],
-                                        "nodeType": "FunctionCall",
-                                        "src": "755:148:28",
-                                        "tryCall": false,
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_bytes_memory_ptr",
-                                            "typeString": "bytes memory"
-                                        }
-                                    }
-                                ],
-                                "id": 9625,
-                                "kind": "baseConstructorSpecifier",
-                                "modifierName": {
-                                    "id": 9613,
-                                    "name": "ERC1967Proxy",
-                                    "nameLocations": [
-                                        "700:12:28"
-                                    ],
-                                    "nodeType": "IdentifierPath",
-                                    "referencedDeclaration": 407,
-                                    "src": "700:12:28"
-                                },
-                                "nodeType": "ModifierInvocation",
-                                "src": "700:213:28"
+                            "src": "795:15:28",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_type$_t_contract$_CircleSavingsV1_$6298_$",
+                              "typeString": "type(contract CircleSavingsV1)"
                             }
-                        ],
-                        "name": "",
-                        "nameLocation": "-1:-1:-1",
-                        "nodeType": "FunctionDefinition",
-                        "parameters": {
-                            "id": 9612,
-                            "nodeType": "ParameterList",
-                            "parameters": [
-                                {
-                                    "constant": false,
-                                    "id": 9603,
-                                    "mutability": "mutable",
-                                    "name": "_implementation",
-                                    "nameLocation": "547:15:28",
-                                    "nodeType": "VariableDeclaration",
-                                    "scope": 9628,
-                                    "src": "539:23:28",
-                                    "stateVariable": false,
-                                    "storageLocation": "default",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_address",
-                                        "typeString": "address"
-                                    },
-                                    "typeName": {
-                                        "id": 9602,
-                                        "name": "address",
-                                        "nodeType": "ElementaryTypeName",
-                                        "src": "539:7:28",
-                                        "stateMutability": "nonpayable",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    "visibility": "internal"
-                                },
-                                {
-                                    "constant": false,
-                                    "id": 9605,
-                                    "mutability": "mutable",
-                                    "name": "_cUSDToken",
-                                    "nameLocation": "580:10:28",
-                                    "nodeType": "VariableDeclaration",
-                                    "scope": 9628,
-                                    "src": "572:18:28",
-                                    "stateVariable": false,
-                                    "storageLocation": "default",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_address",
-                                        "typeString": "address"
-                                    },
-                                    "typeName": {
-                                        "id": 9604,
-                                        "name": "address",
-                                        "nodeType": "ElementaryTypeName",
-                                        "src": "572:7:28",
-                                        "stateMutability": "nonpayable",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    "visibility": "internal"
-                                },
-                                {
-                                    "constant": false,
-                                    "id": 9607,
-                                    "mutability": "mutable",
-                                    "name": "_treasury",
-                                    "nameLocation": "608:9:28",
-                                    "nodeType": "VariableDeclaration",
-                                    "scope": 9628,
-                                    "src": "600:17:28",
-                                    "stateVariable": false,
-                                    "storageLocation": "default",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_address",
-                                        "typeString": "address"
-                                    },
-                                    "typeName": {
-                                        "id": 9606,
-                                        "name": "address",
-                                        "nodeType": "ElementaryTypeName",
-                                        "src": "600:7:28",
-                                        "stateMutability": "nonpayable",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    "visibility": "internal"
-                                },
-                                {
-                                    "constant": false,
-                                    "id": 9609,
-                                    "mutability": "mutable",
-                                    "name": "_reputationContract",
-                                    "nameLocation": "635:19:28",
-                                    "nodeType": "VariableDeclaration",
-                                    "scope": 9628,
-                                    "src": "627:27:28",
-                                    "stateVariable": false,
-                                    "storageLocation": "default",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_address",
-                                        "typeString": "address"
-                                    },
-                                    "typeName": {
-                                        "id": 9608,
-                                        "name": "address",
-                                        "nodeType": "ElementaryTypeName",
-                                        "src": "627:7:28",
-                                        "stateMutability": "nonpayable",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    "visibility": "internal"
-                                },
-                                {
-                                    "constant": false,
-                                    "id": 9611,
-                                    "mutability": "mutable",
-                                    "name": "_initialOwner",
-                                    "nameLocation": "672:13:28",
-                                    "nodeType": "VariableDeclaration",
-                                    "scope": 9628,
-                                    "src": "664:21:28",
-                                    "stateVariable": false,
-                                    "storageLocation": "default",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_address",
-                                        "typeString": "address"
-                                    },
-                                    "typeName": {
-                                        "id": 9610,
-                                        "name": "address",
-                                        "nodeType": "ElementaryTypeName",
-                                        "src": "664:7:28",
-                                        "stateMutability": "nonpayable",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    "visibility": "internal"
-                                }
-                            ],
-                            "src": "529:162:28"
+                          },
+                          "id": 9618,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "memberLocation": "811:10:28",
+                          "memberName": "initialize",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 3037,
+                          "src": "795:26:28",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_declaration_nonpayable$_t_address_$_t_address_$_t_address_$_t_address_$returns$__$",
+                            "typeString": "function CircleSavingsV1.initialize(address,address,address,address)"
+                          }
                         },
-                        "returnParameters": {
-                            "id": 9626,
-                            "nodeType": "ParameterList",
-                            "parameters": [],
-                            "src": "918:0:28"
+                        "id": 9619,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "822:8:28",
+                        "memberName": "selector",
+                        "nodeType": "MemberAccess",
+                        "src": "795:35:28",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      },
+                      {
+                        "id": 9620,
+                        "name": "_USDmToken",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 9605,
+                        "src": "832:10:28",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "id": 9621,
+                        "name": "_treasury",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 9607,
+                        "src": "844:9:28",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "id": 9622,
+                        "name": "_reputationContract",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 9609,
+                        "src": "855:19:28",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "id": 9623,
+                        "name": "_initialOwner",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 9611,
+                        "src": "876:13:28",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
                         },
-                        "scope": 9629,
-                        "src": "518:402:28",
-                        "stateMutability": "nonpayable",
-                        "virtual": false,
-                        "visibility": "public"
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "id": 9615,
+                        "name": "abi",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967295,
+                        "src": "755:3:28",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_abi",
+                          "typeString": "abi"
+                        }
+                      },
+                      "id": 9616,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "759:18:28",
+                      "memberName": "encodeWithSelector",
+                      "nodeType": "MemberAccess",
+                      "src": "755:22:28",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_abiencodewithselector_pure$_t_bytes4_$returns$_t_bytes_memory_ptr_$",
+                        "typeString": "function (bytes4) pure returns (bytes memory)"
+                      }
+                    },
+                    "id": 9624,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "755:148:28",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_memory_ptr",
+                      "typeString": "bytes memory"
                     }
+                  }
                 ],
-                "scope": 9681,
-                "src": "468:454:28",
-                "usedErrors": [
-                    427,
-                    440,
-                    1726,
-                    2117
-                ],
-                "usedEvents": [
-                    342
-                ]
+                "id": 9625,
+                "kind": "baseConstructorSpecifier",
+                "modifierName": {
+                  "id": 9613,
+                  "name": "ERC1967Proxy",
+                  "nameLocations": ["700:12:28"],
+                  "nodeType": "IdentifierPath",
+                  "referencedDeclaration": 407,
+                  "src": "700:12:28"
+                },
+                "nodeType": "ModifierInvocation",
+                "src": "700:213:28"
+              }
+            ],
+            "name": "",
+            "nameLocation": "-1:-1:-1",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 9612,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 9603,
+                  "mutability": "mutable",
+                  "name": "_implementation",
+                  "nameLocation": "547:15:28",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9628,
+                  "src": "539:23:28",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 9602,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "539:7:28",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 9605,
+                  "mutability": "mutable",
+                  "name": "_USDmToken",
+                  "nameLocation": "580:10:28",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9628,
+                  "src": "572:18:28",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 9604,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "572:7:28",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 9607,
+                  "mutability": "mutable",
+                  "name": "_treasury",
+                  "nameLocation": "608:9:28",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9628,
+                  "src": "600:17:28",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 9606,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "600:7:28",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 9609,
+                  "mutability": "mutable",
+                  "name": "_reputationContract",
+                  "nameLocation": "635:19:28",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9628,
+                  "src": "627:27:28",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 9608,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "627:7:28",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 9611,
+                  "mutability": "mutable",
+                  "name": "_initialOwner",
+                  "nameLocation": "672:13:28",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9628,
+                  "src": "664:21:28",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 9610,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "664:7:28",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "529:162:28"
+            },
+            "returnParameters": {
+              "id": 9626,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "918:0:28"
+            },
+            "scope": 9629,
+            "src": "518:402:28",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          }
+        ],
+        "scope": 9681,
+        "src": "468:454:28",
+        "usedErrors": [427, 440, 1726, 2117],
+        "usedEvents": [342]
+      },
+      {
+        "body": {
+          "id": 9679,
+          "nodeType": "Block",
+          "src": "1447:406:28",
+          "statements": [
+            {
+              "assignments": [9646],
+              "declarations": [
+                {
+                  "constant": false,
+                  "id": 9646,
+                  "mutability": "mutable",
+                  "name": "implementation",
+                  "nameLocation": "1498:14:28",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9679,
+                  "src": "1482:30:28",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                    "typeString": "contract CircleSavingsV1"
+                  },
+                  "typeName": {
+                    "id": 9645,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 9644,
+                      "name": "CircleSavingsV1",
+                      "nameLocations": ["1482:15:28"],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 6298,
+                      "src": "1482:15:28"
+                    },
+                    "referencedDeclaration": 6298,
+                    "src": "1482:15:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                      "typeString": "contract CircleSavingsV1"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "id": 9651,
+              "initialValue": {
+                "arguments": [],
+                "expression": {
+                  "argumentTypes": [],
+                  "id": 9649,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "nodeType": "NewExpression",
+                  "src": "1515:19:28",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_CircleSavingsV1_$6298_$",
+                    "typeString": "function () returns (contract CircleSavingsV1)"
+                  },
+                  "typeName": {
+                    "id": 9648,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 9647,
+                      "name": "CircleSavingsV1",
+                      "nameLocations": ["1519:15:28"],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 6298,
+                      "src": "1519:15:28"
+                    },
+                    "referencedDeclaration": 6298,
+                    "src": "1519:15:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                      "typeString": "contract CircleSavingsV1"
+                    }
+                  }
+                },
+                "id": 9650,
+                "isConstant": false,
+                "isLValue": false,
+                "isPure": false,
+                "kind": "functionCall",
+                "lValueRequested": false,
+                "nameLocations": [],
+                "names": [],
+                "nodeType": "FunctionCall",
+                "src": "1515:21:28",
+                "tryCall": false,
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                  "typeString": "contract CircleSavingsV1"
+                }
+              },
+              "nodeType": "VariableDeclarationStatement",
+              "src": "1482:54:28"
             },
             {
-                "body": {
-                    "id": 9679,
-                    "nodeType": "Block",
-                    "src": "1447:406:28",
-                    "statements": [
-                        {
-                            "assignments": [
-                                9646
-                            ],
-                            "declarations": [
-                                {
-                                    "constant": false,
-                                    "id": 9646,
-                                    "mutability": "mutable",
-                                    "name": "implementation",
-                                    "nameLocation": "1498:14:28",
-                                    "nodeType": "VariableDeclaration",
-                                    "scope": 9679,
-                                    "src": "1482:30:28",
-                                    "stateVariable": false,
-                                    "storageLocation": "default",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                        "typeString": "contract CircleSavingsV1"
-                                    },
-                                    "typeName": {
-                                        "id": 9645,
-                                        "nodeType": "UserDefinedTypeName",
-                                        "pathNode": {
-                                            "id": 9644,
-                                            "name": "CircleSavingsV1",
-                                            "nameLocations": [
-                                                "1482:15:28"
-                                            ],
-                                            "nodeType": "IdentifierPath",
-                                            "referencedDeclaration": 6298,
-                                            "src": "1482:15:28"
-                                        },
-                                        "referencedDeclaration": 6298,
-                                        "src": "1482:15:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                            "typeString": "contract CircleSavingsV1"
-                                        }
-                                    },
-                                    "visibility": "internal"
-                                }
-                            ],
-                            "id": 9651,
-                            "initialValue": {
-                                "arguments": [],
-                                "expression": {
-                                    "argumentTypes": [],
-                                    "id": 9649,
-                                    "isConstant": false,
-                                    "isLValue": false,
-                                    "isPure": false,
-                                    "lValueRequested": false,
-                                    "nodeType": "NewExpression",
-                                    "src": "1515:19:28",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_CircleSavingsV1_$6298_$",
-                                        "typeString": "function () returns (contract CircleSavingsV1)"
-                                    },
-                                    "typeName": {
-                                        "id": 9648,
-                                        "nodeType": "UserDefinedTypeName",
-                                        "pathNode": {
-                                            "id": 9647,
-                                            "name": "CircleSavingsV1",
-                                            "nameLocations": [
-                                                "1519:15:28"
-                                            ],
-                                            "nodeType": "IdentifierPath",
-                                            "referencedDeclaration": 6298,
-                                            "src": "1519:15:28"
-                                        },
-                                        "referencedDeclaration": 6298,
-                                        "src": "1519:15:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                            "typeString": "contract CircleSavingsV1"
-                                        }
-                                    }
-                                },
-                                "id": 9650,
-                                "isConstant": false,
-                                "isLValue": false,
-                                "isPure": false,
-                                "kind": "functionCall",
-                                "lValueRequested": false,
-                                "nameLocations": [],
-                                "names": [],
-                                "nodeType": "FunctionCall",
-                                "src": "1515:21:28",
-                                "tryCall": false,
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                    "typeString": "contract CircleSavingsV1"
-                                }
-                            },
-                            "nodeType": "VariableDeclarationStatement",
-                            "src": "1482:54:28"
-                        },
-                        {
-                            "assignments": [
-                                9654
-                            ],
-                            "declarations": [
-                                {
-                                    "constant": false,
-                                    "id": 9654,
-                                    "mutability": "mutable",
-                                    "name": "_proxy",
-                                    "nameLocation": "1613:6:28",
-                                    "nodeType": "VariableDeclaration",
-                                    "scope": 9679,
-                                    "src": "1594:25:28",
-                                    "stateVariable": false,
-                                    "storageLocation": "default",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
-                                        "typeString": "contract CircleSavingsProxy"
-                                    },
-                                    "typeName": {
-                                        "id": 9653,
-                                        "nodeType": "UserDefinedTypeName",
-                                        "pathNode": {
-                                            "id": 9652,
-                                            "name": "CircleSavingsProxy",
-                                            "nameLocations": [
-                                                "1594:18:28"
-                                            ],
-                                            "nodeType": "IdentifierPath",
-                                            "referencedDeclaration": 9629,
-                                            "src": "1594:18:28"
-                                        },
-                                        "referencedDeclaration": 9629,
-                                        "src": "1594:18:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
-                                            "typeString": "contract CircleSavingsProxy"
-                                        }
-                                    },
-                                    "visibility": "internal"
-                                }
-                            ],
-                            "id": 9667,
-                            "initialValue": {
-                                "arguments": [
-                                    {
-                                        "arguments": [
-                                            {
-                                                "id": 9660,
-                                                "name": "implementation",
-                                                "nodeType": "Identifier",
-                                                "overloadedDeclarations": [],
-                                                "referencedDeclaration": 9646,
-                                                "src": "1661:14:28",
-                                                "typeDescriptions": {
-                                                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                                    "typeString": "contract CircleSavingsV1"
-                                                }
-                                            }
-                                        ],
-                                        "expression": {
-                                            "argumentTypes": [
-                                                {
-                                                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                                    "typeString": "contract CircleSavingsV1"
-                                                }
-                                            ],
-                                            "id": 9659,
-                                            "isConstant": false,
-                                            "isLValue": false,
-                                            "isPure": true,
-                                            "lValueRequested": false,
-                                            "nodeType": "ElementaryTypeNameExpression",
-                                            "src": "1653:7:28",
-                                            "typeDescriptions": {
-                                                "typeIdentifier": "t_type$_t_address_$",
-                                                "typeString": "type(address)"
-                                            },
-                                            "typeName": {
-                                                "id": 9658,
-                                                "name": "address",
-                                                "nodeType": "ElementaryTypeName",
-                                                "src": "1653:7:28",
-                                                "typeDescriptions": {}
-                                            }
-                                        },
-                                        "id": 9661,
-                                        "isConstant": false,
-                                        "isLValue": false,
-                                        "isPure": false,
-                                        "kind": "typeConversion",
-                                        "lValueRequested": false,
-                                        "nameLocations": [],
-                                        "names": [],
-                                        "nodeType": "FunctionCall",
-                                        "src": "1653:23:28",
-                                        "tryCall": false,
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    {
-                                        "id": 9662,
-                                        "name": "_cUSDToken",
-                                        "nodeType": "Identifier",
-                                        "overloadedDeclarations": [],
-                                        "referencedDeclaration": 9632,
-                                        "src": "1678:10:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    {
-                                        "id": 9663,
-                                        "name": "_treasury",
-                                        "nodeType": "Identifier",
-                                        "overloadedDeclarations": [],
-                                        "referencedDeclaration": 9634,
-                                        "src": "1690:9:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    {
-                                        "id": 9664,
-                                        "name": "_reputationContract",
-                                        "nodeType": "Identifier",
-                                        "overloadedDeclarations": [],
-                                        "referencedDeclaration": 9636,
-                                        "src": "1701:19:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    },
-                                    {
-                                        "id": 9665,
-                                        "name": "_initialOwner",
-                                        "nodeType": "Identifier",
-                                        "overloadedDeclarations": [],
-                                        "referencedDeclaration": 9638,
-                                        "src": "1722:13:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    }
-                                ],
-                                "expression": {
-                                    "argumentTypes": [
-                                        {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        },
-                                        {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        },
-                                        {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        },
-                                        {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        },
-                                        {
-                                            "typeIdentifier": "t_address",
-                                            "typeString": "address"
-                                        }
-                                    ],
-                                    "id": 9657,
-                                    "isConstant": false,
-                                    "isLValue": false,
-                                    "isPure": false,
-                                    "lValueRequested": false,
-                                    "nodeType": "NewExpression",
-                                    "src": "1630:22:28",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_function_creation_nonpayable$_t_address_$_t_address_$_t_address_$_t_address_$_t_address_$returns$_t_contract$_CircleSavingsProxy_$9629_$",
-                                        "typeString": "function (address,address,address,address,address) returns (contract CircleSavingsProxy)"
-                                    },
-                                    "typeName": {
-                                        "id": 9656,
-                                        "nodeType": "UserDefinedTypeName",
-                                        "pathNode": {
-                                            "id": 9655,
-                                            "name": "CircleSavingsProxy",
-                                            "nameLocations": [
-                                                "1634:18:28"
-                                            ],
-                                            "nodeType": "IdentifierPath",
-                                            "referencedDeclaration": 9629,
-                                            "src": "1634:18:28"
-                                        },
-                                        "referencedDeclaration": 9629,
-                                        "src": "1634:18:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
-                                            "typeString": "contract CircleSavingsProxy"
-                                        }
-                                    }
-                                },
-                                "id": 9666,
-                                "isConstant": false,
-                                "isLValue": false,
-                                "isPure": false,
-                                "kind": "functionCall",
-                                "lValueRequested": false,
-                                "nameLocations": [],
-                                "names": [],
-                                "nodeType": "FunctionCall",
-                                "src": "1630:106:28",
-                                "tryCall": false,
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
-                                    "typeString": "contract CircleSavingsProxy"
-                                }
-                            },
-                            "nodeType": "VariableDeclarationStatement",
-                            "src": "1594:142:28"
-                        },
-                        {
-                            "expression": {
-                                "id": 9675,
-                                "isConstant": false,
-                                "isLValue": false,
-                                "isPure": false,
-                                "lValueRequested": false,
-                                "leftHandSide": {
-                                    "id": 9668,
-                                    "name": "proxy",
-                                    "nodeType": "Identifier",
-                                    "overloadedDeclarations": [],
-                                    "referencedDeclaration": 9642,
-                                    "src": "1792:5:28",
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                        "typeString": "contract CircleSavingsV1"
-                                    }
-                                },
-                                "nodeType": "Assignment",
-                                "operator": "=",
-                                "rightHandSide": {
-                                    "arguments": [
-                                        {
-                                            "arguments": [
-                                                {
-                                                    "id": 9672,
-                                                    "name": "_proxy",
-                                                    "nodeType": "Identifier",
-                                                    "overloadedDeclarations": [],
-                                                    "referencedDeclaration": 9654,
-                                                    "src": "1824:6:28",
-                                                    "typeDescriptions": {
-                                                        "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
-                                                        "typeString": "contract CircleSavingsProxy"
-                                                    }
-                                                }
-                                            ],
-                                            "expression": {
-                                                "argumentTypes": [
-                                                    {
-                                                        "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
-                                                        "typeString": "contract CircleSavingsProxy"
-                                                    }
-                                                ],
-                                                "id": 9671,
-                                                "isConstant": false,
-                                                "isLValue": false,
-                                                "isPure": true,
-                                                "lValueRequested": false,
-                                                "nodeType": "ElementaryTypeNameExpression",
-                                                "src": "1816:7:28",
-                                                "typeDescriptions": {
-                                                    "typeIdentifier": "t_type$_t_address_$",
-                                                    "typeString": "type(address)"
-                                                },
-                                                "typeName": {
-                                                    "id": 9670,
-                                                    "name": "address",
-                                                    "nodeType": "ElementaryTypeName",
-                                                    "src": "1816:7:28",
-                                                    "typeDescriptions": {}
-                                                }
-                                            },
-                                            "id": 9673,
-                                            "isConstant": false,
-                                            "isLValue": false,
-                                            "isPure": false,
-                                            "kind": "typeConversion",
-                                            "lValueRequested": false,
-                                            "nameLocations": [],
-                                            "names": [],
-                                            "nodeType": "FunctionCall",
-                                            "src": "1816:15:28",
-                                            "tryCall": false,
-                                            "typeDescriptions": {
-                                                "typeIdentifier": "t_address",
-                                                "typeString": "address"
-                                            }
-                                        }
-                                    ],
-                                    "expression": {
-                                        "argumentTypes": [
-                                            {
-                                                "typeIdentifier": "t_address",
-                                                "typeString": "address"
-                                            }
-                                        ],
-                                        "id": 9669,
-                                        "name": "CircleSavingsV1",
-                                        "nodeType": "Identifier",
-                                        "overloadedDeclarations": [],
-                                        "referencedDeclaration": 6298,
-                                        "src": "1800:15:28",
-                                        "typeDescriptions": {
-                                            "typeIdentifier": "t_type$_t_contract$_CircleSavingsV1_$6298_$",
-                                            "typeString": "type(contract CircleSavingsV1)"
-                                        }
-                                    },
-                                    "id": 9674,
-                                    "isConstant": false,
-                                    "isLValue": false,
-                                    "isPure": false,
-                                    "kind": "typeConversion",
-                                    "lValueRequested": false,
-                                    "nameLocations": [],
-                                    "names": [],
-                                    "nodeType": "FunctionCall",
-                                    "src": "1800:32:28",
-                                    "tryCall": false,
-                                    "typeDescriptions": {
-                                        "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                        "typeString": "contract CircleSavingsV1"
-                                    }
-                                },
-                                "src": "1792:40:28",
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                    "typeString": "contract CircleSavingsV1"
-                                }
-                            },
-                            "id": 9676,
-                            "nodeType": "ExpressionStatement",
-                            "src": "1792:40:28"
-                        },
-                        {
-                            "expression": {
-                                "id": 9677,
-                                "name": "proxy",
-                                "nodeType": "Identifier",
-                                "overloadedDeclarations": [],
-                                "referencedDeclaration": 9642,
-                                "src": "1845:5:28",
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                    "typeString": "contract CircleSavingsV1"
-                                }
-                            },
-                            "functionReturnParameters": 9643,
-                            "id": 9678,
-                            "nodeType": "Return",
-                            "src": "1838:12:28"
+              "assignments": [9654],
+              "declarations": [
+                {
+                  "constant": false,
+                  "id": 9654,
+                  "mutability": "mutable",
+                  "name": "_proxy",
+                  "nameLocation": "1613:6:28",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 9679,
+                  "src": "1594:25:28",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
+                    "typeString": "contract CircleSavingsProxy"
+                  },
+                  "typeName": {
+                    "id": 9653,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 9652,
+                      "name": "CircleSavingsProxy",
+                      "nameLocations": ["1594:18:28"],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 9629,
+                      "src": "1594:18:28"
+                    },
+                    "referencedDeclaration": 9629,
+                    "src": "1594:18:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
+                      "typeString": "contract CircleSavingsProxy"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "id": 9667,
+              "initialValue": {
+                "arguments": [
+                  {
+                    "arguments": [
+                      {
+                        "id": 9660,
+                        "name": "implementation",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 9646,
+                        "src": "1661:14:28",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                          "typeString": "contract CircleSavingsV1"
                         }
-                    ]
-                },
-                "documentation": {
-                    "id": 9630,
-                    "nodeType": "StructuredDocumentation",
-                    "src": "924:366:28",
-                    "text": " @dev Factory function to deploy CircleSavings with proxy\n @param _cUSDToken Address of cUSD token on Celo L2\n @param _treasury Address for platform fees\n @param _reputationContract Address of the reputation contract\n @param _initialOwner Address of contract owner\n @return proxy Address of the deployed proxy (which delegates to CircleSavingsV1)"
-                },
-                "id": 9680,
-                "implemented": true,
-                "kind": "freeFunction",
-                "modifiers": [],
-                "name": "createCircleSavings",
-                "nameLocation": "1300:19:28",
-                "nodeType": "FunctionDefinition",
-                "parameters": {
-                    "id": 9639,
-                    "nodeType": "ParameterList",
-                    "parameters": [
-                        {
-                            "constant": false,
-                            "id": 9632,
-                            "mutability": "mutable",
-                            "name": "_cUSDToken",
-                            "nameLocation": "1328:10:28",
-                            "nodeType": "VariableDeclaration",
-                            "scope": 9680,
-                            "src": "1320:18:28",
-                            "stateVariable": false,
-                            "storageLocation": "default",
-                            "typeDescriptions": {
-                                "typeIdentifier": "t_address",
-                                "typeString": "address"
-                            },
-                            "typeName": {
-                                "id": 9631,
-                                "name": "address",
-                                "nodeType": "ElementaryTypeName",
-                                "src": "1320:7:28",
-                                "stateMutability": "nonpayable",
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_address",
-                                    "typeString": "address"
-                                }
-                            },
-                            "visibility": "internal"
-                        },
-                        {
-                            "constant": false,
-                            "id": 9634,
-                            "mutability": "mutable",
-                            "name": "_treasury",
-                            "nameLocation": "1348:9:28",
-                            "nodeType": "VariableDeclaration",
-                            "scope": 9680,
-                            "src": "1340:17:28",
-                            "stateVariable": false,
-                            "storageLocation": "default",
-                            "typeDescriptions": {
-                                "typeIdentifier": "t_address",
-                                "typeString": "address"
-                            },
-                            "typeName": {
-                                "id": 9633,
-                                "name": "address",
-                                "nodeType": "ElementaryTypeName",
-                                "src": "1340:7:28",
-                                "stateMutability": "nonpayable",
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_address",
-                                    "typeString": "address"
-                                }
-                            },
-                            "visibility": "internal"
-                        },
-                        {
-                            "constant": false,
-                            "id": 9636,
-                            "mutability": "mutable",
-                            "name": "_reputationContract",
-                            "nameLocation": "1367:19:28",
-                            "nodeType": "VariableDeclaration",
-                            "scope": 9680,
-                            "src": "1359:27:28",
-                            "stateVariable": false,
-                            "storageLocation": "default",
-                            "typeDescriptions": {
-                                "typeIdentifier": "t_address",
-                                "typeString": "address"
-                            },
-                            "typeName": {
-                                "id": 9635,
-                                "name": "address",
-                                "nodeType": "ElementaryTypeName",
-                                "src": "1359:7:28",
-                                "stateMutability": "nonpayable",
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_address",
-                                    "typeString": "address"
-                                }
-                            },
-                            "visibility": "internal"
-                        },
-                        {
-                            "constant": false,
-                            "id": 9638,
-                            "mutability": "mutable",
-                            "name": "_initialOwner",
-                            "nameLocation": "1396:13:28",
-                            "nodeType": "VariableDeclaration",
-                            "scope": 9680,
-                            "src": "1388:21:28",
-                            "stateVariable": false,
-                            "storageLocation": "default",
-                            "typeDescriptions": {
-                                "typeIdentifier": "t_address",
-                                "typeString": "address"
-                            },
-                            "typeName": {
-                                "id": 9637,
-                                "name": "address",
-                                "nodeType": "ElementaryTypeName",
-                                "src": "1388:7:28",
-                                "stateMutability": "nonpayable",
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_address",
-                                    "typeString": "address"
-                                }
-                            },
-                            "visibility": "internal"
-                        }
+                      }
                     ],
-                    "src": "1319:91:28"
-                },
-                "returnParameters": {
-                    "id": 9643,
-                    "nodeType": "ParameterList",
-                    "parameters": [
+                    "expression": {
+                      "argumentTypes": [
                         {
-                            "constant": false,
-                            "id": 9642,
-                            "mutability": "mutable",
-                            "name": "proxy",
-                            "nameLocation": "1440:5:28",
-                            "nodeType": "VariableDeclaration",
-                            "scope": 9680,
-                            "src": "1424:21:28",
-                            "stateVariable": false,
-                            "storageLocation": "default",
-                            "typeDescriptions": {
-                                "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                "typeString": "contract CircleSavingsV1"
-                            },
-                            "typeName": {
-                                "id": 9641,
-                                "nodeType": "UserDefinedTypeName",
-                                "pathNode": {
-                                    "id": 9640,
-                                    "name": "CircleSavingsV1",
-                                    "nameLocations": [
-                                        "1424:15:28"
-                                    ],
-                                    "nodeType": "IdentifierPath",
-                                    "referencedDeclaration": 6298,
-                                    "src": "1424:15:28"
-                                },
-                                "referencedDeclaration": 6298,
-                                "src": "1424:15:28",
-                                "typeDescriptions": {
-                                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
-                                    "typeString": "contract CircleSavingsV1"
-                                }
-                            },
-                            "visibility": "internal"
+                          "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                          "typeString": "contract CircleSavingsV1"
                         }
-                    ],
-                    "src": "1423:23:28"
+                      ],
+                      "id": 9659,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "nodeType": "ElementaryTypeNameExpression",
+                      "src": "1653:7:28",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_type$_t_address_$",
+                        "typeString": "type(address)"
+                      },
+                      "typeName": {
+                        "id": 9658,
+                        "name": "address",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "1653:7:28",
+                        "typeDescriptions": {}
+                      }
+                    },
+                    "id": 9661,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "typeConversion",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1653:23:28",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  {
+                    "id": 9662,
+                    "name": "_USDmToken",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 9632,
+                    "src": "1678:10:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  {
+                    "id": 9663,
+                    "name": "_treasury",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 9634,
+                    "src": "1690:9:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  {
+                    "id": 9664,
+                    "name": "_reputationContract",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 9636,
+                    "src": "1701:19:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  {
+                    "id": 9665,
+                    "name": "_initialOwner",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 9638,
+                    "src": "1722:13:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  }
+                ],
+                "expression": {
+                  "argumentTypes": [
+                    {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  ],
+                  "id": 9657,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "lValueRequested": false,
+                  "nodeType": "NewExpression",
+                  "src": "1630:22:28",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_function_creation_nonpayable$_t_address_$_t_address_$_t_address_$_t_address_$_t_address_$returns$_t_contract$_CircleSavingsProxy_$9629_$",
+                    "typeString": "function (address,address,address,address,address) returns (contract CircleSavingsProxy)"
+                  },
+                  "typeName": {
+                    "id": 9656,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 9655,
+                      "name": "CircleSavingsProxy",
+                      "nameLocations": ["1634:18:28"],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 9629,
+                      "src": "1634:18:28"
+                    },
+                    "referencedDeclaration": 9629,
+                    "src": "1634:18:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
+                      "typeString": "contract CircleSavingsProxy"
+                    }
+                  }
                 },
-                "scope": 9681,
-                "src": "1291:562:28",
-                "stateMutability": "nonpayable",
-                "virtual": false,
-                "visibility": "internal"
+                "id": 9666,
+                "isConstant": false,
+                "isLValue": false,
+                "isPure": false,
+                "kind": "functionCall",
+                "lValueRequested": false,
+                "nameLocations": [],
+                "names": [],
+                "nodeType": "FunctionCall",
+                "src": "1630:106:28",
+                "tryCall": false,
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
+                  "typeString": "contract CircleSavingsProxy"
+                }
+              },
+              "nodeType": "VariableDeclarationStatement",
+              "src": "1594:142:28"
+            },
+            {
+              "expression": {
+                "id": 9675,
+                "isConstant": false,
+                "isLValue": false,
+                "isPure": false,
+                "lValueRequested": false,
+                "leftHandSide": {
+                  "id": 9668,
+                  "name": "proxy",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 9642,
+                  "src": "1792:5:28",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                    "typeString": "contract CircleSavingsV1"
+                  }
+                },
+                "nodeType": "Assignment",
+                "operator": "=",
+                "rightHandSide": {
+                  "arguments": [
+                    {
+                      "arguments": [
+                        {
+                          "id": 9672,
+                          "name": "_proxy",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 9654,
+                          "src": "1824:6:28",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
+                            "typeString": "contract CircleSavingsProxy"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_contract$_CircleSavingsProxy_$9629",
+                            "typeString": "contract CircleSavingsProxy"
+                          }
+                        ],
+                        "id": 9671,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "1816:7:28",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        },
+                        "typeName": {
+                          "id": 9670,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1816:7:28",
+                          "typeDescriptions": {}
+                        }
+                      },
+                      "id": 9673,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "nameLocations": [],
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1816:15:28",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    }
+                  ],
+                  "expression": {
+                    "argumentTypes": [
+                      {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    ],
+                    "id": 9669,
+                    "name": "CircleSavingsV1",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 6298,
+                    "src": "1800:15:28",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_type$_t_contract$_CircleSavingsV1_$6298_$",
+                      "typeString": "type(contract CircleSavingsV1)"
+                    }
+                  },
+                  "id": 9674,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": false,
+                  "kind": "typeConversion",
+                  "lValueRequested": false,
+                  "nameLocations": [],
+                  "names": [],
+                  "nodeType": "FunctionCall",
+                  "src": "1800:32:28",
+                  "tryCall": false,
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                    "typeString": "contract CircleSavingsV1"
+                  }
+                },
+                "src": "1792:40:28",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                  "typeString": "contract CircleSavingsV1"
+                }
+              },
+              "id": 9676,
+              "nodeType": "ExpressionStatement",
+              "src": "1792:40:28"
+            },
+            {
+              "expression": {
+                "id": 9677,
+                "name": "proxy",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": 9642,
+                "src": "1845:5:28",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                  "typeString": "contract CircleSavingsV1"
+                }
+              },
+              "functionReturnParameters": 9643,
+              "id": 9678,
+              "nodeType": "Return",
+              "src": "1838:12:28"
             }
-        ],
-        "src": "51:1803:28"
-    },
-    "functionHashes": {},
-    "gasEstimates": {
-        "creation": {
-            "codeDepositCost": "26000",
-            "executionCost": "infinite",
-            "totalCost": "infinite"
+          ]
         },
-        "external": {
-            "": "infinite"
-        }
+        "documentation": {
+          "id": 9630,
+          "nodeType": "StructuredDocumentation",
+          "src": "924:366:28",
+          "text": " @dev Factory function to deploy CircleSavings with proxy\n @param _USDmToken Address of USDm token on Celo L2\n @param _treasury Address for platform fees\n @param _reputationContract Address of the reputation contract\n @param _initialOwner Address of contract owner\n @return proxy Address of the deployed proxy (which delegates to CircleSavingsV1)"
+        },
+        "id": 9680,
+        "implemented": true,
+        "kind": "freeFunction",
+        "modifiers": [],
+        "name": "createCircleSavings",
+        "nameLocation": "1300:19:28",
+        "nodeType": "FunctionDefinition",
+        "parameters": {
+          "id": 9639,
+          "nodeType": "ParameterList",
+          "parameters": [
+            {
+              "constant": false,
+              "id": 9632,
+              "mutability": "mutable",
+              "name": "_USDmToken",
+              "nameLocation": "1328:10:28",
+              "nodeType": "VariableDeclaration",
+              "scope": 9680,
+              "src": "1320:18:28",
+              "stateVariable": false,
+              "storageLocation": "default",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              },
+              "typeName": {
+                "id": 9631,
+                "name": "address",
+                "nodeType": "ElementaryTypeName",
+                "src": "1320:7:28",
+                "stateMutability": "nonpayable",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                }
+              },
+              "visibility": "internal"
+            },
+            {
+              "constant": false,
+              "id": 9634,
+              "mutability": "mutable",
+              "name": "_treasury",
+              "nameLocation": "1348:9:28",
+              "nodeType": "VariableDeclaration",
+              "scope": 9680,
+              "src": "1340:17:28",
+              "stateVariable": false,
+              "storageLocation": "default",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              },
+              "typeName": {
+                "id": 9633,
+                "name": "address",
+                "nodeType": "ElementaryTypeName",
+                "src": "1340:7:28",
+                "stateMutability": "nonpayable",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                }
+              },
+              "visibility": "internal"
+            },
+            {
+              "constant": false,
+              "id": 9636,
+              "mutability": "mutable",
+              "name": "_reputationContract",
+              "nameLocation": "1367:19:28",
+              "nodeType": "VariableDeclaration",
+              "scope": 9680,
+              "src": "1359:27:28",
+              "stateVariable": false,
+              "storageLocation": "default",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              },
+              "typeName": {
+                "id": 9635,
+                "name": "address",
+                "nodeType": "ElementaryTypeName",
+                "src": "1359:7:28",
+                "stateMutability": "nonpayable",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                }
+              },
+              "visibility": "internal"
+            },
+            {
+              "constant": false,
+              "id": 9638,
+              "mutability": "mutable",
+              "name": "_initialOwner",
+              "nameLocation": "1396:13:28",
+              "nodeType": "VariableDeclaration",
+              "scope": 9680,
+              "src": "1388:21:28",
+              "stateVariable": false,
+              "storageLocation": "default",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              },
+              "typeName": {
+                "id": 9637,
+                "name": "address",
+                "nodeType": "ElementaryTypeName",
+                "src": "1388:7:28",
+                "stateMutability": "nonpayable",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                }
+              },
+              "visibility": "internal"
+            }
+          ],
+          "src": "1319:91:28"
+        },
+        "returnParameters": {
+          "id": 9643,
+          "nodeType": "ParameterList",
+          "parameters": [
+            {
+              "constant": false,
+              "id": 9642,
+              "mutability": "mutable",
+              "name": "proxy",
+              "nameLocation": "1440:5:28",
+              "nodeType": "VariableDeclaration",
+              "scope": 9680,
+              "src": "1424:21:28",
+              "stateVariable": false,
+              "storageLocation": "default",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                "typeString": "contract CircleSavingsV1"
+              },
+              "typeName": {
+                "id": 9641,
+                "nodeType": "UserDefinedTypeName",
+                "pathNode": {
+                  "id": 9640,
+                  "name": "CircleSavingsV1",
+                  "nameLocations": ["1424:15:28"],
+                  "nodeType": "IdentifierPath",
+                  "referencedDeclaration": 6298,
+                  "src": "1424:15:28"
+                },
+                "referencedDeclaration": 6298,
+                "src": "1424:15:28",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_contract$_CircleSavingsV1_$6298",
+                  "typeString": "contract CircleSavingsV1"
+                }
+              },
+              "visibility": "internal"
+            }
+          ],
+          "src": "1423:23:28"
+        },
+        "scope": 9681,
+        "src": "1291:562:28",
+        "stateMutability": "nonpayable",
+        "virtual": false,
+        "visibility": "internal"
+      }
+    ],
+    "src": "51:1803:28"
+  },
+  "functionHashes": {},
+  "gasEstimates": {
+    "creation": {
+      "codeDepositCost": "26000",
+      "executionCost": "infinite",
+      "totalCost": "infinite"
+    },
+    "external": {
+      "": "infinite"
     }
+  }
 }

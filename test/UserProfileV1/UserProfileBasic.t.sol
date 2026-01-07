@@ -11,7 +11,7 @@ contract UserProfileV1BasicTests is UserProfileV1Setup {
 
     function testCreateAndGetProfile() public {
         vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "Alice Johnson", "ipfs://photo1");
+        userProfile.createProfile("alice@example.com", "", "alice", "Alice Johnson", "ipfs://photo1");
 
         UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
         assertEq(p.userAddress, alice);
@@ -23,13 +23,13 @@ contract UserProfileV1BasicTests is UserProfileV1Setup {
 
     function testUpdatePhoto_CooldownNotMet() public {
         vm.prank(alice);
-        userProfile.createProfile("alice@example.com", "alice", "Alice Johnson", "ipfs://p1");
+        userProfile.createProfile("alice@example.com", "", "alice", "Alice Johnson", "ipfs://p1");
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);
-        userProfile.updatePhoto("ipfs://p2");
+        userProfile.updateProfile("", "ipfs://p2");
         vm.warp(block.timestamp + 15 days);
         vm.prank(alice);
-        vm.expectRevert(UserProfileV1.PhotoUpdateCooldownNotMet.selector);
-        userProfile.updatePhoto("ipfs://p3");
+        vm.expectRevert(UserProfileV1.ProfileUpdateCooldownNotMet.selector);
+        userProfile.updateProfile("", "ipfs://p3");
     }
 }

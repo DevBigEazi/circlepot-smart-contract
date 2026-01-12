@@ -99,7 +99,10 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         circleSavings.joinCircle(cid);
 
         // Get member info to check positions
-        (uint256 bobPosition, , , , , , ) = circleSavings.circleMembers(cid, bob);
+        (uint256 bobPosition, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            bob
+        );
 
         assertEq(
             bobPosition,
@@ -172,7 +175,7 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
         uint256 aliceRep = reputation.getReputation(alice);
 
         vm.prank(testOwner);
-        circleSavings.withdrawPlatformFees();
+        circleSavings.withdrawPlatformFees(address(USDm));
 
         assertEq(
             reputation.getReputation(alice),

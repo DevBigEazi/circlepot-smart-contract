@@ -2,7 +2,9 @@
 pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {
+    ERC1967Proxy
+} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
 import {ReputationV1} from "../../src/ReputationV1.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
@@ -25,22 +27,47 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
 
         // Deploy reputation system first
         reputationImpl = new ReputationV1();
-        bytes memory repInitData = abi.encodeWithSelector(ReputationV1.initialize.selector, testOwner);
-        ERC1967Proxy repProxy = new ERC1967Proxy(address(reputationImpl), repInitData);
+        bytes memory repInitData = abi.encodeWithSelector(
+            ReputationV1.initialize.selector,
+            testOwner
+        );
+        ERC1967Proxy repProxy = new ERC1967Proxy(
+            address(reputationImpl),
+            repInitData
+        );
         reputation = ReputationV1(address(repProxy));
 
         // Deploy implementation and proxy
         implementation = new CircleSavingsV1();
 
         // Deploy yield vault
-        yieldVault = new YieldVault(address(USDm), "Yield Bearing USDm", "yUSDm");
-
-        bytes memory initData = abi.encodeWithSelector(
-            CircleSavingsV1.initialize.selector, address(USDm), testTreasury, address(reputation), address(yieldVault), testOwner
+        yieldVault = new YieldVault(
+            address(USDm),
+            "Yield Bearing USDm",
+            "yUSDm"
         );
 
-        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        // Prepare supported tokens array
+        address[] memory supportedTokens = new address[](1);
+        supportedTokens[0] = address(USDm);
+
+        bytes memory initData = abi.encodeWithSelector(
+            CircleSavingsV1.initialize.selector,
+            supportedTokens,
+            testTreasury,
+            address(reputation),
+            testOwner
+        );
+
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(implementation),
+            initData
+        );
         circleSavings = CircleSavingsV1(address(proxy));
+
+        // Set vault for USDm token
+        vm.prank(testOwner);
+        circleSavings.setTokenVault(address(USDm), address(yieldVault));
 
         // Approve contract to spend user's USDm
         address[] memory users = new address[](6);
@@ -65,15 +92,17 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
     function _createAndStartCircle() internal returns (uint256) {
         // Create circle
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
-            title: "Test Circle",
-            description: "Test Description",
-            contributionAmount: 100e18,
-            frequency: CircleSavingsV1.Frequency.WEEKLY,
-            maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PRIVATE,
-            enableYield: true
-        });
+        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
+            .CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
+                contributionAmount: 100e18,
+                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                maxMembers: 5,
+                visibility: CircleSavingsV1.Visibility.PRIVATE,
+                enableYield: true,
+                token: address(USDm)
+            });
 
         uint256 cid = circleSavings.createCircle(params);
 
@@ -117,15 +146,17 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
     // Helper to create a default circle without adding other members
     function _createDefaultCircle(address creator) internal returns (uint256) {
         vm.prank(creator);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
-            title: "Test Circle",
-            description: "Test Description",
-            contributionAmount: 100e18,
-            frequency: CircleSavingsV1.Frequency.WEEKLY,
-            maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
-        });
+        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
+            .CreateCircleParams({
+                title: "Test Circle",
+                description: "Test Description",
+                contributionAmount: 100e18,
+                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                maxMembers: 5,
+                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                enableYield: true,
+                token: address(USDm)
+            });
 
         return circleSavings.createCircle(params);
     }

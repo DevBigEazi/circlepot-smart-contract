@@ -195,7 +195,8 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 10,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-                enableYield: true
+                enableYield: true,
+            token: address(USDm)
             });
 
         vm.prank(alice);

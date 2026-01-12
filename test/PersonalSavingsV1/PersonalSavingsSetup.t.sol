@@ -37,12 +37,14 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
         // Deploy personal savings
         implementation = new PersonalSavingsV1();
 
+        address[] memory supportedTokens = new address[](1);
+        supportedTokens[0] = address(USDm);
+
         bytes memory initData = abi.encodeWithSelector(
             PersonalSavingsV1.initialize.selector,
-            address(USDm),
+            supportedTokens,
             testTreasury,
             address(reputation),
-            address(0),
             testOwner
         );
         ERC1967Proxy proxy = new ERC1967Proxy(
@@ -80,7 +82,8 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
                 contributionAmount: 100e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
-                enableYield: false
+                enableYield: false,
+                token: address(USDm)
             });
 
         return personalSavings.createPersonalGoal(params);

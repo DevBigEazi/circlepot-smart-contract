@@ -19,7 +19,8 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
             visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+            enableYield: true,
+            token: address(USDm)
         });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -50,7 +51,7 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
         USDm.approve(address(yieldVault), 100e18);
         yieldVault.simulateYield(100e18);
 
-        uint256 platformFeesBefore = circleSavings.totalPlatformFees();
+        uint256 platformFeesBefore = circleSavings.getPlatformFees(address(USDm));
 
         // Complete 5 rounds
         address[] memory members = new address[](5);
@@ -66,7 +67,7 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             }
         }
 
-        uint256 platformFeesAfter = circleSavings.totalPlatformFees();
+        uint256 platformFeesAfter = circleSavings.getPlatformFees(address(USDm));
         uint256 platformFeesCollected = platformFeesAfter - platformFeesBefore;
 
         // Platform collections:
@@ -86,7 +87,8 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
             visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+            enableYield: true,
+            token: address(USDm)
         }));
         vm.stopPrank();
 
@@ -101,12 +103,12 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
         // Alice decides to withdraw (Ultimatum passed)
         vm.warp(block.timestamp + 8 days);
         
-        uint256 platformFeesBefore = circleSavings.totalPlatformFees();
+        uint256 platformFeesBefore = circleSavings.getPlatformFees(address(USDm));
         
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 platformFeesAfter = circleSavings.totalPlatformFees();
+        uint256 platformFeesAfter = circleSavings.getPlatformFees(address(USDm));
         uint256 collection = platformFeesAfter - platformFeesBefore;
         
         // Expected collection: 
@@ -127,7 +129,8 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             frequency: CircleSavingsV1.Frequency.WEEKLY,
             maxMembers: 5,
             visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true
+            enableYield: true,
+            token: address(USDm)
         }));
 
         address[] memory others = new address[](4);

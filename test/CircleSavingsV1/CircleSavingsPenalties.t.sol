@@ -15,8 +15,11 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
 
         // Fund everyone for contributions
         uint256 contribution = 100e18;
+        uint256 lateFee = (contribution * circleSavings.LATE_FEE_BPS()) / 10000;
+
         deal(address(USDm), alice, contribution);
-        deal(address(USDm), bob, contribution);
+        // Bob needs extra for the late fee
+        deal(address(USDm), bob, contribution + lateFee);
         deal(address(USDm), charlie, contribution);
         deal(address(USDm), david, contribution);
         deal(address(USDm), eve, contribution);
@@ -37,6 +40,17 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         (CircleSavingsV1.Member memory bobMemberBefore, , ) = circleSavings
             .getMemberInfo(cid, bob);
         uint256 collateralBefore = bobMemberBefore.collateralLocked;
+        uint256 balanceBefore = USDm.balanceOf(bob);
+
+        vm.expectEmit(true, true, true, true);
+        emit CircleSavingsV1.LateContributionMade(
+            cid,
+            1,
+            bob,
+            contribution,
+            lateFee,
+            address(USDm)
+        );
 
         vm.prank(bob);
         circleSavings.contribute(cid);
@@ -44,11 +58,13 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         (CircleSavingsV1.Member memory bobMemberAfter, , ) = circleSavings
             .getMemberInfo(cid, bob);
         uint256 collateralAfter = bobMemberAfter.collateralLocked;
+        uint256 balanceAfter = USDm.balanceOf(bob);
 
-        uint256 expectedDeduction = 100e18 +
-            (100e18 * circleSavings.LATE_FEE_BPS()) /
-            10000;
-        assertEq(collateralBefore - collateralAfter, expectedDeduction);
+        // Collateral should be unchanged
+        assertEq(collateralBefore, collateralAfter);
+        // Balance should have decreased by contribution + fee
+        assertEq(balanceBefore - balanceAfter, contribution + lateFee);
+
         (, , , , , , , uint256 latePayments, ) = reputation
             .getUserReputationDetails(bob);
         assertEq(latePayments, 1);

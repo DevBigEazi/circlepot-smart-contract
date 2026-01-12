@@ -18,7 +18,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -53,7 +53,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -81,7 +81,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -110,7 +110,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -134,7 +134,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             });
 
         uint256 gid1 = personalSavings.createPersonalGoal(params1);
@@ -149,7 +149,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 100e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             });
 
         uint256 gid2 = personalSavings.createPersonalGoal(params2);
@@ -187,7 +187,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.MONTHLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             })
         );
         // Goal created with MONTHLY frequency - first contribution already made
@@ -207,7 +207,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             })
         );
         // First contribution already made (50e18)
@@ -237,7 +237,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             })
         );
         uint256[] memory goals = personalSavings.getUserGoals(alice);
@@ -255,7 +255,7 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
                 contributionAmount: 10e18,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false
+                enableYield: false, token: address(USDm)
             })
         );
         // First contribution already made

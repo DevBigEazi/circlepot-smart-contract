@@ -44,23 +44,24 @@ contract ReputationIntegration is ReputationSetup {
         personalSavingsImpl = new PersonalSavingsV1();
         circleSavingsImpl = new CircleSavingsV1();
 
+        address[] memory supportedTokens = new address[](1);
+        supportedTokens[0] = address(mockUSDm);
+
         // Deploy proxies
         savingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
-            address(mockUSDm),
+            supportedTokens,
             treasury,
             address(reputation),
-            address(0), // No vault needed for these reputation tests
             owner
         );
         personalSavings = PersonalSavingsV1(address(savingsProxy));
 
         circleProxy = new CircleSavingsProxy(
             address(circleSavingsImpl),
-            address(mockUSDm),
+            supportedTokens,
             treasury,
             address(reputation),
-            address(0), // No vault needed for these reputation tests
             owner
         );
         circleSavings = CircleSavingsV1(address(circleProxy));
@@ -88,7 +89,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
-                enableYield: false
+                enableYield: false,
+                token: address(mockUSDm)
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -131,7 +133,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
-                enableYield: false
+                enableYield: false,
+                token: address(mockUSDm)
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -167,7 +170,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
-                enableYield: false
+                enableYield: false,
+                token: address(mockUSDm)
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -206,7 +210,8 @@ contract ReputationIntegration is ReputationSetup {
                     contributionAmount: CONTRIBUTION_AMOUNT,
                     frequency: PersonalSavingsV1.Frequency.DAILY,
                     deadline: block.timestamp + DEADLINE,
-                    enableYield: false
+                    enableYield: false,
+                    token: address(mockUSDm)
                 });
             uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -261,7 +266,8 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-                enableYield: true
+                enableYield: true,
+                token: address(mockUSDm)
             })
         );
 
@@ -320,7 +326,8 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-                enableYield: true
+                enableYield: true,
+                token: address(mockUSDm)
             })
         );
 
@@ -384,7 +391,8 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-                enableYield: true
+                enableYield: true,
+                token: address(mockUSDm)
             })
         );
 
@@ -464,7 +472,8 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-                enableYield: true
+                enableYield: true,
+                token: address(mockUSDm)
             })
         );
 
@@ -509,7 +518,8 @@ contract ReputationIntegration is ReputationSetup {
                 contributionAmount: CONTRIBUTION_AMOUNT,
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
-                enableYield: false
+                enableYield: false,
+                token: address(mockUSDm)
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -550,7 +560,9 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.DAILY,
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-                enableYield: true
+                enableYield: true,
+                 
+                token: address(mockUSDm)
             })
         );
 
@@ -622,7 +634,9 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: CircleSavingsV1.Frequency.WEEKLY,
                 maxMembers: 4,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
-                enableYield: true
+                enableYield: true,
+                 
+                token: address(mockUSDm)
             })
         );
 

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.27;
 
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {
+    ERC1967Proxy
+} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {CircleSavingsV1} from "../CircleSavingsV1.sol";
 
 /**
@@ -12,16 +14,19 @@ import {CircleSavingsV1} from "../CircleSavingsV1.sol";
 contract CircleSavingsProxy is ERC1967Proxy {
     constructor(
         address _implementation,
-        address _USDmToken,
+        address[] memory _supportedTokens,
         address _treasury,
         address _reputationContract,
-        address _vault,
         address _initialOwner
     )
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                CircleSavingsV1.initialize.selector, _USDmToken, _treasury, _reputationContract, _vault, _initialOwner
+                CircleSavingsV1.initialize.selector,
+                _supportedTokens,
+                _treasury,
+                _reputationContract,
+                _initialOwner
             )
         )
     {}
@@ -29,22 +34,29 @@ contract CircleSavingsProxy is ERC1967Proxy {
 
 /**
  * @dev Factory function to deploy CircleSavings with proxy
- * @param _USDmToken Address of USDm token on Celo L2
+ * @param _supportedTokens Array of supported ERC20 token addresses
  * @param _treasury Address for platform fees
  * @param _reputationContract Address of the reputation contract
- * @param _vault Address of the yield vault
  * @param _initialOwner Address of contract owner
  * @return proxy Address of the deployed proxy (which delegates to CircleSavingsV1)
  */
-function createCircleSavings(address _USDmToken, address _treasury, address _reputationContract, address _vault, address _initialOwner)
-    returns (CircleSavingsV1 proxy)
-{
+function createCircleSavings(
+    address[] memory _supportedTokens,
+    address _treasury,
+    address _reputationContract,
+    address _initialOwner
+) returns (CircleSavingsV1 proxy) {
     // Deploy implementation
     CircleSavingsV1 implementation = new CircleSavingsV1();
 
     // Deploy proxy pointing to the implementation
-    CircleSavingsProxy _proxy =
-        new CircleSavingsProxy(address(implementation), _USDmToken, _treasury, _reputationContract, _vault, _initialOwner);
+    CircleSavingsProxy _proxy = new CircleSavingsProxy(
+        address(implementation),
+        _supportedTokens,
+        _treasury,
+        _reputationContract,
+        _initialOwner
+    );
 
     // Return proxy as CircleSavingsV1 interface
     proxy = CircleSavingsV1(address(_proxy));

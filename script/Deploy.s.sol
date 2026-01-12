@@ -53,22 +53,35 @@ contract Deploy is Script {
             msg.sender // initialOwner
         );
 
+        address[] memory supportedTokens = new address[](1);
+        supportedTokens[0] = USDm;
+
         PersonalSavingsProxy personalSavingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
-            USDm, // USDm token address
+            supportedTokens, // Supported tokens array
             treasury, // treasury address
             address(reputationProxy), // reputation contract address
-            address(yieldVault), // vault address for yield
             msg.sender // initialOwner
+        );
+
+        // Set vault for USDm token
+        PersonalSavingsV1(address(personalSavingsProxy)).setTokenVault(
+            USDm,
+            address(yieldVault)
         );
 
         CircleSavingsProxy circleSavingsProxy = new CircleSavingsProxy(
             address(circleSavingsImpl),
-            USDm, // USDm token address
+            supportedTokens, // Supported tokens array
             treasury, // treasury address
             address(reputationProxy), // reputation contract address
-            address(yieldVault), // vault address
             msg.sender // initialOwner
+        );
+
+        // Set vault for USDm token
+        CircleSavingsV1(address(circleSavingsProxy)).setTokenVault(
+            USDm,
+            address(yieldVault)
         );
 
         // Authorize contracts in the reputation system

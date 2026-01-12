@@ -1,134 +1,88 @@
 # Circlepot Smart Contracts
 
-A comprehensive DeFi savings platform built on Celo blockchain, enabling both community-based and individual savings solutions with reputation-based trust mechanisms.
+A comprehensive DeFi savings platform built on Celo blockchain, enabling both community-based and individual savings solutions with reputation-based trust mechanisms and yield-bearing options.
 
 ## Overview
 
-Circlepot digitizes traditional rotating savings and credit associations (ROSCAs) using blockchain technology. Create or join savings circles where members contribute regularly, and each person receives the full pot when their turn arrives—all with complete transparency and zero gas fees. By combining the simplicity of community savings with Celo's infrastructure, Mento Protocol's stable digital currencies(USDm first), Thirdweb's account abstraction, gasless transactions, and established partner ecosystem, CirclePot delivers a seamless Web2-like experience with Web3 benefits.
+Circlepot digitizes traditional rotating savings and credit associations (ROSCAs) using blockchain technology. Unlike traditional ROSCAs, Circlepot puts idle funds to work through yield-bearing vaults. By combining Celo's L2 infrastructure, Mento Protocol's stablecoins (USDm and others), ERC-4626 Yield Vaults, and Thirdweb's Account Abstraction, Circlepot delivers a seamless Web2-like experience with decentralized finance benefits.
+
+## Core Features
+
+- **Yield-Bearing Savings**: Choose between "Standard" (no DeFi risk) and "Yield" (interest-earning) modes for both circles and personal goals.
+- **Gasless Transactions**: EIP-7702 account abstraction powered by Thirdweb sponsors all user gas fees.
+- **Reputation Scoring**: On-chain credit scoring adapted from standard FICO/VantageScore models.
+- **90/10 Yield Sharing**: 90% of earned yield goes to the community/user, while 10% supports the platform.
+- **Extensible Architecture**: Built with future-proof support for dynamic ERC20 tokens (primary currency: Mento USDm).
 
 ## Smart Contracts
 
 ### 🔄 CircleSavingsV1
 
-A community-based savings platform that enables groups of people to create and participate in savings circles. Members contribute funds regularly and take turns receiving the collective pot.
+A community-based savings platform for groups. Members contribute funds (primarily Mento USDm) regularly and rotate receiving the collective pot.
 
 **Key Features:**
 
-- **Private or Public Circles** - Create invitation-only circles or open communities
-- **Collateral-Backed Commitments** - Ensure participation through collateral requirements
-- **Reputation-Based Position Assignment** - Earlier payout positions for trusted members
-- **Automated Payment Handling** - Automatic processing of late payments and forfeitures
-- **Democratic Voting System** - Start circles before they're full through member consensus
-- **Flexible Schedules** - Support for daily, weekly, or monthly contribution cycles
-
-**Use Cases:**
-
-- Community savings groups
-- Friend and family savings circles
-- Goal-oriented group savings
-- Trust-building financial communities
+- **Dual-Mode Choice**: Creators choose between Standard and Yield-bearing circles.
+- **Automatic Yield Deployment**: Collateral is instantly moved to ERC-4626 vaults in Yield mode.
+- **Reputation-Based Ordering**: Payout order is assigned based on user reputation at start-time.
+- **DEAD State & Liquidation**: Automated bulk liquidation if a circle fails to meet capacity or the start-vote fails.
+- **Democratic Voting**: Members can vote to "Start early" or "Withdraw" during the pending phase.
 
 ---
 
 ### 💰 PersonalSavingsV1
 
-An individual savings solution that helps users save toward personal financial goals with built-in accountability mechanisms.
+An individual savings solution for personal financial goals with yield options and extensible asset support.
 
 **Key Features:**
 
-- **Goal-Based Savings** - Set customizable targets and deadlines
-- **Flexible Contributions** - Contribute on your own schedule
-- **Early Withdrawal Options** - Access funds early with a graduated penalty system
-- **Reputation Rewards** - Earn reputation points for completing savings goals
-- **Progress Tracking** - Monitor your savings journey with milestone celebrations
-- **Automated Enforcement** - Smart contract ensures commitment to your goals
-
-**Use Cases:**
-
-- Emergency fund building
-- Vacation savings
-- Down payment accumulation
-- Education fund
-- Any personal financial goal
+- **Goal-Mode Selection**: Choose Standard for safety or Yield to earn interest on your progress.
+- **Primary Support for USDm**: Optimized for Mento USDm with architectural support for future assets.
+- **Graduated Penalties**: Access funds early with progress-based fees (0% penalty at 100% completion).
+- **Reputation Rewards**: Completing goals boosts your on-chain credit score.
 
 ---
 
 ### ⭐ ReputationV1
 
-A credit scoring system that tracks user financial behavior across the platform to build trust and reward responsible actions.
-
-> **Note:** This contract uses standard FICO and VantageScore models adapted for on-chain credit scoring.
+An on-chain credit scoring system that tracks financial behavior to build trust and reward responsibility.
 
 **Key Features:**
 
-- **Score-Based Reputation System** - Multiple tiers based on financial behavior
-- **Positive Behavior Rewards** - Earn points for completing savings goals and timely payments
-- **Negative Action Penalties** - Score reduction for late payments or defaults
-- **Preferential Treatment** - Higher reputation users get better positions in savings circles
-- **Transparent History** - All financial activities recorded on-chain
-- **Cross-Platform Impact** - Reputation affects all Circlepot products
-
-**Reputation Benefits:**
-
-- Priority positions in savings circles
-- Reduced collateral requirements
-- Access to larger circles
-- Community trust indicator
+- **Tiered Scoring**: Behavior-based reputation tiers (Bronze to Platinum).
+- **Positive/Negative Impact**: Points for on-time contributions and goal completion; penalties for late payments.
+- **Priority Access**: Higher reputation grants better payout positions and access to larger circles.
 
 ---
 
 ### 👤 UserProfileV1
 
-Manages user identity across the entire Circlepot platform.
-
-**Key Features:**
-
-- **Secure Profile Management** - Secure profile management
-- **Cross-Platform Identity** - Single profile across all Circlepot products
+Manages user identity and cross-platform profile data using unique usernames.
 
 ---
 
-## Architecture
+## Technical Stack
 
-```
-┌─────────────────┐
-│  UserProfileV1  │
-└────────┬────────┘
-         │
-         ├──────────────────────┬──────────────────────┐
-         │                      │                      │
-┌────────▼─────────┐   ┌───────▼──────────┐   ┌──────▼──────────┐
-│ CircleSavingsV1  │   │ PersonalSavingsV1│   │  ReputationV1   │
-│   (Community)    │   │   (Individual)   │   │ (Credit Score)  │
-└──────────────────┘   └──────────────────┘   └─────────────────┘
-```
+- **L2 Network**: Celo (Fast, stable, affordable)
+- **Stablecoins**: Mento Protocol (USDm)
+- **Yield Engine**: ERC-4626 Tokenized Vaults (Aave V3, Mento Reserve, etc.)
+- **Account Abstraction**: Thirdweb (EIP-7702, In-App Wallets, Gas Sponsorship)
+- **Smart Contracts**: Solidity (Foundry framework)
 
-## Use Cases
+## Business Model & Sustainability
 
-### Community Savings Circle Example
+### Revenue Streams
 
-A group of 10 friends wants to save $1,000 each month. They create a circle where:
-
-- Each member contributes $100 monthly
-- One member receives $1,000 each month (in rotating order)
-- Members with higher reputation get earlier positions
-- Late payments result in collateral forfeiture
-
-### Personal Savings Goal Example
-
-A user wants to save $5,000 for a vacation in 6 months:
-
-- Sets a goal of $5,000 with a 6-month deadline
-- Commits to $833 monthly contributions
-- Earns reputation points upon completion
-- Can withdraw early with a penalty if needed
+- **Tiered Payout Fees**: 1% for payouts ≤ $1,000; fixed $10 for payouts > $1,000.
+- **Yield Share**: 10% platform share of total interest earned in Yield circles/goals.
+- **Late Fees**: 100% to platform for Standard circles; shared with community in Yield circles.
+- **Operational Fees**: Small fees for visibility toggles ($0.50 USDm) and external withdrawals ($0.20 USDm).
 
 ## Security
 
-- All contracts are designed with security best practices
-- Comprehensive test coverage
-- Regular security audits (planned)
-- Bug bounty program (coming soon)
+- **Self-Custodial**: Users maintain full control of their keys via Thirdweb's secure architecture.
+- **Collateral-Backed**: All circles require one-round of collateral to protect the group.
+- **Audited Logic**: Designed with safety-first principles and comprehensive test suites.
 
 ## Contributing
 
@@ -144,11 +98,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 No License
 
-## Contact
-
-- **Project Link:** [https://github.com/DevBigEazi/Circlepot-smart-contract](https://github.com/DevBigEazi/Circlepot-smart-contract)
-- **Issues:** [https://github.com/DevBigEazi/Circlepot-smart-contract/issues](https://github.com/DevBigEazi/Circlepot-smart-contract/issues)
-
 ---
 
-**Built with ❤️**
+**Built with ❤️ by the Circlepot Team**

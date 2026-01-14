@@ -90,7 +90,8 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -134,7 +135,8 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -171,7 +173,8 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -211,7 +214,8 @@ contract ReputationIntegration is ReputationSetup {
                     frequency: PersonalSavingsV1.Frequency.DAILY,
                     deadline: block.timestamp + DEADLINE,
                     enableYield: false,
-                    token: address(mockUSDm)
+                    token: address(mockUSDm),
+                    yieldAPR: 0
                 });
             uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -267,7 +271,8 @@ contract ReputationIntegration is ReputationSetup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             })
         );
 
@@ -327,7 +332,8 @@ contract ReputationIntegration is ReputationSetup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             })
         );
 
@@ -392,7 +398,8 @@ contract ReputationIntegration is ReputationSetup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             })
         );
 
@@ -473,7 +480,8 @@ contract ReputationIntegration is ReputationSetup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             })
         );
 
@@ -519,7 +527,8 @@ contract ReputationIntegration is ReputationSetup {
                 frequency: PersonalSavingsV1.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -561,8 +570,8 @@ contract ReputationIntegration is ReputationSetup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                 
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             })
         );
 
@@ -635,8 +644,8 @@ contract ReputationIntegration is ReputationSetup {
                 maxMembers: 4,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                 
-                token: address(mockUSDm)
+                token: address(mockUSDm),
+                yieldAPR: 0
             })
         );
 

@@ -16,7 +16,7 @@ Circlepot digitizes traditional rotating savings and credit associations (ROSCAs
 
 ## Smart Contracts
 
-### 🔄 CircleSavingsV1
+### 🔄 CircleSavings
 
 A community-based savings platform for groups. Members contribute funds (primarily Mento USDm) regularly and rotate receiving the collective pot.
 
@@ -30,7 +30,7 @@ A community-based savings platform for groups. Members contribute funds (primari
 
 ---
 
-### 💰 PersonalSavingsV1
+### 💰 PersonalSavings
 
 An individual savings solution for personal financial goals with yield options and extensible asset support.
 
@@ -43,7 +43,7 @@ An individual savings solution for personal financial goals with yield options a
 
 ---
 
-### ⭐ ReputationV1
+### ⭐ Reputation
 
 An on-chain credit scoring system that tracks financial behavior to build trust and reward responsibility.
 
@@ -55,7 +55,7 @@ An on-chain credit scoring system that tracks financial behavior to build trust 
 
 ---
 
-### 👤 UserProfileV1
+### 👤 UserProfile
 
 Manages user identity and cross-platform profile data using unique usernames.
 

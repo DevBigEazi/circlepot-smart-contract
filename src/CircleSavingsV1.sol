@@ -21,11 +21,11 @@ import {IReputation} from "./interfaces/IReputation.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /**
- * @title CircleSavingsV1
+ * @title CircleSavings
  * @dev On-chain savings circles with centralized reputation management
  * @notice Implements community savings circles with collateral-backed commitments, voting, and invitations
  */
-contract CircleSavingsV1 is
+contract CircleSavings is
     Initializable,
     OwnableUpgradeable,
     ReentrancyGuard,

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 import {IReputation} from "../../src/interfaces/IReputation.sol";
 
-contract CircleSavingsPenalties is CircleSavingsV1Setup {
+contract CircleSavingsPenalties is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -37,13 +37,13 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         // warp to after grace period
         vm.warp(block.timestamp + 8 days + 49 hours);
 
-        (CircleSavingsV1.Member memory bobMemberBefore, , ) = circleSavings
+        (CircleSavings.Member memory bobMemberBefore, , ) = circleSavings
             .getMemberInfo(cid, bob);
         uint256 collateralBefore = bobMemberBefore.collateralLocked;
         uint256 balanceBefore = USDm.balanceOf(bob);
 
         vm.expectEmit(true, true, true, true);
-        emit CircleSavingsV1.LateContributionMade(
+        emit CircleSavings.LateContributionMade(
             cid,
             1,
             bob,
@@ -55,7 +55,7 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         vm.prank(bob);
         circleSavings.contribute(cid);
 
-        (CircleSavingsV1.Member memory bobMemberAfter, , ) = circleSavings
+        (CircleSavings.Member memory bobMemberAfter, , ) = circleSavings
             .getMemberInfo(cid, bob);
         uint256 collateralAfter = bobMemberAfter.collateralLocked;
         uint256 balanceAfter = USDm.balanceOf(bob);
@@ -124,7 +124,7 @@ contract CircleSavingsPenalties is CircleSavingsV1Setup {
         circleSavings.contribute(cid);
 
         // Check that round advanced
-        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(status.currentRound, 2);
 

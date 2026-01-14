@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {PersonalSavingsV1} from "../../src/PersonalSavingsV1.sol";
-import {PersonalSavingsV1Setup} from "./PersonalSavingsSetup.t.sol";
+import {PersonalSavings} from "../../src/PersonalSavings.sol";
+import {PersonalSavingsSetup} from "./PersonalSavingsSetup.t.sol";
 
-contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
+contract PersonalSavingsAdvanced is PersonalSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
 
     function test_completeGoalAndWithdrawFull() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "GoalFull",
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -67,18 +67,18 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
 
         // try to contribute again immediately
         vm.prank(alice);
-        vm.expectRevert(PersonalSavingsV1.AlreadyContributed.selector);
+        vm.expectRevert(PersonalSavings.AlreadyContributed.selector);
         personalSavings.contributeToGoal(gid);
     }
 
     function test_RevertWithdrawInsufficientBalance() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Small Goal",
                 targetAmount: 500e18,
                 contributionAmount: 10e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -88,19 +88,19 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         // First contribution made (10e18)
 
         vm.prank(alice);
-        vm.expectRevert(PersonalSavingsV1.InsufficientBalance.selector);
+        vm.expectRevert(PersonalSavings.InsufficientBalance.selector);
         personalSavings.withdrawFromGoal(gid, 50e18); // Try to withdraw more than available
     }
 
     function test_CreateGoal_RevertInvalidTarget() public {
         vm.prank(alice);
-        vm.expectRevert(PersonalSavingsV1.InvalidGoalAmount.selector);
+        vm.expectRevert(PersonalSavings.InvalidGoalAmount.selector);
         personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "Low",
                 targetAmount: 1e17,
                 contributionAmount: 1e17,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -111,13 +111,13 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
 
     function test_CreateGoal_RevertInvalidContribution() public {
         vm.prank(alice);
-        vm.expectRevert(PersonalSavingsV1.InvalidContributionAmount.selector);
+        vm.expectRevert(PersonalSavings.InvalidContributionAmount.selector);
         personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "Zero",
                 targetAmount: 100e18,
                 contributionAmount: 0,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -128,13 +128,13 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
 
     function test_CreateGoal_RevertInvalidDeadline() public {
         vm.prank(alice);
-        vm.expectRevert(PersonalSavingsV1.InvalidDeadline.selector);
+        vm.expectRevert(PersonalSavings.InvalidDeadline.selector);
         personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "Past",
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp - 1,
                 enableYield: false,
                 token: address(USDm),
@@ -146,14 +146,14 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
     function test_Complete_RevertInsufficientBalance() public {
         uint256 gid = _createDefaultGoal(alice);
         vm.prank(alice);
-        vm.expectRevert(PersonalSavingsV1.InsufficientBalance.selector);
+        vm.expectRevert(PersonalSavings.InsufficientBalance.selector);
         personalSavings.completeGoal(gid);
     }
 
     function test_Contribute_RevertNotOwner() public {
         uint256 gid = _createDefaultGoal(alice);
         vm.prank(bob);
-        vm.expectRevert(PersonalSavingsV1.NotGoalOwner.selector);
+        vm.expectRevert(PersonalSavings.NotGoalOwner.selector);
         personalSavings.contributeToGoal(gid);
     }
 
@@ -161,7 +161,7 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         uint256 gid = _createDefaultGoal(alice);
         // First contribution already made (100e18)
         vm.prank(bob);
-        vm.expectRevert(PersonalSavingsV1.NotGoalOwner.selector);
+        vm.expectRevert(PersonalSavings.NotGoalOwner.selector);
         personalSavings.withdrawFromGoal(gid, 10e18);
     }
 
@@ -178,18 +178,18 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
         }
         vm.stopPrank();
         vm.prank(bob);
-        vm.expectRevert(PersonalSavingsV1.NotGoalOwner.selector);
+        vm.expectRevert(PersonalSavings.NotGoalOwner.selector);
         personalSavings.completeGoal(gid);
     }
 
     function test_Withdraw_25PercentProgress() public {
         vm.prank(alice);
         uint256 gid = personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "Low Progress",
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -207,11 +207,11 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
     function test_Withdraw_50PercentProgress() public {
         vm.prank(alice);
         uint256 gid = personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "Mid Progress",
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),

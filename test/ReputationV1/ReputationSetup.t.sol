@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {ReputationV1} from "../../src/ReputationV1.sol";
+import {Reputation} from "../../src/Reputation.sol";
 import {ReputationProxy} from "../../src/proxies/ReputationProxy.sol";
 import {PersonalSavingsProxy} from "../../src/proxies/PersonalSavingsProxy.sol";
 import {CircleSavingsProxy} from "../../src/proxies/CircleSavingsProxy.sol";
@@ -15,9 +15,9 @@ import {MockERC20} from "../mocks/MockERC20.sol";
  */
 contract ReputationSetup is Test {
     // Contracts
-    ReputationV1 public reputationImpl;
+    Reputation public reputationImpl;
     ReputationProxy public reputationProxy;
-    ReputationV1 public reputation;
+    Reputation public reputation;
 
     // Accounts
     address public owner;
@@ -43,9 +43,9 @@ contract ReputationSetup is Test {
         USDmToken = new MockERC20();
 
         // Deploy reputation implementation and proxy
-        reputationImpl = new ReputationV1();
+        reputationImpl = new Reputation();
         reputationProxy = new ReputationProxy(address(reputationImpl), owner);
-        reputation = ReputationV1(address(reputationProxy));
+        reputation = Reputation(address(reputationProxy));
 
         vm.stopPrank();
     }

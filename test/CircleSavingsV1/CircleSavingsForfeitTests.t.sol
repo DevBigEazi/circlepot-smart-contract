@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 
-contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
+contract CircleSavingsForfeitTests is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -28,7 +28,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Get alice's collateral before forfeit
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings
+        (CircleSavings.Member memory aliceBefore, , ) = circleSavings
             .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceBefore.collateralLocked;
 
@@ -40,7 +40,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
 
         // Check collateral was deducted
         {
-            (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
+            (CircleSavings.Member memory aliceAfter, , ) = circleSavings
                 .getMemberInfo(cid, alice);
 
             // Alice is the recipient, so she should NOT be forfeited
@@ -88,7 +88,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         // This should now SUCCEED
 
         // Get alice's (late member) collateral before forfeit
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings
+        (CircleSavings.Member memory aliceBefore, , ) = circleSavings
             .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceBefore.collateralLocked;
 
@@ -98,7 +98,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Check forfeit did NOT happen (Alice is the recipient)
-        (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
+        (CircleSavings.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
 
         assertEq(
@@ -125,7 +125,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         address[] memory lateMembers = new address[](1);
         lateMembers[0] = alice;
         vm.prank(bob);
-        vm.expectRevert(CircleSavingsV1.GracePeriodNotExpired.selector);
+        vm.expectRevert(CircleSavings.GracePeriodNotExpired.selector);
         circleSavings.forfeitMember(cid, lateMembers);
     }
 
@@ -187,7 +187,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         address[] memory lateMembers = new address[](1);
         lateMembers[0] = charlie;
         vm.prank(nextRecipient);
-        vm.expectRevert(CircleSavingsV1.AlreadyContributed.selector);
+        vm.expectRevert(CircleSavings.AlreadyContributed.selector);
         circleSavings.forfeitMember(cid, lateMembers);
     }
 
@@ -196,7 +196,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
 
         address[] memory lateMembers = new address[](0);
         vm.prank(alice);
-        vm.expectRevert(CircleSavingsV1.CircleNotActive.selector);
+        vm.expectRevert(CircleSavings.CircleNotActive.selector);
         circleSavings.forfeitMember(cid, lateMembers);
     }
 
@@ -212,13 +212,13 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Get collateral before forfeit
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings
+        (CircleSavings.Member memory aliceBefore, , ) = circleSavings
             .getMemberInfo(cid, alice);
-        (CircleSavingsV1.Member memory charlieBefore, , ) = circleSavings
+        (CircleSavings.Member memory charlieBefore, , ) = circleSavings
             .getMemberInfo(cid, charlie);
-        (CircleSavingsV1.Member memory davidBefore, , ) = circleSavings
+        (CircleSavings.Member memory davidBefore, , ) = circleSavings
             .getMemberInfo(cid, david);
-        (CircleSavingsV1.Member memory eveBefore, , ) = circleSavings
+        (CircleSavings.Member memory eveBefore, , ) = circleSavings
             .getMemberInfo(cid, eve);
 
         uint256 aliceCollateralBefore = aliceBefore.collateralLocked;
@@ -236,13 +236,13 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Check collateral was deducted for all members
-        (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
+        (CircleSavings.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
-        (CircleSavingsV1.Member memory charlieAfter, , ) = circleSavings
+        (CircleSavings.Member memory charlieAfter, , ) = circleSavings
             .getMemberInfo(cid, charlie);
-        (CircleSavingsV1.Member memory davidAfter, , ) = circleSavings
+        (CircleSavings.Member memory davidAfter, , ) = circleSavings
             .getMemberInfo(cid, david);
-        (CircleSavingsV1.Member memory eveAfter, , ) = circleSavings
+        (CircleSavings.Member memory eveAfter, , ) = circleSavings
             .getMemberInfo(cid, eve);
 
         uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000; // contribution + late fee
@@ -329,7 +329,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Check alice's collateral
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings
+        (CircleSavings.Member memory aliceBefore, , ) = circleSavings
             .getMemberInfo(cid, alice);
 
         // If alice has sufficient collateral, forfeit should succeed
@@ -358,7 +358,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Get alice's collateral before forfeit
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings
+        (CircleSavings.Member memory aliceBefore, , ) = circleSavings
             .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceBefore.collateralLocked;
 
@@ -369,7 +369,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Check alice's collateral was NOT deducted (she's the recipient)
-        (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
+        (CircleSavings.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
         assertEq(
             aliceAfter.collateralLocked,
@@ -378,7 +378,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         );
 
         // Check that the round DID advance via auto-resolution
-        (, CircleSavingsV1.CircleStatus memory statusAfter, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory statusAfter, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             statusAfter.currentRound,
@@ -421,7 +421,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Check that round DID advance (Alice is recipient and triggered auto-resolution)
-        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
 
         assertEq(
@@ -520,7 +520,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         address[] memory members = circleSavings.getCircleMembers(_circleId);
 
         for (uint256 i = 0; i < members.length; i++) {
-            (CircleSavingsV1.Member memory m, , ) = circleSavings.getMemberInfo(
+            (CircleSavings.Member memory m, , ) = circleSavings.getMemberInfo(
                 _circleId,
                 members[i]
             );
@@ -536,7 +536,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         uint256 cid,
         uint256 expectedRound
     ) internal view {
-        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(status.currentRound, expectedRound, "Incorrect current round");
     }
@@ -545,7 +545,7 @@ contract CircleSavingsForfeitTests is CircleSavingsV1Setup {
         uint256 cid,
         address member
     ) internal view returns (uint256) {
-        (CircleSavingsV1.Member memory m, , ) = circleSavings.getMemberInfo(
+        (CircleSavings.Member memory m, , ) = circleSavings.getMemberInfo(
             cid,
             member
         );

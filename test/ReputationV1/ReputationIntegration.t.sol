@@ -3,9 +3,9 @@ pragma solidity ^0.8.27;
 
 import {ReputationSetup} from "./ReputationSetup.t.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
-import {PersonalSavingsV1} from "../../src/PersonalSavingsV1.sol";
+import {PersonalSavings} from "../../src/PersonalSavings.sol";
 import {PersonalSavingsProxy} from "../../src/proxies/PersonalSavingsProxy.sol";
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
 import {CircleSavingsProxy} from "../../src/proxies/CircleSavingsProxy.sol";
 import {IReputation} from "../../src/interfaces/IReputation.sol";
 
@@ -20,12 +20,12 @@ contract ReputationIntegration is ReputationSetup {
 
     // Test contracts
     MockERC20 public mockUSDm;
-    PersonalSavingsV1 public personalSavingsImpl;
+    PersonalSavings public personalSavingsImpl;
     PersonalSavingsProxy public savingsProxy;
-    PersonalSavingsV1 public personalSavings;
-    CircleSavingsV1 public circleSavingsImpl;
+    PersonalSavings public personalSavings;
+    CircleSavings public circleSavingsImpl;
     CircleSavingsProxy public circleProxy;
-    CircleSavingsV1 public circleSavings;
+    CircleSavings public circleSavings;
 
     function setUp() public override {
         super.setUp();
@@ -41,8 +41,8 @@ contract ReputationIntegration is ReputationSetup {
         vm.startPrank(owner);
 
         // Deploy implementations
-        personalSavingsImpl = new PersonalSavingsV1();
-        circleSavingsImpl = new CircleSavingsV1();
+        personalSavingsImpl = new PersonalSavings();
+        circleSavingsImpl = new CircleSavings();
 
         address[] memory supportedTokens = new address[](1);
         supportedTokens[0] = address(mockUSDm);
@@ -55,7 +55,7 @@ contract ReputationIntegration is ReputationSetup {
             address(reputation),
             owner
         );
-        personalSavings = PersonalSavingsV1(address(savingsProxy));
+        personalSavings = PersonalSavings(address(savingsProxy));
 
         circleProxy = new CircleSavingsProxy(
             address(circleSavingsImpl),
@@ -64,7 +64,7 @@ contract ReputationIntegration is ReputationSetup {
             address(reputation),
             owner
         );
-        circleSavings = CircleSavingsV1(address(circleProxy));
+        circleSavings = CircleSavings(address(circleProxy));
 
         // Authorize the contracts
         reputation.authorizeContract(address(savingsProxy));
@@ -82,12 +82,12 @@ contract ReputationIntegration is ReputationSetup {
         mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
         // Create goal
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Test Goal",
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
+                frequency: PersonalSavings.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
                 token: address(mockUSDm),
@@ -127,12 +127,12 @@ contract ReputationIntegration is ReputationSetup {
         vm.startPrank(user1);
         mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Test Goal",
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
+                frequency: PersonalSavings.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
                 token: address(mockUSDm),
@@ -165,12 +165,12 @@ contract ReputationIntegration is ReputationSetup {
         vm.startPrank(user1);
         mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Test Goal",
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
+                frequency: PersonalSavings.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
                 token: address(mockUSDm),
@@ -206,12 +206,12 @@ contract ReputationIntegration is ReputationSetup {
 
         // Create and complete 3 goals
         for (uint256 i = 0; i < 3; i++) {
-            PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+            PersonalSavings.CreateGoalParams memory params = PersonalSavings
                 .CreateGoalParams({
                     name: "Test Goal",
                     targetAmount: TARGET_AMOUNT,
                     contributionAmount: CONTRIBUTION_AMOUNT,
-                    frequency: PersonalSavingsV1.Frequency.DAILY,
+                    frequency: PersonalSavings.Frequency.DAILY,
                     deadline: block.timestamp + DEADLINE,
                     enableYield: false,
                     token: address(mockUSDm),
@@ -263,13 +263,13 @@ contract ReputationIntegration is ReputationSetup {
         // Create circle
         vm.prank(user1);
         uint256 circleId = circleSavings.createCircle(
-            CircleSavingsV1.CreateCircleParams({
+            CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
                 yieldAPR: 0
@@ -324,13 +324,13 @@ contract ReputationIntegration is ReputationSetup {
 
         vm.prank(user1);
         uint256 circleId = circleSavings.createCircle(
-            CircleSavingsV1.CreateCircleParams({
+            CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
                 yieldAPR: 0
@@ -390,13 +390,13 @@ contract ReputationIntegration is ReputationSetup {
 
         vm.prank(user1);
         uint256 circleId = circleSavings.createCircle(
-            CircleSavingsV1.CreateCircleParams({
+            CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: CircleSavingsV1.Frequency.DAILY,
+                frequency: CircleSavings.Frequency.DAILY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
                 yieldAPR: 0
@@ -472,13 +472,13 @@ contract ReputationIntegration is ReputationSetup {
 
         vm.prank(user2);
         uint256 circleId = circleSavings.createCircle(
-            CircleSavingsV1.CreateCircleParams({
+            CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
                 yieldAPR: 0
@@ -492,8 +492,10 @@ contract ReputationIntegration is ReputationSetup {
         }
 
         // Check positions - user1 should have position 2 (highest rep after creator)
-        (CircleSavingsV1.Member memory member, , ) = circleSavings
-            .getMemberInfo(circleId, user1);
+        (CircleSavings.Member memory member, , ) = circleSavings.getMemberInfo(
+            circleId,
+            user1
+        );
         assertEq(
             member.position,
             2,
@@ -501,7 +503,7 @@ contract ReputationIntegration is ReputationSetup {
         );
 
         // Creator should have position 1
-        (CircleSavingsV1.Member memory creatorMember, , ) = circleSavings
+        (CircleSavings.Member memory creatorMember, , ) = circleSavings
             .getMemberInfo(circleId, user2);
         assertEq(
             creatorMember.position,
@@ -519,12 +521,12 @@ contract ReputationIntegration is ReputationSetup {
         vm.startPrank(user1);
         mockUSDm.approve(address(savingsProxy), type(uint256).max);
 
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Test Goal",
                 targetAmount: TARGET_AMOUNT,
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
+                frequency: PersonalSavings.Frequency.DAILY,
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
                 token: address(mockUSDm),
@@ -562,13 +564,13 @@ contract ReputationIntegration is ReputationSetup {
 
         vm.prank(user1);
         uint256 circleId = circleSavings.createCircle(
-            CircleSavingsV1.CreateCircleParams({
+            CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: CircleSavingsV1.Frequency.DAILY,
+                frequency: CircleSavings.Frequency.DAILY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
                 yieldAPR: 0
@@ -636,13 +638,13 @@ contract ReputationIntegration is ReputationSetup {
 
         vm.prank(users[0]);
         uint256 circleId = circleSavings.createCircle(
-            CircleSavingsV1.CreateCircleParams({
+            CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: CONTRIBUTION_AMOUNT,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 4,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
                 yieldAPR: 0
@@ -655,15 +657,15 @@ contract ReputationIntegration is ReputationSetup {
         }
 
         // Verify position assignment
-        (CircleSavingsV1.Member memory m1, , ) = circleSavings.getMemberInfo(
+        (CircleSavings.Member memory m1, , ) = circleSavings.getMemberInfo(
             circleId,
             user1
         );
-        (CircleSavingsV1.Member memory m2, , ) = circleSavings.getMemberInfo(
+        (CircleSavings.Member memory m2, , ) = circleSavings.getMemberInfo(
             circleId,
             user2
         );
-        (CircleSavingsV1.Member memory m3, , ) = circleSavings.getMemberInfo(
+        (CircleSavings.Member memory m3, , ) = circleSavings.getMemberInfo(
             circleId,
             user3
         );

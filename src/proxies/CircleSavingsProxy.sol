@@ -4,12 +4,12 @@ pragma solidity ^0.8.27;
 import {
     ERC1967Proxy
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {CircleSavingsV1} from "../CircleSavingsV1.sol";
+import {CircleSavings} from "../CircleSavings.sol";
 
 /**
  * @title CircleSavingsProxy
  * @dev ERC1967 Proxy for CircleSavings (UUPS pattern)
- * @notice Ownership and upgrades are managed by the implementation (CircleSavingsV1)
+ * @notice Ownership and upgrades are managed by the implementation (CircleSavings)
  */
 contract CircleSavingsProxy is ERC1967Proxy {
     constructor(
@@ -22,7 +22,7 @@ contract CircleSavingsProxy is ERC1967Proxy {
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                CircleSavingsV1.initialize.selector,
+                CircleSavings.initialize.selector,
                 _supportedTokens,
                 _treasury,
                 _reputationContract,
@@ -38,16 +38,16 @@ contract CircleSavingsProxy is ERC1967Proxy {
  * @param _treasury Address for platform fees
  * @param _reputationContract Address of the reputation contract
  * @param _initialOwner Address of contract owner
- * @return proxy Address of the deployed proxy (which delegates to CircleSavingsV1)
+ * @return proxy Address of the deployed proxy (which delegates to CircleSavings)
  */
 function createCircleSavings(
     address[] memory _supportedTokens,
     address _treasury,
     address _reputationContract,
     address _initialOwner
-) returns (CircleSavingsV1 proxy) {
+) returns (CircleSavings proxy) {
     // Deploy implementation
-    CircleSavingsV1 implementation = new CircleSavingsV1();
+    CircleSavings implementation = new CircleSavings();
 
     // Deploy proxy pointing to the implementation
     CircleSavingsProxy _proxy = new CircleSavingsProxy(
@@ -58,7 +58,7 @@ function createCircleSavings(
         _initialOwner
     );
 
-    // Return proxy as CircleSavingsV1 interface
-    proxy = CircleSavingsV1(address(_proxy));
+    // Return proxy as CircleSavings interface
+    proxy = CircleSavings(address(_proxy));
     return proxy;
 }

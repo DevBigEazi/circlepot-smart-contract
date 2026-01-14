@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 
-contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsV1Setup {
+contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -29,7 +29,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Alice (recipient) has NOT contributed. Pot should be 400.
-        (, CircleSavingsV1.CircleStatus memory statusBefore, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory statusBefore, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             statusBefore.totalPot,
@@ -44,7 +44,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, emptyList);
 
         // Round should have advanced because Alice was the only one missing after grace
-        (, CircleSavingsV1.CircleStatus memory statusAfter, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory statusAfter, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             statusAfter.currentRound,
@@ -81,7 +81,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsV1Setup {
         circleSavings.contribute(cid);
 
         // Move to Round 2 (Bob is recipient)
-        (, CircleSavingsV1.CircleStatus memory statusR2, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory statusR2, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(statusR2.currentRound, 2, "Should be round 2");
 
@@ -103,7 +103,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, new address[](0));
 
         // Round should advance to 3
-        (, CircleSavingsV1.CircleStatus memory statusR3, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory statusR3, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(statusR3.currentRound, 3, "Should advance to round 3");
 
@@ -129,14 +129,14 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Alice (recipient) contributes AFTER grace period
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings
+        (CircleSavings.Member memory aliceBefore, , ) = circleSavings
             .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceBefore.collateralLocked;
 
         vm.prank(alice);
         circleSavings.contribute(cid);
 
-        (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
+        (CircleSavings.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
 
         // Recipient should NOT have collateral deducted
@@ -190,7 +190,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, toForfeit);
 
         // Check round advanced
-        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             status.currentRound,

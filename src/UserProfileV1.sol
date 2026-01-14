@@ -12,11 +12,11 @@ import {
 } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
- * @title UserProfileV1
+ * @title UserProfile
  * @dev User profile management contract with unique account id (account number)
  * @notice Manages user profile data including email, username, address, profile photo, and unique account number
  */
-contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // ============ Version ============
     uint256 public constant VERSION = 1;
 
@@ -70,11 +70,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 createdAt,
         bool hasProfile
     );
-    event ProfileUpdated(
-        address indexed user,
-        string fullName,
-        string photo
-    );
+    event ProfileUpdated(address indexed user, string fullName, string photo);
     event ContactInfoUpdated(
         address indexed user,
         string email,
@@ -361,11 +357,7 @@ contract UserProfileV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         profile.lastProfileUpdate = block.timestamp;
 
-        emit ProfileUpdated(
-            msg.sender,
-            profile.fullName,
-            profile.profilePhoto
-        );
+        emit ProfileUpdated(msg.sender, profile.fullName, profile.profilePhoto);
     }
 
     // ============ Helper Functions ============

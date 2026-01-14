@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {
+    Initializable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {
+    UUPSUpgradeable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
- * @title ReputationV1
+ * @title Reputation
  * @dev Credit score-style reputation system (300-850 range)
- * @notice Compatible with PersonalSavingsV1 and CircleSavingsV1 contracts
+ * @notice Compatible with PersonalSavings and CircleSavings contracts
  * @notice Mimics FICO/VantageScore models with savings-specific features
  */
-contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract Reputation is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // ============ Constants ============
     uint256 public constant VERSION = 1;
 
@@ -39,7 +45,6 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         GOOD, // 670-739
         VERY_GOOD, // 740-799
         EXCEPTIONAL // 800-850
-
     }
 
     // ============ Structs ============
@@ -69,14 +74,42 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
-    event ReputationIncreased(address indexed user, uint256 points, string reason, uint256 newScore);
-    event ReputationDecreased(address indexed user, uint256 points, string reason, uint256 newScore);
+    event ReputationIncreased(
+        address indexed user,
+        uint256 points,
+        string reason,
+        uint256 newScore
+    );
+    event ReputationDecreased(
+        address indexed user,
+        uint256 points,
+        string reason,
+        uint256 newScore
+    );
     event ContractAuthorized(address indexed contractAddress);
     event ContractRevoked(address indexed contractAddress);
-    event ScoreCategoryChanged(address indexed user, ScoreCategory oldCategory, ScoreCategory newCategory);
-    event CircleCompleted(address indexed user, uint256 indexed cid, uint256 totalCompleted);
-    event LatePaymentRecorded(address indexed user, uint256 indexed cid, uint256 indexed round, uint256 fee, uint256 totalLatePayments);
-    event GoalCompleted(address indexed user, uint256 indexed goalId, uint256 totalCompleted);
+    event ScoreCategoryChanged(
+        address indexed user,
+        ScoreCategory oldCategory,
+        ScoreCategory newCategory
+    );
+    event CircleCompleted(
+        address indexed user,
+        uint256 indexed cid,
+        uint256 totalCompleted
+    );
+    event LatePaymentRecorded(
+        address indexed user,
+        uint256 indexed cid,
+        uint256 indexed round,
+        uint256 fee,
+        uint256 totalLatePayments
+    );
+    event GoalCompleted(
+        address indexed user,
+        uint256 indexed goalId,
+        uint256 totalCompleted
+    );
     // ============ Errors ============
     error UnauthorizedContract();
     error InvalidScoreChange();
@@ -103,7 +136,9 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Authorizes upgrade to new implementation
      */
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {
         emit ContractUpgraded(newImplementation, VERSION);
     }
 
@@ -140,7 +175,11 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _points Points to increase (maps to score increase)
      * @param _reason Reason for increase
      */
-    function increaseReputation(address _user, uint256 _points, string calldata _reason) external onlyAuthorized {
+    function increaseReputation(
+        address _user,
+        uint256 _points,
+        string calldata _reason
+    ) external onlyAuthorized {
         _initializeUser(_user);
 
         UserReputation storage rep = userReputations[_user];
@@ -160,12 +199,18 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         rep.lastUpdated = block.timestamp;
 
         // Track specific achievements
-        if (_containsString(_reason, "Goal completed") || _containsString(_reason, "Goal target reached")) {
+        if (
+            _containsString(_reason, "Goal completed") ||
+            _containsString(_reason, "Goal target reached")
+        ) {
             rep.goalsCompleted++;
             rep.consecutiveOnTimePayments++;
         }
 
-        if (_containsString(_reason, "Contribution") || _containsString(_reason, "Payment")) {
+        if (
+            _containsString(_reason, "Contribution") ||
+            _containsString(_reason, "Payment")
+        ) {
             rep.consecutiveOnTimePayments++;
         }
 
@@ -194,7 +239,11 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _points Points to decrease (maps to score decrease)
      * @param _reason Reason for decrease
      */
-    function decreaseReputation(address _user, uint256 _points, string calldata _reason) external onlyAuthorized {
+    function decreaseReputation(
+        address _user,
+        uint256 _points,
+        string calldata _reason
+    ) external onlyAuthorized {
         _initializeUser(_user);
 
         UserReputation storage rep = userReputations[_user];
@@ -202,7 +251,9 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         uint256 oldScore = rep.score;
         uint256 scoreDecrease = _calculateScoreDecrease(_points, rep.score);
-        uint256 newScore = oldScore > scoreDecrease ? oldScore - scoreDecrease : MIN_SCORE;
+        uint256 newScore = oldScore > scoreDecrease
+            ? oldScore - scoreDecrease
+            : MIN_SCORE;
 
         // Floor at MIN_SCORE
         if (newScore < MIN_SCORE) {
@@ -237,11 +288,14 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * @dev Record circle completion (called by CircleSavingsV1)
+     * @dev Record circle completion (called by CircleSavings)
      * @param _user Address of the user
      * @param _cid Circle ID
      */
-    function recordCircleCompleted(address _user, uint256 _cid) external onlyAuthorized {
+    function recordCircleCompleted(
+        address _user,
+        uint256 _cid
+    ) external onlyAuthorized {
         _initializeUser(_user);
         UserReputation storage rep = userReputations[_user];
         rep.circlesCompleted++;
@@ -249,25 +303,33 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * @dev Record late payment (called by CircleSavingsV1)
+     * @dev Record late payment (called by CircleSavings)
      * @param _user Address of the user
      * @param _cid Circle ID
      * @param _round Round number
      * @param _fee Fee amount
      */
-    function recordLatePayment(address _user, uint256 _cid, uint256 _round, uint256 _fee) external onlyAuthorized {
+    function recordLatePayment(
+        address _user,
+        uint256 _cid,
+        uint256 _round,
+        uint256 _fee
+    ) external onlyAuthorized {
         _initializeUser(_user);
         UserReputation storage rep = userReputations[_user];
         rep.latePayments++;
-        emit LatePaymentRecorded(_user,  _cid, _round, _fee, rep.latePayments);
+        emit LatePaymentRecorded(_user, _cid, _round, _fee, rep.latePayments);
     }
 
     /**
-     * @dev Record goal completion (called by PersonalSavingsV1)
+     * @dev Record goal completion (called by PersonalSavings)
      * @param _user Address of the user
      * @param _goalId Goal ID
      */
-    function recordGoalCompleted(address _user, uint256 _goalId) external onlyAuthorized {
+    function recordGoalCompleted(
+        address _user,
+        uint256 _goalId
+    ) external onlyAuthorized {
         _initializeUser(_user);
         UserReputation storage rep = userReputations[_user];
         rep.goalsCompleted++;
@@ -281,7 +343,10 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Calculate score increase based on current score
      * @notice Higher scores gain points more slowly (diminishing returns)
      */
-    function _calculateScoreIncrease(uint256 _basePoints, uint256 _currentScore) private pure returns (uint256) {
+    function _calculateScoreIncrease(
+        uint256 _basePoints,
+        uint256 _currentScore
+    ) private pure returns (uint256) {
         // Diminishing returns as score increases
         if (_currentScore >= 800) {
             return _basePoints * 1; // Hardest to improve exceptional scores
@@ -300,7 +365,10 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Calculate score decrease based on current score
      * @notice Higher scores lose more points (more to lose)
      */
-    function _calculateScoreDecrease(uint256 _basePoints, uint256 _currentScore) private pure returns (uint256) {
+    function _calculateScoreDecrease(
+        uint256 _basePoints,
+        uint256 _currentScore
+    ) private pure returns (uint256) {
         // Steeper penalties for higher scores
         if (_currentScore >= 800) {
             return _basePoints * 8; // Exceptional scores drop significantly
@@ -315,30 +383,42 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
     }
 
-    // ============ View Functions (CircleSavingsV1 Compatibility) ============
+    // ============ View Functions (CircleSavings Compatibility) ============
 
     /**
-     * @dev Get user reputation data (for CircleSavingsV1 _getReputationScore)
+     * @dev Get user reputation data (for CircleSavings _getReputationScore)
      * @return positiveActions Total positive actions
      * @return negativeActions Total negative actions
      * @return circlesCompleted Total circles completed
      * @return score Current reputation score
      */
-    function getUserReputationData(address _user)
+    function getUserReputationData(
+        address _user
+    )
         external
         view
-        returns (uint256 positiveActions, uint256 negativeActions, uint256 circlesCompleted, uint256 score)
+        returns (
+            uint256 positiveActions,
+            uint256 negativeActions,
+            uint256 circlesCompleted,
+            uint256 score
+        )
     {
         if (!userReputations[_user].isInitialized) {
             return (0, 0, 0, DEFAULT_SCORE);
         }
 
         UserReputation storage rep = userReputations[_user];
-        return (rep.totalPositiveActions, rep.totalNegativeActions, rep.circlesCompleted, rep.score);
+        return (
+            rep.totalPositiveActions,
+            rep.totalNegativeActions,
+            rep.circlesCompleted,
+            rep.score
+        );
     }
 
     /**
-     * @dev Get user's reputation score (for PersonalSavingsV1 getUserReputation)
+     * @dev Get user's reputation score (for PersonalSavings getUserReputation)
      */
     function getReputation(address _user) external view returns (uint256) {
         if (!userReputations[_user].isInitialized) {
@@ -350,8 +430,12 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Get user's score category
      */
-    function getScoreCategory(address _user) public view returns (ScoreCategory) {
-        uint256 score = userReputations[_user].isInitialized ? userReputations[_user].score : DEFAULT_SCORE;
+    function getScoreCategory(
+        address _user
+    ) public view returns (ScoreCategory) {
+        uint256 score = userReputations[_user].isInitialized
+            ? userReputations[_user].score
+            : DEFAULT_SCORE;
 
         if (score <= POOR_THRESHOLD) return ScoreCategory.POOR;
         if (score <= FAIR_THRESHOLD) return ScoreCategory.FAIR;
@@ -363,7 +447,9 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Get score category as string
      */
-    function getScoreCategoryString(address _user) external view returns (string memory) {
+    function getScoreCategoryString(
+        address _user
+    ) external view returns (string memory) {
         ScoreCategory category = getScoreCategory(_user);
 
         if (category == ScoreCategory.POOR) return "Poor (300-579)";
@@ -376,7 +462,9 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Get full user reputation details
      */
-    function getUserReputationDetails(address _user)
+    function getUserReputationDetails(
+        address _user
+    )
         external
         view
         returns (
@@ -407,15 +495,22 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Get user's reputation history
      */
-    function getReputationHistory(address _user) external view returns (ReputationHistory[] memory) {
+    function getReputationHistory(
+        address _user
+    ) external view returns (ReputationHistory[] memory) {
         return reputationHistory[_user];
     }
 
     /**
      * @dev Check if user meets score requirement for a feature
      */
-    function meetsScoreRequirement(address _user, uint256 _requiredScore) external view returns (bool) {
-        uint256 score = userReputations[_user].isInitialized ? userReputations[_user].score : DEFAULT_SCORE;
+    function meetsScoreRequirement(
+        address _user,
+        uint256 _requiredScore
+    ) external view returns (bool) {
+        uint256 score = userReputations[_user].isInitialized
+            ? userReputations[_user].score
+            : DEFAULT_SCORE;
         return score >= _requiredScore;
     }
 
@@ -423,7 +518,9 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Check if user can create large personal goals (600+ score)
      */
     function canCreateLargeGoal(address _user) external view returns (bool) {
-        uint256 score = userReputations[_user].isInitialized ? userReputations[_user].score : DEFAULT_SCORE;
+        uint256 score = userReputations[_user].isInitialized
+            ? userReputations[_user].score
+            : DEFAULT_SCORE;
         return score >= MIN_SCORE_LARGE_GOAL;
     }
 
@@ -431,7 +528,9 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Check if user can create savings circles (580+ score)
      */
     function canCreateCircle(address _user) external view returns (bool) {
-        uint256 score = userReputations[_user].isInitialized ? userReputations[_user].score : DEFAULT_SCORE;
+        uint256 score = userReputations[_user].isInitialized
+            ? userReputations[_user].score
+            : DEFAULT_SCORE;
         return score >= MIN_SCORE_CIRCLE_CREATE;
     }
 
@@ -439,7 +538,9 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Check if user qualifies for premium features (740+ score)
      */
     function hasPremiumAccess(address _user) external view returns (bool) {
-        uint256 score = userReputations[_user].isInitialized ? userReputations[_user].score : DEFAULT_SCORE;
+        uint256 score = userReputations[_user].isInitialized
+            ? userReputations[_user].score
+            : DEFAULT_SCORE;
         return score >= MIN_SCORE_PREMIUM;
     }
 
@@ -447,8 +548,12 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Calculate dynamic penalty reduction based on score
      * @return penaltyMultiplier Multiplier in basis points (10000 = 100%)
      */
-    function getPenaltyMultiplier(address _user) external view returns (uint256) {
-        uint256 score = userReputations[_user].isInitialized ? userReputations[_user].score : DEFAULT_SCORE;
+    function getPenaltyMultiplier(
+        address _user
+    ) external view returns (uint256) {
+        uint256 score = userReputations[_user].isInitialized
+            ? userReputations[_user].score
+            : DEFAULT_SCORE;
 
         // Better scores get penalty reductions
         if (score >= 800) return 5000; // 50% reduction (Exceptional)
@@ -462,8 +567,12 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Calculate collateral discount based on score
      * @return discountMultiplier Multiplier in basis points (10000 = 100%)
      */
-    function getCollateralMultiplier(address _user) external view returns (uint256) {
-        uint256 score = userReputations[_user].isInitialized ? userReputations[_user].score : DEFAULT_SCORE;
+    function getCollateralMultiplier(
+        address _user
+    ) external view returns (uint256) {
+        uint256 score = userReputations[_user].isInitialized
+            ? userReputations[_user].score
+            : DEFAULT_SCORE;
 
         // Better scores require less collateral
         if (score >= 800) return 8000; // 20% less (Exceptional)
@@ -496,7 +605,10 @@ contract ReputationV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Check if string contains substring (case-sensitive)
      */
-    function _containsString(string calldata _str, string memory _substr) private pure returns (bool) {
+    function _containsString(
+        string calldata _str,
+        string memory _substr
+    ) private pure returns (bool) {
         bytes memory strBytes = bytes(_str);
         bytes memory substrBytes = bytes(_substr);
 

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 
-contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
+contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -28,7 +28,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         uint256 bobBalBefore = USDm.balanceOf(bob);
         uint256 aliceBalBefore = USDm.balanceOf(alice);
 
-        (CircleSavingsV1.Member memory mVal, , ) = circleSavings.getMemberInfo(
+        (CircleSavings.Member memory mVal, , ) = circleSavings.getMemberInfo(
             cid,
             alice
         );
@@ -52,16 +52,16 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         );
 
         // Verify state is DEAD
-        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             uint256(status.state),
-            uint256(CircleSavingsV1.CircleState.DEAD)
+            uint256(CircleSavings.CircleState.DEAD)
         );
 
         // SCENARIO 2: Alice attempts to withdraw manually - should revert as already processed
         vm.prank(alice);
-        vm.expectRevert(CircleSavingsV1.NotActiveMember.selector);
+        vm.expectRevert(CircleSavings.NotActiveMember.selector);
         circleSavings.WithdrawCollateral(cid);
 
         // Verify specifically if possible (PUBLIC fee is usually 2e18 or something set in contract)
@@ -81,7 +81,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         // Fee condition (isCreator && DEAD) is false.
 
         uint256 aliceBalBefore = USDm.balanceOf(alice);
-        (CircleSavingsV1.Member memory mVal, , ) = circleSavings.getMemberInfo(
+        (CircleSavings.Member memory mVal, , ) = circleSavings.getMemberInfo(
             cid,
             alice
         );
@@ -100,33 +100,33 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         );
 
         // State should now be DEAD
-        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             uint256(status.state),
-            uint256(CircleSavingsV1.CircleState.DEAD)
+            uint256(CircleSavings.CircleState.DEAD)
         );
     }
 
     function test_RoundsAndMembers_IncrementCorrectly() public {
         // Create circle
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
+        CircleSavings.CreateCircleParams memory params = CircleSavings
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-            token: address(USDm),
+                token: address(USDm),
                 yieldAPR: 0
             });
         uint256 cid = circleSavings.createCircle(params);
 
         // Check initial state
-        (, CircleSavingsV1.CircleStatus memory status1, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status1, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             status1.currentMembers,
@@ -144,7 +144,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         vm.prank(bob);
         circleSavings.joinCircle(cid);
 
-        (, CircleSavingsV1.CircleStatus memory status2, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status2, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(status2.currentMembers, 2, "Members should increase to 2");
         assertEq(status2.totalRounds, 2, "Total rounds should increase to 2");
@@ -153,7 +153,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         vm.prank(charlie);
         circleSavings.joinCircle(cid);
 
-        (, CircleSavingsV1.CircleStatus memory status3, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status3, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(status3.currentMembers, 3, "Members should increase to 3");
 
@@ -164,11 +164,11 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         circleSavings.joinCircle(cid);
 
         // Circle should now be started automatically (max members reached)
-        (, CircleSavingsV1.CircleStatus memory statusStart, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory statusStart, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             uint256(statusStart.state),
-            uint256(CircleSavingsV1.CircleState.ACTIVE),
+            uint256(CircleSavings.CircleState.ACTIVE),
             "Circle should be active"
         );
         assertEq(statusStart.currentRound, 1, "Round should be 1 after start");
@@ -185,23 +185,23 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
         vm.prank(eve);
         circleSavings.contribute(cid);
 
-        (, CircleSavingsV1.CircleStatus memory statusRound2, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory statusRound2, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(statusRound2.currentRound, 2, "Round should increment to 2");
     }
     function test_PartialCircleStart_RoundsEqualMembers() public {
         // Create circle with max 5 members
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
+        CircleSavings.CreateCircleParams memory params = CircleSavings
             .CreateCircleParams({
                 title: "Partial Circle",
                 description: "Test Description",
                 contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-            token: address(USDm),
+                token: address(USDm),
                 yieldAPR: 0
             });
         uint256 cid = circleSavings.createCircle(params);
@@ -225,23 +225,23 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
 
         // All members vote to start
         vm.prank(alice);
-        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+        circleSavings.castVote(cid, CircleSavings.VoteChoice.START);
         vm.prank(bob);
-        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START);
+        circleSavings.castVote(cid, CircleSavings.VoteChoice.START);
         vm.prank(charlie);
-        circleSavings.castVote(cid, CircleSavingsV1.VoteChoice.START); // This will trigger early execution
+        circleSavings.castVote(cid, CircleSavings.VoteChoice.START); // This will trigger early execution
 
         // Verify state
         (
-            CircleSavingsV1.CircleConfig memory config,
-            CircleSavingsV1.CircleStatus memory status,
+            CircleSavings.CircleConfig memory config,
+            CircleSavings.CircleStatus memory status,
             ,
 
         ) = circleSavings.getCircleDetails(cid);
 
         assertEq(
             uint256(status.state),
-            uint256(CircleSavingsV1.CircleState.ACTIVE),
+            uint256(CircleSavings.CircleState.ACTIVE),
             "Circle should be active"
         );
         assertEq(status.currentMembers, 3, "Current members should be 3");

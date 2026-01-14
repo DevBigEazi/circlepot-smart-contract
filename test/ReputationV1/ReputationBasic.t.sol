@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {ReputationSetup} from "./ReputationSetup.t.sol";
-import {ReputationV1} from "../../src/ReputationV1.sol";
+import {Reputation} from "../../src/Reputation.sol";
 
 /**
  * @title ReputationBasic
@@ -43,7 +43,7 @@ contract ReputationBasic is ReputationSetup {
     }
 
     function test_revertNotAuthorized() public {
-        vm.expectRevert(ReputationV1.UnauthorizedContract.selector);
+        vm.expectRevert(Reputation.UnauthorizedContract.selector);
         reputation.increaseReputation(user1, 10, "Test");
     }
 
@@ -72,8 +72,12 @@ contract ReputationBasic is ReputationSetup {
     }
 
     function test_getUserReputationData_NewUser() public view {
-        (uint256 positiveActions, uint256 negativeActions, uint256 circlesCompleted, uint256 score) =
-            reputation.getUserReputationData(user1);
+        (
+            uint256 positiveActions,
+            uint256 negativeActions,
+            uint256 circlesCompleted,
+            uint256 score
+        ) = reputation.getUserReputationData(user1);
 
         assertEq(positiveActions, 0);
         assertEq(negativeActions, 0);
@@ -185,7 +189,9 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 10, "Action 2");
         vm.stopPrank();
 
-        (uint256 positiveActions,,,) = reputation.getUserReputationData(user1);
+        (uint256 positiveActions, , , ) = reputation.getUserReputationData(
+            user1
+        );
         assertEq(positiveActions, 2, "Should track positive actions");
     }
 
@@ -196,7 +202,7 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 10, "Goal completed");
 
-        ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
+        Reputation.UserReputation memory userRep = _getUserReputation(user1);
         assertEq(userRep.goalsCompleted, 1, "Should track goal completion");
     }
 
@@ -207,8 +213,12 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 10, "Goal target reached");
 
-        ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
-        assertEq(userRep.consecutiveOnTimePayments, 1, "Should track payment streak");
+        Reputation.UserReputation memory userRep = _getUserReputation(user1);
+        assertEq(
+            userRep.consecutiveOnTimePayments,
+            1,
+            "Should track payment streak"
+        );
     }
 
     // ============ Reputation Decrease Tests ============
@@ -308,8 +318,12 @@ contract ReputationBasic is ReputationSetup {
         reputation.decreaseReputation(user1, 5, "Penalty");
         vm.stopPrank();
 
-        ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
-        assertEq(userRep.consecutiveOnTimePayments, 0, "Should reset payment streak");
+        Reputation.UserReputation memory userRep = _getUserReputation(user1);
+        assertEq(
+            userRep.consecutiveOnTimePayments,
+            0,
+            "Should reset payment streak"
+        );
     }
 
     function test_reputationDecrease_TracksNegativeActions() public {
@@ -321,7 +335,9 @@ contract ReputationBasic is ReputationSetup {
         reputation.decreaseReputation(user1, 5, "Action 2");
         vm.stopPrank();
 
-        (, uint256 negativeActions,,) = reputation.getUserReputationData(user1);
+        (, uint256 negativeActions, , ) = reputation.getUserReputationData(
+            user1
+        );
         assertEq(negativeActions, 2, "Should track negative actions");
     }
 
@@ -335,7 +351,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.recordLatePayment(user1, 1, 1, 1);
         vm.stopPrank();
 
-        ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
+        Reputation.UserReputation memory userRep = _getUserReputation(user1);
         assertEq(userRep.latePayments, 1, "Should track late payments");
     }
 
@@ -348,7 +364,7 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.recordCircleCompleted(user1, 1);
 
-        (,, uint256 circles,) = reputation.getUserReputationData(user1);
+        (, , uint256 circles, ) = reputation.getUserReputationData(user1);
         assertEq(circles, 1, "Should record circle completion");
     }
 
@@ -362,7 +378,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.recordCircleCompleted(user1, 3);
         vm.stopPrank();
 
-        (,, uint256 circles,) = reputation.getUserReputationData(user1);
+        (, , uint256 circles, ) = reputation.getUserReputationData(user1);
         assertEq(circles, 3, "Should track multiple circle completions");
     }
 
@@ -375,7 +391,7 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.recordLatePayment(user1, 1, 1, 1);
 
-        ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
+        Reputation.UserReputation memory userRep = _getUserReputation(user1);
         assertEq(userRep.latePayments, 1, "Should record late payment");
     }
 
@@ -388,16 +404,20 @@ contract ReputationBasic is ReputationSetup {
         reputation.recordLatePayment(user1, 1, 1, 1);
         vm.stopPrank();
 
-        ReputationV1.UserReputation memory userRep = _getUserReputation(user1);
-        assertEq(userRep.latePayments, 2, "Should track multiple late payments");
+        Reputation.UserReputation memory userRep = _getUserReputation(user1);
+        assertEq(
+            userRep.latePayments,
+            2,
+            "Should track multiple late payments"
+        );
     }
 
     // ============ Score Category Tests ============
 
     function test_getScoreCategory_Poor() public view {
         // Default score is 300 (Poor)
-        ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.POOR));
+        Reputation.ScoreCategory category = reputation.getScoreCategory(user1);
+        assertEq(uint256(category), uint256(Reputation.ScoreCategory.POOR));
     }
 
     function test_getScoreCategory_Fair() public {
@@ -407,8 +427,8 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 60, "Setup"); // 300 + (60×5) = 600
 
-        ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.FAIR));
+        Reputation.ScoreCategory category = reputation.getScoreCategory(user1);
+        assertEq(uint256(category), uint256(Reputation.ScoreCategory.FAIR));
     }
 
     function test_getScoreCategory_Good() public {
@@ -418,8 +438,8 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 80, "Setup"); // 300 + (80×5) = 700
 
-        ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.GOOD));
+        Reputation.ScoreCategory category = reputation.getScoreCategory(user1);
+        assertEq(uint256(category), uint256(Reputation.ScoreCategory.GOOD));
     }
 
     function test_getScoreCategory_VeryGood() public {
@@ -429,8 +449,11 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 90, "Setup"); // 300 + (90×5) = 750
 
-        ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.VERY_GOOD));
+        Reputation.ScoreCategory category = reputation.getScoreCategory(user1);
+        assertEq(
+            uint256(category),
+            uint256(Reputation.ScoreCategory.VERY_GOOD)
+        );
     }
 
     function test_getScoreCategory_Exceptional() public {
@@ -440,8 +463,11 @@ contract ReputationBasic is ReputationSetup {
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 110, "Setup"); // 300 + (110×5) = 850 (capped)
 
-        ReputationV1.ScoreCategory category = reputation.getScoreCategory(user1);
-        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.EXCEPTIONAL));
+        Reputation.ScoreCategory category = reputation.getScoreCategory(user1);
+        assertEq(
+            uint256(category),
+            uint256(Reputation.ScoreCategory.EXCEPTIONAL)
+        );
     }
 
     function test_getScoreCategoryString_AllCategories() public {
@@ -634,7 +660,7 @@ contract ReputationBasic is ReputationSetup {
 
         (
             uint256 score,
-            ReputationV1.ScoreCategory category,
+            Reputation.ScoreCategory category,
             uint256 positiveActions,
             uint256 negativeActions,
             uint256 consecutivePayments,
@@ -645,7 +671,7 @@ contract ReputationBasic is ReputationSetup {
         ) = reputation.getUserReputationDetails(user1);
 
         assertGt(score, 300);
-        assertEq(uint256(category), uint256(ReputationV1.ScoreCategory.POOR)); // Still poor after penalties
+        assertEq(uint256(category), uint256(Reputation.ScoreCategory.POOR)); // Still poor after penalties
         assertEq(positiveActions, 2);
         assertEq(negativeActions, 1);
         assertEq(consecutivePayments, 0); // Reset by decrease
@@ -667,7 +693,8 @@ contract ReputationBasic is ReputationSetup {
         reputation.decreaseReputation(user1, 3, "Penalty");
         vm.stopPrank();
 
-        ReputationV1.ReputationHistory[] memory history = reputation.getReputationHistory(user1);
+        Reputation.ReputationHistory[] memory history = reputation
+            .getReputationHistory(user1);
 
         assertEq(history.length, 3);
         assertEq(history[0].reason, "Action 1");
@@ -684,7 +711,7 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.ReputationIncreased(user1, 50, "Test", 350);
+        emit Reputation.ReputationIncreased(user1, 50, "Test", 350);
 
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 10, "Test");
@@ -698,7 +725,7 @@ contract ReputationBasic is ReputationSetup {
         reputation.increaseReputation(user1, 20, "Setup");
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.ReputationDecreased(user1, 15, "Test", 385);
+        emit Reputation.ReputationDecreased(user1, 15, "Test", 385);
 
         reputation.decreaseReputation(user1, 5, "Test");
         vm.stopPrank();
@@ -709,7 +736,11 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.ScoreCategoryChanged(user1, ReputationV1.ScoreCategory.POOR, ReputationV1.ScoreCategory.FAIR);
+        emit Reputation.ScoreCategoryChanged(
+            user1,
+            Reputation.ScoreCategory.POOR,
+            Reputation.ScoreCategory.FAIR
+        );
 
         vm.prank(mockContract);
         reputation.increaseReputation(user1, 60, "Upgrade"); // 300 -> 600 (Poor -> Fair)
@@ -719,7 +750,7 @@ contract ReputationBasic is ReputationSetup {
         address mockContract = makeAddr("mockContract");
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.ContractAuthorized(mockContract);
+        emit Reputation.ContractAuthorized(mockContract);
 
         vm.prank(owner);
         reputation.authorizeContract(mockContract);
@@ -730,7 +761,7 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.ContractRevoked(mockContract);
+        emit Reputation.ContractRevoked(mockContract);
 
         vm.prank(owner);
         reputation.revokeContract(mockContract);
@@ -741,7 +772,7 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.CircleCompleted(user1, 1, 1);
+        emit Reputation.CircleCompleted(user1, 1, 1);
 
         vm.prank(mockContract);
         reputation.recordCircleCompleted(user1, 1);
@@ -752,14 +783,16 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.expectEmit(true, true, true, true);
-        emit ReputationV1.LatePaymentRecorded(user1, 1, 1, 1, 1);
+        emit Reputation.LatePaymentRecorded(user1, 1, 1, 1, 1);
 
         vm.prank(mockContract);
         reputation.recordLatePayment(user1, 1, 1, 1);
     }
 
     // ============ Helper Function ============
-    function _getUserReputation(address _user) internal view returns (ReputationV1.UserReputation memory) {
+    function _getUserReputation(
+        address _user
+    ) internal view returns (Reputation.UserReputation memory) {
         (
             uint256 score,
             ,
@@ -772,17 +805,18 @@ contract ReputationBasic is ReputationSetup {
             uint256 lastUpdated
         ) = reputation.getUserReputationDetails(_user);
 
-        return ReputationV1.UserReputation({
-            score: score,
-            totalPositiveActions: positiveActions,
-            totalNegativeActions: negativeActions,
-            consecutiveOnTimePayments: consecutivePayments,
-            circlesCompleted: circlesCompleted,
-            goalsCompleted: goalsCompleted,
-            latePayments: latePayments,
-            lastUpdated: lastUpdated,
-            isInitialized: true
-        });
+        return
+            Reputation.UserReputation({
+                score: score,
+                totalPositiveActions: positiveActions,
+                totalNegativeActions: negativeActions,
+                consecutiveOnTimePayments: consecutivePayments,
+                circlesCompleted: circlesCompleted,
+                goalsCompleted: goalsCompleted,
+                latePayments: latePayments,
+                lastUpdated: lastUpdated,
+                isInitialized: true
+            });
     }
 
     function _authorizeContract(address _contract) internal override {

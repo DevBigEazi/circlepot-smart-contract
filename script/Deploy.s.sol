@@ -5,10 +5,10 @@ import {Script, console2} from "forge-std/Script.sol";
 import {
     ERC1967Proxy
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {UserProfileV1} from "../src/UserProfileV1.sol";
-import {PersonalSavingsV1} from "../src/PersonalSavingsV1.sol";
-import {CircleSavingsV1} from "../src/CircleSavingsV1.sol";
-import {ReputationV1} from "../src/ReputationV1.sol";
+import {UserProfile} from "../src/UserProfile.sol";
+import {PersonalSavings} from "../src/PersonalSavings.sol";
+import {CircleSavings} from "../src/CircleSavings.sol";
+import {Reputation} from "../src/Reputation.sol";
 import {CircleSavingsProxy} from "../src/proxies/CircleSavingsProxy.sol";
 import {PersonalSavingsProxy} from "../src/proxies/PersonalSavingsProxy.sol";
 import {UserProfileProxy} from "../src/proxies/UserProfileProxy.sol";
@@ -29,10 +29,10 @@ contract Deploy is Script {
         vm.startBroadcast();
 
         // Deploy implementation contracts
-        UserProfileV1 userProfileImpl = new UserProfileV1();
-        PersonalSavingsV1 personalSavingsImpl = new PersonalSavingsV1();
-        CircleSavingsV1 circleSavingsImpl = new CircleSavingsV1();
-        ReputationV1 reputationImpl = new ReputationV1();
+        UserProfile userProfileImpl = new UserProfile();
+        PersonalSavings personalSavingsImpl = new PersonalSavings();
+        CircleSavings circleSavingsImpl = new CircleSavings();
+        Reputation reputationImpl = new Reputation();
 
         // Deploy yield vault
         YieldVault yieldVault = new YieldVault(
@@ -65,10 +65,10 @@ contract Deploy is Script {
         );
 
         // Set vault for USDm token
-        PersonalSavingsV1(address(personalSavingsProxy)).setTokenVault(
+        PersonalSavings(address(personalSavingsProxy)).setTokenVault(
             USDm,
             address(yieldVault),
-            "Mock Yield Vault"
+            "moola-market"
         );
 
         CircleSavingsProxy circleSavingsProxy = new CircleSavingsProxy(
@@ -80,17 +80,17 @@ contract Deploy is Script {
         );
 
         // Set vault for USDm token
-        CircleSavingsV1(address(circleSavingsProxy)).setTokenVault(
+        CircleSavings(address(circleSavingsProxy)).setTokenVault(
             USDm,
             address(yieldVault),
-            "Mock Yield Vault"
+            "moola-market"
         );
 
         // Authorize contracts in the reputation system
-        ReputationV1(address(reputationProxy)).authorizeContract(
+        Reputation(address(reputationProxy)).authorizeContract(
             address(personalSavingsProxy)
         );
-        ReputationV1(address(reputationProxy)).authorizeContract(
+        Reputation(address(reputationProxy)).authorizeContract(
             address(circleSavingsProxy)
         );
 

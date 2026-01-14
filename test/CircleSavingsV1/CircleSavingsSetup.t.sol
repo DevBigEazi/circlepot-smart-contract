@@ -5,18 +5,18 @@ import {Test} from "forge-std/Test.sol";
 import {
     ERC1967Proxy
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {ReputationV1} from "../../src/ReputationV1.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {Reputation} from "../../src/Reputation.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {TestHelpers} from "../helpers/TestHelpers.sol";
 
 import {YieldVault} from "../../src/mocks/YieldVault.sol";
 
-contract CircleSavingsV1Setup is Test, TestHelpers {
-    CircleSavingsV1 public implementation;
-    CircleSavingsV1 public circleSavings;
-    ReputationV1 public reputationImpl;
-    ReputationV1 public reputation;
+contract CircleSavingsSetup is Test, TestHelpers {
+    CircleSavings public implementation;
+    CircleSavings public circleSavings;
+    Reputation public reputationImpl;
+    Reputation public reputation;
     YieldVault public yieldVault;
 
     address public testOwner = address(1);
@@ -26,19 +26,19 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
         _setupMockTokenAndUsers();
 
         // Deploy reputation system first
-        reputationImpl = new ReputationV1();
+        reputationImpl = new Reputation();
         bytes memory repInitData = abi.encodeWithSelector(
-            ReputationV1.initialize.selector,
+            Reputation.initialize.selector,
             testOwner
         );
         ERC1967Proxy repProxy = new ERC1967Proxy(
             address(reputationImpl),
             repInitData
         );
-        reputation = ReputationV1(address(repProxy));
+        reputation = Reputation(address(repProxy));
 
         // Deploy implementation and proxy
-        implementation = new CircleSavingsV1();
+        implementation = new CircleSavings();
 
         // Deploy yield vault
         yieldVault = new YieldVault(
@@ -52,7 +52,7 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
         supportedTokens[0] = address(USDm);
 
         bytes memory initData = abi.encodeWithSelector(
-            CircleSavingsV1.initialize.selector,
+            CircleSavings.initialize.selector,
             supportedTokens,
             testTreasury,
             address(reputation),
@@ -63,7 +63,7 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
             address(implementation),
             initData
         );
-        circleSavings = CircleSavingsV1(address(proxy));
+        circleSavings = CircleSavings(address(proxy));
 
         // Set vault for USDm token
         vm.prank(testOwner);
@@ -96,14 +96,14 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
     function _createAndStartCircle() internal returns (uint256) {
         // Create circle
         vm.prank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
+        CircleSavings.CreateCircleParams memory params = CircleSavings
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PRIVATE,
+                visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
                 token: address(USDm),
                 yieldAPR: 0
@@ -151,14 +151,14 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
     // Helper to create a default circle without adding other members
     function _createDefaultCircle(address creator) internal returns (uint256) {
         vm.prank(creator);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
+        CircleSavings.CreateCircleParams memory params = CircleSavings
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
                 contributionAmount: 100e18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(USDm),
                 yieldAPR: 0

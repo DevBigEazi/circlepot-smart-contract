@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 
-contract PositionSortingTest is CircleSavingsV1Setup {
+contract PositionSortingTest is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -48,29 +48,41 @@ contract PositionSortingTest is CircleSavingsV1Setup {
         // Members join IN ORDER: bob, charlie, david, eve (NOT reputation order)
         vm.prank(bob);
         circleSavings.joinCircle(cid);
-        
+
         vm.prank(charlie);
         circleSavings.joinCircle(cid);
-        
+
         vm.prank(david);
         circleSavings.joinCircle(cid);
-        
+
         vm.prank(eve);
         circleSavings.joinCircle(cid);
 
         // Circle should auto-start and assign positions
 
         // Get positions
-        (uint256 alicePos, , , , , , ) = circleSavings.circleMembers(cid, alice);
+        (uint256 alicePos, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            alice
+        );
         (uint256 bobPos, , , , , , ) = circleSavings.circleMembers(cid, bob);
-        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(cid, charlie);
-        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(cid, david);
+        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            charlie
+        );
+        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            david
+        );
         (uint256 evePos, , , , , , ) = circleSavings.circleMembers(cid, eve);
 
         emit log_named_uint("Alice position (creator, always 1)", alicePos);
         emit log_named_uint("David position (450 rep, should be 2)", davidPos);
         emit log_named_uint("Bob position (400 rep, should be 3)", bobPos);
-        emit log_named_uint("Charlie position (350 rep, should be 4)", charliePos);
+        emit log_named_uint(
+            "Charlie position (350 rep, should be 4)",
+            charliePos
+        );
         emit log_named_uint("Eve position (290 rep, should be 5)", evePos);
 
         // VERIFY POSITIONS ARE SORTED BY REPUTATION (HIGH TO LOW)
@@ -110,27 +122,41 @@ contract PositionSortingTest is CircleSavingsV1Setup {
         // Join in REVERSE reputation order: eve (lowest), charlie, bob, david (highest)
         vm.prank(eve);
         circleSavings.joinCircle(cid); // 290 rep joins first
-        
+
         vm.prank(charlie);
         circleSavings.joinCircle(cid); // 350 rep joins second
-        
+
         vm.prank(bob);
         circleSavings.joinCircle(cid); // 400 rep joins third
-        
+
         vm.prank(david);
         circleSavings.joinCircle(cid); // 450 rep joins LAST
 
         // Get positions
-        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(cid, david);
+        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            david
+        );
         (uint256 bobPos, , , , , , ) = circleSavings.circleMembers(cid, bob);
-        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(cid, charlie);
+        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            charlie
+        );
         (uint256 evePos, , , , , , ) = circleSavings.circleMembers(cid, eve);
 
         // Positions should STILL be by reputation, not join order
-        assertEq(davidPos, 2, "David (highest rep, joined LAST) should still be position 2");
+        assertEq(
+            davidPos,
+            2,
+            "David (highest rep, joined LAST) should still be position 2"
+        );
         assertEq(bobPos, 3, "Bob should be position 3");
         assertEq(charliePos, 4, "Charlie should be position 4");
-        assertEq(evePos, 5, "Eve (lowest rep, joined FIRST) should still be position 5");
+        assertEq(
+            evePos,
+            5,
+            "Eve (lowest rep, joined FIRST) should still be position 5"
+        );
     }
 
     /**
@@ -143,26 +169,35 @@ contract PositionSortingTest is CircleSavingsV1Setup {
 
         vm.prank(bob);
         circleSavings.joinCircle(cid);
-        
+
         vm.prank(charlie);
         circleSavings.joinCircle(cid);
-        
+
         vm.prank(david);
         circleSavings.joinCircle(cid);
-        
+
         vm.prank(eve);
         circleSavings.joinCircle(cid);
 
         // Get positions
-        (uint256 alicePos, , , , , , ) = circleSavings.circleMembers(cid, alice);
+        (uint256 alicePos, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            alice
+        );
         (uint256 bobPos, , , , , , ) = circleSavings.circleMembers(cid, bob);
-        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(cid, charlie);
-        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(cid, david);
+        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            charlie
+        );
+        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(
+            cid,
+            david
+        );
         (uint256 evePos, , , , , , ) = circleSavings.circleMembers(cid, eve);
 
         // Creator always position 1
         assertEq(alicePos, 1, "Alice (creator) always position 1");
-        
+
         // Others should get consistent positions (stable sort - maintains join order for equal values)
         assertEq(bobPos, 2, "Bob joined first");
         assertEq(charliePos, 3, "Charlie joined second");

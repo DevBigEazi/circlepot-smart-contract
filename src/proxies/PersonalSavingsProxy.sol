@@ -4,12 +4,12 @@ pragma solidity ^0.8.27;
 import {
     ERC1967Proxy
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {PersonalSavingsV1} from "../PersonalSavingsV1.sol";
+import {PersonalSavings} from "../PersonalSavings.sol";
 
 /**
  * @title PersonalSavingsProxy
  * @dev ERC1967 Proxy for PersonalSavings (UUPS pattern)
- * @notice Ownership and upgrades are managed by the implementation (PersonalSavingsV1)
+ * @notice Ownership and upgrades are managed by the implementation (PersonalSavings)
  */
 contract PersonalSavingsProxy is ERC1967Proxy {
     constructor(
@@ -22,7 +22,7 @@ contract PersonalSavingsProxy is ERC1967Proxy {
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                PersonalSavingsV1.initialize.selector,
+                PersonalSavings.initialize.selector,
                 _supportedTokens,
                 _treasury,
                 _reputationContract,
@@ -38,16 +38,16 @@ contract PersonalSavingsProxy is ERC1967Proxy {
  * @param _treasury Address for platform fees
  * @param _reputationContract Address of the reputation contract
  * @param _initialOwner Address of contract owner
- * @return proxy Address of the deployed proxy (which delegates to PersonalSavingsV1)
+ * @return proxy Address of the deployed proxy (which delegates to PersonalSavings)
  */
 function createPersonalSavings(
     address[] memory _supportedTokens,
     address _treasury,
     address _reputationContract,
     address _initialOwner
-) returns (PersonalSavingsV1 proxy) {
+) returns (PersonalSavings proxy) {
     // Deploy implementation
-    PersonalSavingsV1 implementation = new PersonalSavingsV1();
+    PersonalSavings implementation = new PersonalSavings();
 
     // Deploy proxy pointing to the implementation
     PersonalSavingsProxy _proxy = new PersonalSavingsProxy(
@@ -58,7 +58,7 @@ function createPersonalSavings(
         _initialOwner
     );
 
-    // Return proxy as PersonalSavingsV1 interface
-    proxy = PersonalSavingsV1(address(_proxy));
+    // Return proxy as PersonalSavings interface
+    proxy = PersonalSavings(address(_proxy));
     return proxy;
 }

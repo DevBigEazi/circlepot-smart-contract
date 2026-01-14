@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 
-contract CircleSavingsReputationTests is CircleSavingsV1Setup {
+contract CircleSavingsReputationTests is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -187,7 +187,7 @@ contract CircleSavingsReputationTests is CircleSavingsV1Setup {
     function test_GetMemberInfo() public {
         uint256 cid = _createAndStartCircle();
         (
-            CircleSavingsV1.Member memory m,
+            CircleSavings.Member memory m,
             bool hasContributed,
             uint256 nextDeadline
         ) = circleSavings.getMemberInfo(cid, alice);

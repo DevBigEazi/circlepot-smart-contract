@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {UserProfileV1} from "../../src/UserProfileV1.sol";
-import {UserProfileV1Setup} from "./UserProfileSetup.t.sol";
+import {UserProfile} from "../../src/UserProfile.sol";
+import {UserProfileSetup} from "./UserProfileSetup.t.sol";
 
-contract UserProfileV1Advanced is UserProfileV1Setup {
+contract UserProfileAdvanced is UserProfileSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -22,7 +22,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         );
 
         vm.prank(bob);
-        vm.expectRevert(UserProfileV1.UsernameAlreadyTaken.selector);
+        vm.expectRevert(UserProfile.UsernameAlreadyTaken.selector);
         userProfile.createProfile(
             "bob@example.com",
             "",
@@ -50,7 +50,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
     }
 
     function test_GetAddressByUsername_RevertProfileDoesNotExist() public {
-        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        vm.expectRevert(UserProfile.ProfileDoesNotExist.selector);
         userProfile.getAddressByUsername("nonexistent");
     }
 
@@ -81,7 +81,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);
         userProfile.updateProfile("", "ipfs://newphoto");
-        UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
         assertEq(p.profilePhoto, "ipfs://newphoto");
     }
 
@@ -96,13 +96,13 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         );
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);
-        vm.expectRevert(UserProfileV1.NoFieldsToUpdate.selector);
+        vm.expectRevert(UserProfile.NoFieldsToUpdate.selector);
         userProfile.updateProfile("", "");
     }
 
     function test_UpdatePhoto_RevertProfileDoesNotExist() public {
         vm.prank(bob);
-        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        vm.expectRevert(UserProfile.ProfileDoesNotExist.selector);
         userProfile.updateProfile("", "ipfs://new");
     }
 
@@ -118,7 +118,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
             "ipfs://p1"
         );
         vm.prank(alice);
-        vm.expectRevert(UserProfileV1.ProfileAlreadyExists.selector);
+        vm.expectRevert(UserProfile.ProfileAlreadyExists.selector);
         userProfile.createProfile(
             "alice2@example.com",
             "",
@@ -129,13 +129,13 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
     }
 
     function test_GetProfile_RevertProfileDoesNotExist() public {
-        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        vm.expectRevert(UserProfile.ProfileDoesNotExist.selector);
         userProfile.getProfile(bob);
     }
 
     function test_CreateProfile_EmptyEmail() public {
         vm.prank(alice);
-        vm.expectRevert(UserProfileV1.EmailOrPhoneRequired.selector);
+        vm.expectRevert(UserProfile.EmailOrPhoneRequired.selector);
         userProfile.createProfile(
             "",
             "",
@@ -147,7 +147,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
 
     function test_CreateProfile_EmptyUsername() public {
         vm.prank(alice);
-        vm.expectRevert(UserProfileV1.EmptyUsername.selector);
+        vm.expectRevert(UserProfile.EmptyUsername.selector);
         userProfile.createProfile(
             "alice@example.com",
             "",
@@ -159,7 +159,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
 
     function test_CreateProfile_EmptyFullName() public {
         vm.prank(alice);
-        vm.expectRevert(UserProfileV1.EmptyFullName.selector);
+        vm.expectRevert(UserProfile.EmptyFullName.selector);
         userProfile.createProfile(
             "alice@example.com",
             "",
@@ -181,7 +181,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
             "ipfs://p1"
         );
 
-        UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
 
         // Check account ID is within valid range (10-digit number)
         assertGe(
@@ -226,14 +226,13 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         );
 
         // Get all profiles
-        UserProfileV1.UserProfile memory aliceProfile = userProfile.getProfile(
+        UserProfile.UserProfile memory aliceProfile = userProfile.getProfile(
             alice
         );
-        UserProfileV1.UserProfile memory bobProfile = userProfile.getProfile(
-            bob
+        UserProfile.UserProfile memory bobProfile = userProfile.getProfile(bob);
+        UserProfile.UserProfile memory charlieProfile = userProfile.getProfile(
+            charlie
         );
-        UserProfileV1.UserProfile memory charlieProfile = userProfile
-            .getProfile(charlie);
 
         // All account IDs should be different
         assertTrue(
@@ -268,7 +267,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
             "ipfs://p1"
         );
 
-        UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
         uint256 accountId = p.accountId;
 
         address retrievedAddress = userProfile.getAddressByAccountId(accountId);
@@ -281,21 +280,21 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
 
     function test_GetAddressByAccountId_RevertInvalidAccountId() public {
         // Test with account ID below minimum
-        vm.expectRevert(UserProfileV1.InvalidAccountId.selector);
+        vm.expectRevert(UserProfile.InvalidAccountId.selector);
         userProfile.getAddressByAccountId(999999999);
 
         // Test with account ID above maximum
-        vm.expectRevert(UserProfileV1.InvalidAccountId.selector);
+        vm.expectRevert(UserProfile.InvalidAccountId.selector);
         userProfile.getAddressByAccountId(10000000000);
 
         // Test with zero
-        vm.expectRevert(UserProfileV1.InvalidAccountId.selector);
+        vm.expectRevert(UserProfile.InvalidAccountId.selector);
         userProfile.getAddressByAccountId(0);
     }
 
     function test_GetAddressByAccountId_RevertProfileDoesNotExist() public {
         // Valid account ID range but no profile exists
-        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        vm.expectRevert(UserProfile.ProfileDoesNotExist.selector);
         userProfile.getAddressByAccountId(1234567890);
     }
 
@@ -309,7 +308,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
             "ipfs://p1"
         );
 
-        UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
         uint256 accountId = p.accountId;
 
         (
@@ -329,17 +328,17 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
 
     function test_GetUserDetailsByAccountId_RevertInvalidAccountId() public {
         // Test below minimum
-        vm.expectRevert(UserProfileV1.InvalidAccountId.selector);
+        vm.expectRevert(UserProfile.InvalidAccountId.selector);
         userProfile.getUserDetailsByAccountId(999999999);
 
         // Test above maximum
-        vm.expectRevert(UserProfileV1.InvalidAccountId.selector);
+        vm.expectRevert(UserProfile.InvalidAccountId.selector);
         userProfile.getUserDetailsByAccountId(10000000000);
     }
 
     function test_GetUserDetailsByAccountId_RevertProfileDoesNotExist() public {
         // Valid range but no profile
-        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        vm.expectRevert(UserProfile.ProfileDoesNotExist.selector);
         userProfile.getUserDetailsByAccountId(5555555555);
     }
 
@@ -402,7 +401,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
     function test_GetUserDetailsByIdentifier_RevertProfileDoesNotExist()
         public
     {
-        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        vm.expectRevert(UserProfile.ProfileDoesNotExist.selector);
         userProfile.getUserDetailsByIdentifier("nonexistent");
     }
 
@@ -446,7 +445,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
             "ipfs://p1"
         );
 
-        UserProfileV1.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
         uint256 accountId = p.accountId;
 
         // Check mapping consistency
@@ -477,7 +476,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
         );
 
         vm.prank(bob);
-        vm.expectRevert(UserProfileV1.EmailAlreadyTaken.selector);
+        vm.expectRevert(UserProfile.EmailAlreadyTaken.selector);
         userProfile.createProfile(
             "alice@example.com",
             "",
@@ -502,7 +501,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
     }
 
     function test_GetAddressByEmail_RevertProfileDoesNotExist() public {
-        vm.expectRevert(UserProfileV1.ProfileDoesNotExist.selector);
+        vm.expectRevert(UserProfile.ProfileDoesNotExist.selector);
         userProfile.getAddressByEmail("nonexistent@example.com");
     }
 
@@ -600,7 +599,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
 
         // We can't predict the exact account ID due to obfuscation, so we don't check it
         vm.expectEmit(true, true, true, false);
-        emit UserProfileV1.ProfileCreated(
+        emit UserProfile.ProfileCreated(
             alice,
             "alice@example.com",
             "",
@@ -635,7 +634,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
 
         vm.prank(alice);
         vm.expectEmit(true, true, false, false);
-        emit UserProfileV1.ProfileUpdated(alice, "", "ipfs://newphoto");
+        emit UserProfile.ProfileUpdated(alice, "", "ipfs://newphoto");
 
         userProfile.updateProfile("", "ipfs://newphoto");
     }
@@ -664,9 +663,7 @@ contract UserProfileV1Advanced is UserProfileV1Setup {
                 "ipfs://photo"
             );
 
-            UserProfileV1.UserProfile memory p = userProfile.getProfile(
-                users[i]
-            );
+            UserProfile.UserProfile memory p = userProfile.getProfile(users[i]);
             accountIds[i] = p.accountId;
         }
 

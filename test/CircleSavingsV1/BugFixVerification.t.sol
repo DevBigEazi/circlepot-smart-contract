@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 
 /**
  * @title BugFixVerificationTest
  * @notice Tests to verify the forfeit bug fix - recipient should NOT be forfeited
  */
-contract BugFixVerificationTest is CircleSavingsV1Setup {
+contract BugFixVerificationTest is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -19,7 +19,7 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
      */
     function test_RecipientExemptFromForfeiture() public {
         uint256 cid = _createAndStartCircle();
-        
+
         // Alice is position 1 (recipient of round 1)
         // Everyone except Alice contributes
         vm.prank(bob);
@@ -35,11 +35,13 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Get Alice's collateral before forfeit attempt
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings.getMemberInfo(cid, alice);
+        (CircleSavings.Member memory aliceBefore, , ) = circleSavings
+            .getMemberInfo(cid, alice);
         uint256 aliceCollateralBefore = aliceBefore.collateralLocked;
-        
+
         // Get Alice's reputation before forfeit attempt
-        (, , , , , , , uint256 aliceLatePaymentsBefore, ) = reputation.getUserReputationDetails(alice);
+        (, , , , , , , uint256 aliceLatePaymentsBefore, ) = reputation
+            .getUserReputationDetails(alice);
 
         // Bob tries to forfeit Alice (the recipient)
         address[] memory lateMembers = new address[](1);
@@ -48,20 +50,28 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Verify Alice was NOT forfeited
-        (CircleSavingsV1.Member memory aliceAfter, bool hasContributed, ) = circleSavings.getMemberInfo(cid, alice);
-        
+        (
+            CircleSavings.Member memory aliceAfter,
+            bool hasContributed,
+
+        ) = circleSavings.getMemberInfo(cid, alice);
+
         // Alice's collateral should be unchanged
         assertEq(
             aliceAfter.collateralLocked,
             aliceCollateralBefore,
             "Recipient's collateral should NOT be deducted"
         );
-        
+
         // Alice should NOT be marked as contributed
-        assertFalse(hasContributed, "Recipient should NOT be marked as contributed");
-        
+        assertFalse(
+            hasContributed,
+            "Recipient should NOT be marked as contributed"
+        );
+
         // Alice's reputation should be unchanged
-        (, , , , , , , uint256 aliceLatePaymentsAfter, ) = reputation.getUserReputationDetails(alice);
+        (, , , , , , , uint256 aliceLatePaymentsAfter, ) = reputation
+            .getUserReputationDetails(alice);
         assertEq(
             aliceLatePaymentsAfter,
             aliceLatePaymentsBefore,
@@ -75,7 +85,7 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
      */
     function test_NonRecipientsAreForfeited() public {
         uint256 cid = _createAndStartCircle();
-        
+
         // Only Bob contributes (Alice is recipient, Charlie/David/Eve are late)
         vm.prank(bob);
         circleSavings.contribute(cid);
@@ -84,9 +94,12 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Get collateral before forfeit
-        (CircleSavingsV1.Member memory charlieBefore, , ) = circleSavings.getMemberInfo(cid, charlie);
-        (CircleSavingsV1.Member memory davidBefore, , ) = circleSavings.getMemberInfo(cid, david);
-        (CircleSavingsV1.Member memory eveBefore, , ) = circleSavings.getMemberInfo(cid, eve);
+        (CircleSavings.Member memory charlieBefore, , ) = circleSavings
+            .getMemberInfo(cid, charlie);
+        (CircleSavings.Member memory davidBefore, , ) = circleSavings
+            .getMemberInfo(cid, david);
+        (CircleSavings.Member memory eveBefore, , ) = circleSavings
+            .getMemberInfo(cid, eve);
 
         // Forfeit the late non-recipients
         address[] memory lateMembers = new address[](3);
@@ -97,9 +110,12 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Verify they were forfeited
-        (CircleSavingsV1.Member memory charlieAfter, , ) = circleSavings.getMemberInfo(cid, charlie);
-        (CircleSavingsV1.Member memory davidAfter, , ) = circleSavings.getMemberInfo(cid, david);
-        (CircleSavingsV1.Member memory eveAfter, , ) = circleSavings.getMemberInfo(cid, eve);
+        (CircleSavings.Member memory charlieAfter, , ) = circleSavings
+            .getMemberInfo(cid, charlie);
+        (CircleSavings.Member memory davidAfter, , ) = circleSavings
+            .getMemberInfo(cid, david);
+        (CircleSavings.Member memory eveAfter, , ) = circleSavings
+            .getMemberInfo(cid, eve);
 
         uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000;
 
@@ -126,7 +142,7 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
      */
     function test_RecipientExemptionChangesPerRound() public {
         uint256 cid = _createAndStartCircle();
-        
+
         // Round 1: Alice is recipient (position 1)
         // Everyone contributes except Alice
         vm.prank(bob);
@@ -137,14 +153,14 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
         circleSavings.contribute(cid);
         vm.prank(eve);
         circleSavings.contribute(cid);
-        
+
         // Alice contributes to complete round 1
         vm.prank(alice);
         circleSavings.contribute(cid);
 
         // Now in Round 2: Bob is recipient (position 2)
         vm.warp(block.timestamp + 7 days);
-        
+
         // Everyone contributes except Bob
         vm.prank(alice);
         circleSavings.contribute(cid);
@@ -159,7 +175,8 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
         vm.warp(block.timestamp + 9 days + 1 hours);
 
         // Get Bob's collateral before forfeit attempt
-        (CircleSavingsV1.Member memory bobBefore, , ) = circleSavings.getMemberInfo(cid, bob);
+        (CircleSavings.Member memory bobBefore, , ) = circleSavings
+            .getMemberInfo(cid, bob);
 
         // Try to forfeit Bob (the round 2 recipient)
         address[] memory lateMembers = new address[](1);
@@ -168,7 +185,8 @@ contract BugFixVerificationTest is CircleSavingsV1Setup {
         circleSavings.forfeitMember(cid, lateMembers);
 
         // Verify Bob was NOT forfeited (he's the recipient in round 2)
-        (CircleSavingsV1.Member memory bobAfter, , ) = circleSavings.getMemberInfo(cid, bob);
+        (CircleSavings.Member memory bobAfter, , ) = circleSavings
+            .getMemberInfo(cid, bob);
         assertEq(
             bobAfter.collateralLocked,
             bobBefore.collateralLocked,

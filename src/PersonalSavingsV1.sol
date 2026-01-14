@@ -21,10 +21,10 @@ import {IReputation} from "./interfaces/IReputation.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /**
- * @title PersonalSavingsV1
+ * @title PersonalSavings
  * @dev Personal savings goals management
  */
-contract PersonalSavingsV1 is
+contract PersonalSavings is
     Initializable,
     OwnableUpgradeable,
     ReentrancyGuard,

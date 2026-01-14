@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 
 /**
  * @title WithdrawalScenariosTest
  * @notice Tests for various withdrawal scenarios including solo creator and sub-60% threshold
  */
-contract WithdrawalScenariosTest is CircleSavingsV1Setup {
+contract WithdrawalScenariosTest is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
@@ -22,20 +22,20 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         uint256 cid = _createDefaultCircle(alice);
 
         // Check initial state
-        (, CircleSavingsV1.CircleStatus memory status, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory status, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(status.currentMembers, 1, "Should only have creator");
         assertEq(uint256(status.state), 1, "Should be in CREATED state (1)");
 
         // Get Alice's collateral before
-        (CircleSavingsV1.Member memory aliceBefore, , ) = circleSavings
+        (CircleSavings.Member memory aliceBefore, , ) = circleSavings
             .getMemberInfo(cid, alice);
         uint256 collateralBefore = aliceBefore.collateralLocked;
         assertGt(collateralBefore, 0, "Creator should have collateral locked");
 
         // Try to withdraw before ultimatum - should fail
         vm.prank(alice);
-        vm.expectRevert(CircleSavingsV1.UltimatumNotPassed.selector);
+        vm.expectRevert(CircleSavings.UltimatumNotPassed.selector);
         circleSavings.WithdrawCollateral(cid);
 
         // Warp past ultimatum period (7 days for WEEKLY)
@@ -49,7 +49,7 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
 
         // Verify withdrawal
         uint256 aliceBalanceAfter = USDm.balanceOf(alice);
-        (CircleSavingsV1.Member memory aliceAfter, , ) = circleSavings
+        (CircleSavings.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
 
         // Creator pays dead circle fee
@@ -69,7 +69,7 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         );
 
         // Check circle state
-        (, CircleSavingsV1.CircleStatus memory statusAfter, , ) = circleSavings
+        (, CircleSavings.CircleStatus memory statusAfter, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(uint256(statusAfter.state), 5, "Circle should be DEAD (5)");
     }
@@ -88,8 +88,8 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
 
         // Verify state
         (
-            CircleSavingsV1.CircleConfig memory config,
-            CircleSavingsV1.CircleStatus memory status,
+            CircleSavings.CircleConfig memory config,
+            CircleSavings.CircleStatus memory status,
             ,
 
         ) = circleSavings.getCircleDetails(cid);
@@ -102,9 +102,9 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
         );
 
         // Get collateral amounts
-        (CircleSavingsV1.Member memory aliceMember, , ) = circleSavings
+        (CircleSavings.Member memory aliceMember, , ) = circleSavings
             .getMemberInfo(cid, alice);
-        (CircleSavingsV1.Member memory bobMember, , ) = circleSavings
+        (CircleSavings.Member memory bobMember, , ) = circleSavings
             .getMemberInfo(cid, bob);
         uint256 aliceCollateral = aliceMember.collateralLocked;
         uint256 bobCollateral = bobMember.collateralLocked;
@@ -122,7 +122,7 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
 
         // Bob (member) should ALREADY have his funds, so his call should revert
         vm.prank(bob);
-        vm.expectRevert(CircleSavingsV1.NotActiveMember.selector);
+        vm.expectRevert(CircleSavings.NotActiveMember.selector);
         circleSavings.WithdrawCollateral(cid);
 
         // Verify withdrawals
@@ -159,8 +159,8 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
 
         // Verify state
         (
-            CircleSavingsV1.CircleConfig memory config,
-            CircleSavingsV1.CircleStatus memory status,
+            CircleSavings.CircleConfig memory config,
+            CircleSavings.CircleStatus memory status,
             ,
 
         ) = circleSavings.getCircleDetails(cid);
@@ -177,7 +177,7 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
 
         // Should NOT be able to withdraw directly (need voting)
         vm.prank(alice);
-        vm.expectRevert(CircleSavingsV1.UltimatumNotPassed.selector);
+        vm.expectRevert(CircleSavings.UltimatumNotPassed.selector);
         circleSavings.WithdrawCollateral(cid);
     }
 
@@ -187,16 +187,16 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
      */
     function test_Exact60ThresholdBlocksWithdrawal() public {
         // Create circle with maxMembers = 10 for clearer percentage
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1
+        CircleSavings.CreateCircleParams memory params = CircleSavings
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test",
                 contributionAmount: 100 * 10 ** 18,
-                frequency: CircleSavingsV1.Frequency.WEEKLY,
+                frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 10,
-                visibility: CircleSavingsV1.Visibility.PUBLIC,
+                visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-            token: address(USDm),
+                token: address(USDm),
                 yieldAPR: 0
             });
 
@@ -224,8 +224,8 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
 
         // Verify: 6 members = 60% of 10 (AT threshold, not below)
         (
-            CircleSavingsV1.CircleConfig memory config,
-            CircleSavingsV1.CircleStatus memory status,
+            CircleSavings.CircleConfig memory config,
+            CircleSavings.CircleStatus memory status,
             ,
 
         ) = circleSavings.getCircleDetails(cid);
@@ -240,7 +240,7 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
 
         // Should NOT be able to withdraw (need voting or manual start)
         vm.prank(alice);
-        vm.expectRevert(CircleSavingsV1.UltimatumNotPassed.selector);
+        vm.expectRevert(CircleSavings.UltimatumNotPassed.selector);
         circleSavings.WithdrawCollateral(cid);
     }
 }

@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {PersonalSavingsV1} from "../../src/PersonalSavingsV1.sol";
-import {PersonalSavingsV1Setup} from "./PersonalSavingsSetup.t.sol";
+import {PersonalSavings} from "../../src/PersonalSavings.sol";
+import {PersonalSavingsSetup} from "./PersonalSavingsSetup.t.sol";
 
-contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
+contract PersonalSavingsBasicTests is PersonalSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
 
     function testCreatePersonalGoal() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
                 targetAmount: 1000e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -48,12 +48,12 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
 
     function testcontributeToGoal() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -78,12 +78,12 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
 
     function testcompleteGoal() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -109,12 +109,12 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
 
     function testEarlyWithdrawalPenalty() public {
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -135,12 +135,12 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
     function testMultipleGoalReputationTracking() public {
         // Create first goal
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params1 = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params1 = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -152,12 +152,12 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
 
         // Create second goal
         vm.prank(alice);
-        PersonalSavingsV1.CreateGoalParams memory params2 = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params2 = PersonalSavings
             .CreateGoalParams({
                 name: "Vacation Fund",
                 targetAmount: 200e18,
                 contributionAmount: 100e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -193,11 +193,11 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
     function testCreateGoal_MonthlyFrequency() public {
         vm.prank(alice);
         uint256 gid = personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "Monthly Goal",
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.MONTHLY,
+                frequency: PersonalSavings.Frequency.MONTHLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -215,11 +215,11 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
     function testWithdraw_HighProgressPenalty() public {
         vm.prank(alice);
         uint256 gid = personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "High Progress",
                 targetAmount: 200e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -247,11 +247,11 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
         uint256 gid1 = _createDefaultGoal(alice);
         vm.prank(alice);
         uint256 gid2 = personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "Goal 2",
                 targetAmount: 100e18,
                 contributionAmount: 50e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
@@ -267,11 +267,11 @@ contract PersonalSavingsV1BasicTests is PersonalSavingsV1Setup {
     function testContribute_DailyFrequency() public {
         vm.prank(alice);
         uint256 gid = personalSavings.createPersonalGoal(
-            PersonalSavingsV1.CreateGoalParams({
+            PersonalSavings.CreateGoalParams({
                 name: "Daily",
                 targetAmount: 100e18,
                 contributionAmount: 10e18,
-                frequency: PersonalSavingsV1.Frequency.DAILY,
+                frequency: PersonalSavings.Frequency.DAILY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),

@@ -1,28 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {CircleSavingsV1} from "../../src/CircleSavingsV1.sol";
-import {CircleSavingsV1Setup} from "./CircleSavingsSetup.t.sol";
+import {CircleSavings} from "../../src/CircleSavings.sol";
+import {CircleSavingsSetup} from "./CircleSavingsSetup.t.sol";
 import {YieldVault} from "../../src/mocks/YieldVault.sol";
 
-contract YieldIntegrationTest is CircleSavingsV1Setup {
+contract YieldIntegrationTest is CircleSavingsSetup {
     function setUp() public override {
         super.setUp();
     }
 
     function test_ImmediateDepositOnCreateAndJoin() public {
         vm.startPrank(alice);
-        CircleSavingsV1.CreateCircleParams memory params = CircleSavingsV1.CreateCircleParams({
-            title: "Yield Circle",
-            description: "Testing immediate yield",
-            contributionAmount: 100e18,
-            frequency: CircleSavingsV1.Frequency.WEEKLY,
-            maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true,
-            token: address(USDm),
+        CircleSavings.CreateCircleParams memory params = CircleSavings
+            .CreateCircleParams({
+                title: "Yield Circle",
+                description: "Testing immediate yield",
+                contributionAmount: 100e18,
+                frequency: CircleSavings.Frequency.WEEKLY,
+                maxMembers: 5,
+                visibility: CircleSavings.Visibility.PUBLIC,
+                enableYield: true,
+                token: address(USDm),
                 yieldAPR: 0
-        });
+            });
 
         uint256 cid = circleSavings.createCircle(params);
         vm.stopPrank();
@@ -32,14 +33,22 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
         uint256 expectedCollateral = 505e18;
         uint256 aliceShares = circleSavings.circleShares(cid);
         assertGt(aliceShares, 0, "Shares should be minted for creator");
-        assertEq(yieldVault.previewRedeem(aliceShares), expectedCollateral, "Vault should hold Alice's collateral");
+        assertEq(
+            yieldVault.previewRedeem(aliceShares),
+            expectedCollateral,
+            "Vault should hold Alice's collateral"
+        );
 
         // Bob joins
         vm.prank(bob);
         circleSavings.joinCircle(cid);
 
         uint256 totalShares = circleSavings.circleShares(cid);
-        assertEq(yieldVault.previewRedeem(totalShares), expectedCollateral * 2, "Vault should hold both members' collateral");
+        assertEq(
+            yieldVault.previewRedeem(totalShares),
+            expectedCollateral * 2,
+            "Vault should hold both members' collateral"
+        );
     }
 
     function test_YieldSplit90_10_OnCircleCompletion() public {
@@ -52,7 +61,9 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
         USDm.approve(address(yieldVault), 100e18);
         yieldVault.simulateYield(100e18);
 
-        uint256 platformFeesBefore = circleSavings.getPlatformFees(address(USDm));
+        uint256 platformFeesBefore = circleSavings.getPlatformFees(
+            address(USDm)
+        );
 
         // Complete 5 rounds
         address[] memory members = new address[](5);
@@ -68,30 +79,39 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             }
         }
 
-        uint256 platformFeesAfter = circleSavings.getPlatformFees(address(USDm));
+        uint256 platformFeesAfter = circleSavings.getPlatformFees(
+            address(USDm)
+        );
         uint256 platformFeesCollected = platformFeesAfter - platformFeesBefore;
 
         // Platform collections:
         // 1. Payout fees: 4 rounds (Bob, Charlie, David, Eve) * 5e18 (1% of 500) = 20e18
         // 2. Yield share: 10% of 100e18 yield = 10e18
         // Total expected: ~30e18
-        
-        assertApproxEqAbs(platformFeesCollected, 30e18, 1e15, "Platform should get payout fees + 10% yield share");
+
+        assertApproxEqAbs(
+            platformFeesCollected,
+            30e18,
+            1e15,
+            "Platform should get payout fees + 10% yield share"
+        );
     }
 
     function test_PlatformSweepOnDeadCircle() public {
         vm.startPrank(alice);
-        uint256 cid = circleSavings.createCircle(CircleSavingsV1.CreateCircleParams({
-            title: "Dead Pool",
-            description: "Interest for platform",
-            contributionAmount: 100e18,
-            frequency: CircleSavingsV1.Frequency.WEEKLY,
-            maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true,
-            token: address(USDm),
+        uint256 cid = circleSavings.createCircle(
+            CircleSavings.CreateCircleParams({
+                title: "Dead Pool",
+                description: "Interest for platform",
+                contributionAmount: 100e18,
+                frequency: CircleSavings.Frequency.WEEKLY,
+                maxMembers: 5,
+                visibility: CircleSavings.Visibility.PUBLIC,
+                enableYield: true,
+                token: address(USDm),
                 yieldAPR: 0
-        }));
+            })
+        );
         vm.stopPrank();
 
         // uint256 initialShares = circleSavings.circleShares(cid);
@@ -104,37 +124,48 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
 
         // Alice decides to withdraw (Ultimatum passed)
         vm.warp(block.timestamp + 8 days);
-        
-        uint256 platformFeesBefore = circleSavings.getPlatformFees(address(USDm));
-        
+
+        uint256 platformFeesBefore = circleSavings.getPlatformFees(
+            address(USDm)
+        );
+
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 platformFeesAfter = circleSavings.getPlatformFees(address(USDm));
+        uint256 platformFeesAfter = circleSavings.getPlatformFees(
+            address(USDm)
+        );
         uint256 collection = platformFeesAfter - platformFeesBefore;
-        
-        // Expected collection: 
+
+        // Expected collection:
         // 1. Dead fee: 0.5 (added to totalPlatformFees immediately)
         // 2. Residual yield sweep: ~10.5 (the 10 yield + the 0.5 fee left in vault)
         // Total: ~11.0
-        
-        assertApproxEqAbs(collection, 11.0e18, 1e15, "Platform should collect fee plus swept yield");
+
+        assertApproxEqAbs(
+            collection,
+            11.0e18,
+            1e15,
+            "Platform should collect fee plus swept yield"
+        );
     }
 
     // Helper functions
     function _create5MemberCircleAndStart() internal returns (uint256) {
         vm.prank(alice);
-        uint256 cid = circleSavings.createCircle(CircleSavingsV1.CreateCircleParams({
-            title: "5 Member Circle",
-            description: "Simple test",
-            contributionAmount: 100e18,
-            frequency: CircleSavingsV1.Frequency.WEEKLY,
-            maxMembers: 5,
-            visibility: CircleSavingsV1.Visibility.PUBLIC,
-            enableYield: true,
-            token: address(USDm),
+        uint256 cid = circleSavings.createCircle(
+            CircleSavings.CreateCircleParams({
+                title: "5 Member Circle",
+                description: "Simple test",
+                contributionAmount: 100e18,
+                frequency: CircleSavings.Frequency.WEEKLY,
+                maxMembers: 5,
+                visibility: CircleSavings.Visibility.PUBLIC,
+                enableYield: true,
+                token: address(USDm),
                 yieldAPR: 0
-        }));
+            })
+        );
 
         address[] memory others = new address[](4);
         others[0] = bob;
@@ -146,7 +177,7 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             vm.prank(others[i]);
             circleSavings.joinCircle(cid);
         }
-        
+
         return cid;
     }
 

@@ -5,16 +5,16 @@ import {Test} from "forge-std/Test.sol";
 import {
     ERC1967Proxy
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {PersonalSavingsV1} from "../../src/PersonalSavingsV1.sol";
-import {ReputationV1} from "../../src/ReputationV1.sol";
+import {PersonalSavings} from "../../src/PersonalSavings.sol";
+import {Reputation} from "../../src/Reputation.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {TestHelpers} from "../helpers/TestHelpers.sol";
 
-contract PersonalSavingsV1Setup is Test, TestHelpers {
-    PersonalSavingsV1 public implementation;
-    PersonalSavingsV1 public personalSavings;
-    ReputationV1 public reputationImpl;
-    ReputationV1 public reputation;
+contract PersonalSavingsSetup is Test, TestHelpers {
+    PersonalSavings public implementation;
+    PersonalSavings public personalSavings;
+    Reputation public reputationImpl;
+    Reputation public reputation;
 
     address public testOwner = address(1);
     address public testTreasury = address(2);
@@ -23,25 +23,25 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
         _setupMockTokenAndUsers();
 
         // Deploy reputation system first
-        reputationImpl = new ReputationV1();
+        reputationImpl = new Reputation();
         bytes memory repInitData = abi.encodeWithSelector(
-            ReputationV1.initialize.selector,
+            Reputation.initialize.selector,
             testOwner
         );
         ERC1967Proxy repProxy = new ERC1967Proxy(
             address(reputationImpl),
             repInitData
         );
-        reputation = ReputationV1(address(repProxy));
+        reputation = Reputation(address(repProxy));
 
         // Deploy personal savings
-        implementation = new PersonalSavingsV1();
+        implementation = new PersonalSavings();
 
         address[] memory supportedTokens = new address[](1);
         supportedTokens[0] = address(USDm);
 
         bytes memory initData = abi.encodeWithSelector(
-            PersonalSavingsV1.initialize.selector,
+            PersonalSavings.initialize.selector,
             supportedTokens,
             testTreasury,
             address(reputation),
@@ -51,7 +51,7 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
             address(implementation),
             initData
         );
-        personalSavings = PersonalSavingsV1(address(proxy));
+        personalSavings = PersonalSavings(address(proxy));
 
         // Approve contract to spend user's USDm
         address[] memory users = new address[](6);
@@ -75,12 +75,12 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
     // Helper to create a default personal goal for a creator
     function _createDefaultGoal(address creator) internal returns (uint256) {
         vm.prank(creator);
-        PersonalSavingsV1.CreateGoalParams memory params = PersonalSavingsV1
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Default Goal",
                 targetAmount: 500e18,
                 contributionAmount: 100e18,
-                frequency: PersonalSavingsV1.Frequency.WEEKLY,
+                frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
                 token: address(USDm),

@@ -81,7 +81,7 @@ contract UserProfileAdvanced is UserProfileSetup {
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);
         userProfile.updateProfile("", "ipfs://newphoto");
-        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
         assertEq(p.profilePhoto, "ipfs://newphoto");
     }
 
@@ -181,7 +181,7 @@ contract UserProfileAdvanced is UserProfileSetup {
             "ipfs://p1"
         );
 
-        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
 
         // Check account ID is within valid range (10-digit number)
         assertGe(
@@ -226,11 +226,11 @@ contract UserProfileAdvanced is UserProfileSetup {
         );
 
         // Get all profiles
-        UserProfile.UserProfile memory aliceProfile = userProfile.getProfile(
+        UserProfile.UserProfileData memory aliceProfile = userProfile.getProfile(
             alice
         );
-        UserProfile.UserProfile memory bobProfile = userProfile.getProfile(bob);
-        UserProfile.UserProfile memory charlieProfile = userProfile.getProfile(
+        UserProfile.UserProfileData memory bobProfile = userProfile.getProfile(bob);
+        UserProfile.UserProfileData memory charlieProfile = userProfile.getProfile(
             charlie
         );
 
@@ -267,7 +267,7 @@ contract UserProfileAdvanced is UserProfileSetup {
             "ipfs://p1"
         );
 
-        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
         uint256 accountId = p.accountId;
 
         address retrievedAddress = userProfile.getAddressByAccountId(accountId);
@@ -308,7 +308,7 @@ contract UserProfileAdvanced is UserProfileSetup {
             "ipfs://p1"
         );
 
-        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
         uint256 accountId = p.accountId;
 
         (
@@ -445,7 +445,7 @@ contract UserProfileAdvanced is UserProfileSetup {
             "ipfs://p1"
         );
 
-        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
         uint256 accountId = p.accountId;
 
         // Check mapping consistency
@@ -663,7 +663,7 @@ contract UserProfileAdvanced is UserProfileSetup {
                 "ipfs://photo"
             );
 
-            UserProfile.UserProfile memory p = userProfile.getProfile(users[i]);
+            UserProfile.UserProfileData memory p = userProfile.getProfile(users[i]);
             accountIds[i] = p.accountId;
         }
 

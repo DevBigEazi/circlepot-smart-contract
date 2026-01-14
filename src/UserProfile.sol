@@ -32,7 +32,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint256 private constant ACCOUNT_ID_MAX = 9999999999; // Last 10-digit id
 
     // ============ Structs ============
-    struct UserProfile {
+    struct UserProfileData {
         address userAddress; // user address
         string email; // unique email (optional if phone provided)
         string phoneNumber; // unique phone number (optional if email provided)
@@ -47,7 +47,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     // ============ Storage ============
-    mapping(address => UserProfile) public profiles;
+    mapping(address => UserProfileData) public profiles;
     mapping(string => address) public usernameToAddress; // Track usernames to ensure uniqueness
     mapping(string => address) public emailToAddress; // Track emails for lookup
     mapping(string => address) public phoneNumberToAddress; // Track phone numbers for lookup
@@ -188,7 +188,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 accountId = _generateAccountId();
 
         {
-            UserProfile storage profile = profiles[msg.sender];
+            UserProfileData storage profile = profiles[msg.sender];
             profile.userAddress = msg.sender;
             profile.email = _email;
             profile.phoneNumber = _phoneNumber;
@@ -217,7 +217,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     function _emitProfileCreated(address user, uint256 accountId) internal {
-        UserProfile storage p = profiles[user];
+        UserProfileData storage p = profiles[user];
         emit ProfileCreated(
             user,
             p.email,
@@ -245,7 +245,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     ) external {
         if (!hasProfile[msg.sender]) revert ProfileDoesNotExist();
 
-        UserProfile storage profile = profiles[msg.sender];
+        UserProfileData storage profile = profiles[msg.sender];
         bool hasEmail = bytes(_email).length > 0;
         bool hasPhone = bytes(_phoneNumber).length > 0;
 
@@ -322,7 +322,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     ) external {
         if (!hasProfile[msg.sender]) revert ProfileDoesNotExist();
 
-        UserProfile storage profile = profiles[msg.sender];
+        UserProfileData storage profile = profiles[msg.sender];
 
         bool hasFullName = bytes(_fullName).length > 0;
         bool hasPhoto = bytes(_profilePhoto).length > 0;
@@ -414,7 +414,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      */
     function getProfile(
         address _user
-    ) external view returns (UserProfile memory) {
+    ) external view returns (UserProfileData memory) {
         if (!hasProfile[_user]) revert ProfileDoesNotExist();
         return profiles[_user];
     }
@@ -518,7 +518,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             revert ProfileDoesNotExist();
         }
 
-        UserProfile storage profile = profiles[userAddr];
+        UserProfileData storage profile = profiles[userAddr];
         return (
             profile.userAddress,
             profile.fullName,
@@ -560,7 +560,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             revert ProfileDoesNotExist();
         }
 
-        UserProfile storage profile = profiles[userAddr];
+        UserProfileData storage profile = profiles[userAddr];
         return (
             profile.userAddress,
             profile.fullName,

@@ -19,7 +19,7 @@ contract UserProfileBasicTests is UserProfileSetup {
             "ipfs://photo1"
         );
 
-        UserProfile.UserProfile memory p = userProfile.getProfile(alice);
+        UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
         assertEq(p.userAddress, alice);
         assertEq(p.email, "alice@example.com");
         assertEq(p.username, "alice");

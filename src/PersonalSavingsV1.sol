@@ -65,6 +65,7 @@ contract PersonalSavingsV1 is
         uint256 deadline;
         bool enableYield; // User choice - true for yield, false for standard
         address token; // The ERC20 token to use for this savings goal
+        uint256 yieldAPR; // The current yield APR (in basis points, e.g., 500 = 5%)
     }
 
     // ============ Storage ============
@@ -104,7 +105,8 @@ contract PersonalSavingsV1 is
         Frequency frequency,
         uint256 deadline,
         bool isActive,
-        address token
+        address token,
+        uint256 yieldAPR
     );
     event GoalContribution(
         uint256 indexed goalId,
@@ -120,7 +122,11 @@ contract PersonalSavingsV1 is
         uint256 penalty,
         address token
     );
-    event VaultUpdated(address indexed token, address indexed newVault);
+    event VaultUpdated(
+        address indexed token,
+        address indexed newVault,
+        string project
+    );
     event YieldDistributed(
         uint256 indexed goalId,
         address indexed owner,
@@ -248,12 +254,17 @@ contract PersonalSavingsV1 is
      * @dev Set the vault address for a specific token (admin only)
      * @param _token Token address
      * @param _vault Vault address for this token
+     * @param _project pool project name for this vault
      */
-    function setTokenVault(address _token, address _vault) external onlyOwner {
+    function setTokenVault(
+        address _token,
+        address _vault,
+        string memory _project
+    ) external onlyOwner {
         if (_token == address(0)) revert AddressZeroNotAllowed();
         if (!supportedTokens[_token]) revert UnsupportedToken();
         tokenVaults[_token] = _vault; // Allow setting to address(0) to disable yield for a token
-        emit VaultUpdated(_token, _vault);
+        emit VaultUpdated(_token, _vault, _project);
     }
 
     /**
@@ -343,7 +354,8 @@ contract PersonalSavingsV1 is
             params.frequency,
             params.deadline,
             true,
-            token
+            token,
+            params.enableYield ? params.yieldAPR : 0
         );
 
         return gid;

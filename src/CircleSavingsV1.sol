@@ -118,6 +118,7 @@ contract CircleSavingsV1 is
         Visibility visibility;
         bool enableYield; // User choice - true for yield, false for standard
         address token; // ERC20 token to use for this circle
+        uint256 yieldAPR; // The current yield APR (in basis points, e.g., 500 = 5%)
     }
 
     struct Vote {
@@ -186,7 +187,8 @@ contract CircleSavingsV1 is
         Visibility visibility,
         uint256 createdAt,
         uint256 collateralLocked,
-        address token
+        address token,
+        uint256 yieldAPR
     );
     event CircleJoined(
         uint256 indexed circleId,
@@ -295,7 +297,11 @@ contract CircleSavingsV1 is
         address indexed member,
         uint256 rewardAmount
     );
-    event VaultUpdated(address token, address indexed newVault);
+    event VaultUpdated(
+        address indexed token,
+        address indexed newVault,
+        string project
+    );
     event TokenAdded(address indexed token);
     event TokenRemoved(address indexed token);
 
@@ -406,11 +412,15 @@ contract CircleSavingsV1 is
      * @param _token Token address
      * @param _vault Vault address for this token
      */
-    function setTokenVault(address _token, address _vault) external onlyOwner {
+    function setTokenVault(
+        address _token,
+        address _vault,
+        string memory _project
+    ) external onlyOwner {
         if (_token == address(0)) revert AddressZeroNotAllowed();
         if (!supportedTokens[_token]) revert UnsupportedToken();
         tokenVaults[_token] = _vault; // Allow setting to address(0) to disable yield for a token
-        emit VaultUpdated(_token, _vault);
+        emit VaultUpdated(_token, _vault, _project);
     }
 
     /**
@@ -593,7 +603,8 @@ contract CircleSavingsV1 is
             params.visibility,
             block.timestamp,
             collateral, // Use local variable to avoid mapping lookup on stack
-            token
+            token,
+            params.enableYield ? params.yieldAPR : 0
         );
         emit CircleJoined(circleId, msg.sender, 1, CircleState.CREATED);
 

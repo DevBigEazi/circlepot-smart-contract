@@ -18,7 +18,9 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false, token: address(USDm)
+                enableYield: false,
+                token: address(USDm),
+                yieldAPR: 0
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -78,7 +80,9 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 contributionAmount: 10e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false, token: address(USDm)
+                enableYield: false,
+                token: address(USDm),
+                yieldAPR: 0
             });
         uint256 gid = personalSavings.createPersonalGoal(params);
         // First contribution made (10e18)
@@ -98,7 +102,9 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 contributionAmount: 1e17,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false, token: address(USDm)
+                enableYield: false,
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
     }
@@ -113,7 +119,9 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 contributionAmount: 0,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false, token: address(USDm)
+                enableYield: false,
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
     }
@@ -128,7 +136,9 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp - 1,
-                enableYield: false, token: address(USDm)
+                enableYield: false,
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
     }
@@ -181,7 +191,9 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false, token: address(USDm)
+                enableYield: false,
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
         // First contribution made (50e18), progress = 25%
@@ -201,7 +213,9 @@ contract PersonalSavingsV1Advanced is PersonalSavingsV1Setup {
                 contributionAmount: 50e18,
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
-                enableYield: false, token: address(USDm)
+                enableYield: false,
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
         // First contribution made (50e18), progress = 50%

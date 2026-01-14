@@ -83,7 +83,8 @@ contract PersonalSavingsV1Setup is Test, TestHelpers {
                 frequency: PersonalSavingsV1.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             });
 
         return personalSavings.createPersonalGoal(params);

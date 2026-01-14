@@ -67,7 +67,8 @@ contract Deploy is Script {
         // Set vault for USDm token
         PersonalSavingsV1(address(personalSavingsProxy)).setTokenVault(
             USDm,
-            address(yieldVault)
+            address(yieldVault),
+            "Mock Yield Vault"
         );
 
         CircleSavingsProxy circleSavingsProxy = new CircleSavingsProxy(
@@ -81,7 +82,8 @@ contract Deploy is Script {
         // Set vault for USDm token
         CircleSavingsV1(address(circleSavingsProxy)).setTokenVault(
             USDm,
-            address(yieldVault)
+            address(yieldVault),
+            "Mock Yield Vault"
         );
 
         // Authorize contracts in the reputation system

@@ -196,7 +196,8 @@ contract WithdrawalScenariosTest is CircleSavingsV1Setup {
                 maxMembers: 10,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-            token: address(USDm)
+            token: address(USDm),
+                yieldAPR: 0
             });
 
         vm.prank(alice);

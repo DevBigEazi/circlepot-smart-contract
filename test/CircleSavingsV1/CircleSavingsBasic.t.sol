@@ -20,7 +20,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PRIVATE,
                 enableYield: true,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -52,7 +53,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PRIVATE,
                 enableYield: true,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -151,7 +153,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PRIVATE,
                 enableYield: true,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
         address[] memory invitees = new address[](1);
@@ -199,7 +202,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
         (CircleSavingsV1.CircleConfig memory config, , , ) = circleSavings
@@ -221,7 +225,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
         (CircleSavingsV1.CircleConfig memory config, , , ) = circleSavings
@@ -262,7 +267,8 @@ contract CircleSavingsV1BasicTests is CircleSavingsV1Setup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             })
         );
         (CircleSavingsV1.CircleConfig memory config, , , ) = circleSavings

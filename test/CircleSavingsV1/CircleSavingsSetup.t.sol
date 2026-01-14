@@ -67,7 +67,11 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
 
         // Set vault for USDm token
         vm.prank(testOwner);
-        circleSavings.setTokenVault(address(USDm), address(yieldVault));
+        circleSavings.setTokenVault(
+            address(USDm),
+            address(yieldVault),
+            "Mock Yield Vault"
+        );
 
         // Approve contract to spend user's USDm
         address[] memory users = new address[](6);
@@ -101,7 +105,8 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PRIVATE,
                 enableYield: true,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -155,7 +160,8 @@ contract CircleSavingsV1Setup is Test, TestHelpers {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm)
+                token: address(USDm),
+                yieldAPR: 0
             });
 
         return circleSavings.createCircle(params);

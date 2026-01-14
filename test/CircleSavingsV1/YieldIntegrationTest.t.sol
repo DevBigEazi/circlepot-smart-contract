@@ -20,7 +20,8 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             maxMembers: 5,
             visibility: CircleSavingsV1.Visibility.PUBLIC,
             enableYield: true,
-            token: address(USDm)
+            token: address(USDm),
+                yieldAPR: 0
         });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -88,7 +89,8 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             maxMembers: 5,
             visibility: CircleSavingsV1.Visibility.PUBLIC,
             enableYield: true,
-            token: address(USDm)
+            token: address(USDm),
+                yieldAPR: 0
         }));
         vm.stopPrank();
 
@@ -130,7 +132,8 @@ contract YieldIntegrationTest is CircleSavingsV1Setup {
             maxMembers: 5,
             visibility: CircleSavingsV1.Visibility.PUBLIC,
             enableYield: true,
-            token: address(USDm)
+            token: address(USDm),
+                yieldAPR: 0
         }));
 
         address[] memory others = new address[](4);

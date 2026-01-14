@@ -120,7 +120,8 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-            token: address(USDm)
+            token: address(USDm),
+                yieldAPR: 0
             });
         uint256 cid = circleSavings.createCircle(params);
 
@@ -200,7 +201,8 @@ contract CircleSavingsDeadFeeTests is CircleSavingsV1Setup {
                 maxMembers: 5,
                 visibility: CircleSavingsV1.Visibility.PUBLIC,
                 enableYield: true,
-            token: address(USDm)
+            token: address(USDm),
+                yieldAPR: 0
             });
         uint256 cid = circleSavings.createCircle(params);
 

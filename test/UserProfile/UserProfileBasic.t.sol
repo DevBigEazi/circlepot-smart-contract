@@ -16,7 +16,8 @@ contract UserProfileBasicTests is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://photo1"
+            "ipfs://photo1",
+            address(0)
         );
 
         UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
@@ -34,7 +35,8 @@ contract UserProfileBasicTests is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);

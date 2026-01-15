@@ -13,12 +13,14 @@ contract UserProfileSetup is Test, TestHelpers {
     UserProfile public userProfile;
 
     address public testOwner = address(1);
+    address public testPersonalSavings = address(2); // Mock PersonalSavings address
 
     function setUp() public virtual {
         _setupMockTokenAndUsers();
 
         implementation = new UserProfile();
 
+        // Initialize with only owner
         bytes memory initData = abi.encodeWithSelector(
             UserProfile.initialize.selector,
             testOwner
@@ -29,5 +31,14 @@ contract UserProfileSetup is Test, TestHelpers {
             initData
         );
         userProfile = UserProfile(address(proxy));
+
+        // Use setters for other configurations
+        vm.startPrank(testOwner);
+        userProfile.setPersonalSavingsContract(testPersonalSavings);
+
+        // Setup multi-token referral rewards
+        userProfile.addSupportedToken(address(USDm));
+        userProfile.setReferralBonusAmount(address(USDm), 5_000_000); // $5
+        vm.stopPrank();
     }
 }

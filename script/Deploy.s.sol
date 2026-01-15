@@ -94,6 +94,18 @@ contract Deploy is Script {
             address(circleSavingsProxy)
         );
 
+        // Link UserProfile to PersonalSavings and setup initial reward token
+        UserProfile userProfile = UserProfile(address(userProfileProxy));
+        userProfile.setPersonalSavingsContract(address(personalSavingsProxy));
+        userProfile.addSupportedToken(USDm);
+        userProfile.setReferralBonusAmount(USDm, 5_000_000); // $5 bonus
+        userProfile.setReferralRewardsEnabled(true);
+
+        // Link PersonalSavings to UserProfile
+        PersonalSavings(address(personalSavingsProxy)).setUserProfileContract(
+            address(userProfileProxy)
+        );
+
         // Log deployed addresses
         console2.log("Deployment Complete");
         console2.log("==================");

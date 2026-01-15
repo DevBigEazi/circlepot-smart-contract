@@ -20,7 +20,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -57,7 +57,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -87,7 +87,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -118,7 +118,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -144,7 +144,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 gid1 = personalSavings.createPersonalGoal(params1);
@@ -161,7 +161,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 gid2 = personalSavings.createPersonalGoal(params2);
@@ -201,7 +201,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         // Goal created with MONTHLY frequency - first contribution already made
@@ -223,7 +223,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         // First contribution already made (50e18)
@@ -255,7 +255,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         uint256[] memory goals = personalSavings.getUserGoals(alice);
@@ -275,7 +275,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         // First contribution already made

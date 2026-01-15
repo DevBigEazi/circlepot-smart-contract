@@ -120,7 +120,7 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsSetup {
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 cid = circleSavings.createCircle(params);

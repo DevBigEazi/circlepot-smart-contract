@@ -21,7 +21,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -54,7 +54,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -154,7 +154,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         address[] memory invitees = new address[](1);
@@ -203,7 +203,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         (CircleSavings.CircleConfig memory config, , , ) = circleSavings
@@ -226,7 +226,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         (CircleSavings.CircleConfig memory config, , , ) = circleSavings
@@ -268,7 +268,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         (CircleSavings.CircleConfig memory config, , , ) = circleSavings

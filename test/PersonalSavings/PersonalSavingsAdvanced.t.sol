@@ -20,7 +20,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -82,7 +82,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
         uint256 gid = personalSavings.createPersonalGoal(params);
         // First contribution made (10e18)
@@ -104,7 +104,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
     }
@@ -121,7 +121,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
     }
@@ -138,7 +138,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 deadline: block.timestamp - 1,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
     }
@@ -193,7 +193,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         // First contribution made (50e18), progress = 25%
@@ -215,7 +215,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
         // First contribution made (50e18), progress = 50%

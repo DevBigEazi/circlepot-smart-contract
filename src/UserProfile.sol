@@ -10,54 +10,84 @@ import {
 import {
     OwnableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {
+    ReentrancyGuard
+} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title UserProfile
- * @dev User profile management contract with unique account id (account number)
- * @notice Manages user profile data including email, username, address, profile photo, and unique account number
+ * @dev User profile management contract with referral rewards system
+ * @notice Manages user profile data and automatic referral rewards
  */
-contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract UserProfile is
+    Initializable,
+    OwnableUpgradeable,
+    UUPSUpgradeable,
+    ReentrancyGuard
+{
     // ============ Version ============
     uint256 public constant VERSION = 1;
 
     // ============ Constants ============
-    uint256 public constant PROFILE_UPDATE_COOLDOWN = 30 days; // 1 month for all profile updates
-    uint256 public constant MIN_USERNAME_LENGTH = 3; // Minimum username length
-    uint256 public constant MAX_USERNAME_LENGTH = 20; // Maximum username length
-    uint256 public constant MIN_FULLNAME_LENGTH = 6; // Minimum full name length
-    uint256 public constant MAX_FULLNAME_LENGTH = 50; // Maximum full name length
+    uint256 public constant PROFILE_UPDATE_COOLDOWN = 30 days;
+    uint256 public constant MIN_USERNAME_LENGTH = 3;
+    uint256 public constant MAX_USERNAME_LENGTH = 20;
+    uint256 public constant MIN_FULLNAME_LENGTH = 6;
+    uint256 public constant MAX_FULLNAME_LENGTH = 50;
 
     // Account ID generation constants
-    uint256 private constant ACCOUNT_ID_START = 1000000000; // First 10-digit id
-    uint256 private constant ACCOUNT_ID_MAX = 9999999999; // Last 10-digit id
+    uint256 private constant ACCOUNT_ID_START = 1000000000;
+    uint256 private constant ACCOUNT_ID_MAX = 9999999999;
 
     // ============ Structs ============
     struct UserProfileData {
-        address userAddress; // user address
-        string email; // unique email (optional if phone provided)
-        string phoneNumber; // unique phone number (optional if email provided)
-        string username; // unique username
-        string fullName; // full name field
-        string profilePhoto; // IPFS hash or URL
-        uint256 accountId; // unique account id
-        bool emailIsOriginal; // true if email was provided at creation (immutable)
-        bool phoneIsOriginal; // true if phone was provided at creation (immutable)
-        uint256 lastProfileUpdate; // timestamp of last profile update
+        address userAddress;
+        string email;
+        string phoneNumber;
+        string username;
+        string fullName;
+        string profilePhoto;
+        uint256 accountId;
+        bool emailIsOriginal;
+        bool phoneIsOriginal;
+        uint256 lastProfileUpdate;
         uint256 createdAt;
     }
 
-    // ============ Storage ============
+    // ============ Profile Storage ============
     mapping(address => UserProfileData) public profiles;
-    mapping(string => address) public usernameToAddress; // Track usernames to ensure uniqueness
-    mapping(string => address) public emailToAddress; // Track emails for lookup
-    mapping(string => address) public phoneNumberToAddress; // Track phone numbers for lookup
-    mapping(uint256 => address) public accountIdToAddress; // Track account numbers for lookup
+    mapping(string => address) public usernameToAddress;
+    mapping(string => address) public emailToAddress;
+    mapping(string => address) public phoneNumberToAddress;
+    mapping(uint256 => address) public accountIdToAddress;
     mapping(address => bool) public hasProfile;
 
-    uint256 private accountIdCounter; // Counter for generating unique account numbers
+    uint256 private accountIdCounter;
     address[] public allUsers;
 
-    // ============ Events ============
+    // ============ Referral Storage ============
+    mapping(address => address) public referredBy; // Who referred this user
+    mapping(address => uint256) public referralCount; // Successful referrals count
+    mapping(address => bool) public hasFirstGoalReward; // Track if referee triggered reward
+
+    // Admin controls
+    bool public referralRewardsEnabled;
+    mapping(address => uint256) public referralBonusAmount; // token => amount
+    mapping(address => uint256) public totalRewardsPaidByToken; // token => amount
+
+    // Campaign mode
+    bool public campaignMode;
+    uint256 public campaignStartTime;
+    uint256 public campaignEndTime;
+    mapping(address => uint256) public campaignBonusAmount; // token => amount
+
+    // Contract references
+    mapping(address => bool) public supportedTokens;
+    address[] public supportedTokenList;
+    address public personalSavingsContract;
+
+    // ============ Profile Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
     event ProfileCreated(
         address indexed user,
@@ -77,7 +107,43 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         string phoneNumber
     );
 
-    // ============ Errors ============
+    // ============ Referral Events ============
+    event UserReferred(
+        address indexed newUser,
+        address indexed referrer,
+        uint256 timestamp
+    );
+    event ReferralRewardPaid(
+        address indexed referrer,
+        address indexed referee,
+        address indexed token,
+        uint256 rewardAmount,
+        uint256 timestamp
+    );
+    event ReferralRewardsToggled(bool enabled, uint256 timestamp);
+    event ReferralBonusUpdated(
+        address indexed token,
+        uint256 oldAmount,
+        uint256 newAmount,
+        uint256 timestamp
+    );
+    event CampaignStarted(uint256 startTime, uint256 endTime);
+    event CampaignBonusUpdated(
+        address indexed token,
+        uint256 bonusAmount,
+        uint256 timestamp
+    );
+    event CampaignEnded(uint256 timestamp);
+    event RewardFundsDeposited(
+        address indexed from,
+        address indexed token,
+        uint256 amount
+    );
+    event TokenAdded(address indexed token);
+    event TokenRemoved(address indexed token);
+    event PersonalSavingsContractUpdated(address indexed newContract);
+
+    // ============ Profile Errors ============
     error ProfileAlreadyExists();
     error ProfileDoesNotExist();
     error UsernameAlreadyTaken();
@@ -89,13 +155,26 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     error EmptyFullName();
     error NoMoreAccountIdsAvailable();
     error InvalidAccountId();
-    error EmailOrPhoneRequired(); // At least one contact method required
-    error CannotChangeOriginalContactInfo(); // Cannot change contact info provided at creation
-    error UsernameTooShort(); // Username must be at least 3 characters
-    error UsernameTooLong(); // Username must be at most 20 characters
-    error FullNameTooShort(); // Full name must be at least 6 characters
-    error FullNameTooLong(); // Full name must be at most 50 characters
-    error NoFieldsToUpdate(); // At least one field must be provided for update
+    error EmailOrPhoneRequired();
+    error CannotChangeOriginalContactInfo();
+    error UsernameTooShort();
+    error UsernameTooLong();
+    error FullNameTooShort();
+    error FullNameTooLong();
+    error NoFieldsToUpdate();
+
+    // ============ Referral Errors ============
+    error CannotReferSelf();
+    error ReferrerMustHaveProfile();
+    error InsufficientRewardFunds();
+    error RewardTransferFailed();
+    error TokenAlreadySupported();
+    error TokenNotSupported();
+    error UnsupportedToken();
+    error InvalidUSDmTokenAddress();
+    error AlreadyReceivedFirstGoalReward();
+    error OnlyPersonalSavingsContract();
+    error InvalidContractAddress();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -112,7 +191,11 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         // Initialize account id counter
         accountIdCounter = 0;
 
-        // transfer ownership if a different initialOwner was provided
+        // Initialize referral settings
+        referralRewardsEnabled = false; // Start disabled
+        campaignMode = false;
+
+        // Transfer ownership if different initialOwner provided
         if (initialOwner != address(0) && initialOwner != owner()) {
             _transferOwnership(initialOwner);
         }
@@ -137,6 +220,7 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param _username Unique username (minimum 3 characters)
      * @param _fullName User's full name (minimum 6 characters)
      * @param _profilePhoto Profile photo IPFS hash or URL (optional)
+     * @param _referrer Address of the user who referred this person (address(0) if none)
      * @notice At least one of email or phone number must be provided
      */
     function createProfile(
@@ -144,7 +228,8 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         string calldata _phoneNumber,
         string calldata _username,
         string calldata _fullName,
-        string calldata _profilePhoto
+        string calldata _profilePhoto,
+        address _referrer
     ) external {
         if (hasProfile[msg.sender]) revert ProfileAlreadyExists();
 
@@ -212,6 +297,22 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         accountIdToAddress[accountId] = msg.sender;
         hasProfile[msg.sender] = true;
         allUsers.push(msg.sender);
+
+        // ============ Referral Logic ============
+        if (_referrer != address(0)) {
+            // Validate referrer
+            if (_referrer == msg.sender) revert CannotReferSelf();
+            if (!hasProfile[_referrer]) revert ReferrerMustHaveProfile();
+
+            // Record referral relationship (NO payment yet!)
+            referredBy[msg.sender] = _referrer;
+
+            emit UserReferred(msg.sender, _referrer, block.timestamp);
+
+            // NOTE: referralCount is NOT incremented here!
+            // It will be incremented when referee creates first goal
+        }
+        // ============ END Referral Logic ============
 
         _emitProfileCreated(msg.sender, accountId);
     }
@@ -360,15 +461,247 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit ProfileUpdated(msg.sender, profile.fullName, profile.profilePhoto);
     }
 
+    // ============ Referral Functions ============
+
+    /**
+     * @dev Called by PersonalSavings contract when user creates first goal
+     * @param _referee The user who created their first goal
+     * @param _token The token used for the goal
+     * @notice Automatically pays referral reward to the referrer
+     * @notice Can only be called by PersonalSavings contract
+     */
+    function payReferralReward(
+        address _referee,
+        address _token
+    ) external nonReentrant {
+        // Only PersonalSavings contract can call this
+        if (msg.sender != personalSavingsContract)
+            revert OnlyPersonalSavingsContract();
+
+        // Check if token is supported
+        if (!supportedTokens[_token]) return;
+
+        // Check if user was referred
+        address referrer = referredBy[_referee];
+        if (referrer == address(0)) return; // Not referred, exit silently
+
+        // Check if already rewarded
+        if (hasFirstGoalReward[_referee]) return;
+
+        // Check if rewards are enabled
+        if (!referralRewardsEnabled) return; // Silently skip if disabled
+
+        // Calculate reward amount for this token
+        uint256 rewardAmount = _calculateReward(_token);
+        if (rewardAmount == 0) return;
+
+        // Check contract has sufficient funds
+        uint256 contractBalance = IERC20(_token).balanceOf(address(this));
+        if (contractBalance < rewardAmount) {
+            // Insufficient funds - skip silently to not block goal creation
+            return;
+        }
+
+        // Mark as rewarded (BEFORE transfer for reentrancy protection)
+        hasFirstGoalReward[_referee] = true;
+
+        // Increment referrer's successful referral count
+        referralCount[referrer]++;
+
+        // Pay reward directly to referrer
+        bool success = IERC20(_token).transfer(referrer, rewardAmount);
+
+        if (success) {
+            totalRewardsPaidByToken[_token] += rewardAmount;
+            emit ReferralRewardPaid(
+                referrer,
+                _referee,
+                _token,
+                rewardAmount,
+                block.timestamp
+            );
+        } else {
+            // Transfer failed - revert the state changes
+            hasFirstGoalReward[_referee] = false;
+            referralCount[referrer]--;
+            revert RewardTransferFailed();
+        }
+    }
+
+    /**
+     * @dev Calculate reward amount based on current settings for a specific token
+     * @param _token Address of the token
+     * @return Reward amount to give
+     */
+    function _calculateReward(address _token) internal view returns (uint256) {
+        // If campaign is active and not expired, use campaign bonus
+        if (
+            campaignMode &&
+            block.timestamp >= campaignStartTime &&
+            block.timestamp <= campaignEndTime
+        ) {
+            return campaignBonusAmount[_token];
+        }
+
+        // Otherwise use standard bonus
+        return referralBonusAmount[_token];
+    }
+
+    // ============ Admin Functions ============
+
+    /**
+     * @dev Toggle referral rewards on/off
+     */
+    function setReferralRewardsEnabled(bool _enabled) external onlyOwner {
+        referralRewardsEnabled = _enabled;
+        emit ReferralRewardsToggled(_enabled, block.timestamp);
+    }
+
+    /**
+     * @dev Update the referral bonus amount for a specific token
+     * @param _token Address of the token
+     * @param _newAmount New bonus amount
+     */
+    function setReferralBonusAmount(
+        address _token,
+        uint256 _newAmount
+    ) external onlyOwner {
+        if (!supportedTokens[_token]) revert TokenNotSupported();
+        uint256 oldAmount = referralBonusAmount[_token];
+        referralBonusAmount[_token] = _newAmount;
+        emit ReferralBonusUpdated(
+            _token,
+            oldAmount,
+            _newAmount,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @dev Start a time-limited referral campaign for all supported tokens
+     * @param _durationInDays Duration of the campaign in days
+     */
+    function startReferralCampaign(uint256 _durationInDays) external onlyOwner {
+        require(!campaignMode, "CampaignAlreadyActive");
+
+        campaignMode = true;
+        campaignStartTime = block.timestamp;
+        campaignEndTime = block.timestamp + (_durationInDays * 1 days);
+
+        emit CampaignStarted(campaignStartTime, campaignEndTime);
+    }
+
+    /**
+     * @dev Update campaign bonus amount for a specific token
+     * @param _token Address of the token
+     * @param _bonus Campaign bonus amount
+     */
+    function setCampaignBonusAmount(
+        address _token,
+        uint256 _bonus
+    ) external onlyOwner {
+        if (!supportedTokens[_token]) revert TokenNotSupported();
+        campaignBonusAmount[_token] = _bonus;
+        emit CampaignBonusUpdated(_token, _bonus, block.timestamp);
+    }
+
+    /**
+     * @dev End the current campaign early
+     */
+    function endReferralCampaign() external onlyOwner {
+        require(campaignMode, "NoCampaignActive");
+
+        campaignMode = false;
+        campaignEndTime = block.timestamp;
+
+        emit CampaignEnded(block.timestamp);
+    }
+
+    /**
+     * @dev Fund the contract with rewards for a specific token
+     * @param _token Address of the token
+     * @param _amount Amount to deposit
+     */
+    function fundReferralRewards(
+        address _token,
+        uint256 _amount
+    ) external onlyOwner {
+        if (!supportedTokens[_token]) revert TokenNotSupported();
+        bool success = IERC20(_token).transferFrom(
+            msg.sender,
+            address(this),
+            _amount
+        );
+        require(success, "TransferFailed");
+
+        emit RewardFundsDeposited(msg.sender, _token, _amount);
+    }
+
+    /**
+     * @dev Withdraw unused reward funds for a specific token (emergency)
+     * @param _token Address of the token
+     * @param _amount Amount to withdraw
+     */
+    function withdrawReferralFunds(
+        address _token,
+        uint256 _amount
+    ) external onlyOwner {
+        bool success = IERC20(_token).transfer(owner(), _amount);
+        require(success, "TransferFailed");
+    }
+
+    /**
+     * @dev Update PersonalSavings contract address
+     */
+    function setPersonalSavingsContract(
+        address _newContract
+    ) external onlyOwner {
+        if (_newContract == address(0)) revert InvalidContractAddress();
+        personalSavingsContract = _newContract;
+        emit PersonalSavingsContractUpdated(_newContract);
+    }
+
+    /**
+     * @dev Add a supported token for referral rewards
+     * @param _token Token address
+     */
+    function addSupportedToken(address _token) external onlyOwner {
+        if (_token == address(0)) revert InvalidContractAddress();
+        if (supportedTokens[_token]) revert TokenAlreadySupported();
+        supportedTokens[_token] = true;
+        supportedTokenList.push(_token);
+        emit TokenAdded(_token);
+    }
+
+    /**
+     * @dev Remove a supported token
+     * @param _token Token address
+     */
+    function removeSupportedToken(address _token) external onlyOwner {
+        if (!supportedTokens[_token]) revert TokenNotSupported();
+        supportedTokens[_token] = false;
+
+        for (uint256 i = 0; i < supportedTokenList.length; i++) {
+            if (supportedTokenList[i] == _token) {
+                supportedTokenList[i] = supportedTokenList[
+                    supportedTokenList.length - 1
+                ];
+                supportedTokenList.pop();
+                break;
+            }
+        }
+        emit TokenRemoved(_token);
+    }
+
     // ============ Helper Functions ============
+
     /**
      * @dev Generate obfuscated unique account number using pseudo-random hash
      */
     function _generateAccountId() private returns (uint256) {
-        uint256 maxAttempts = 100; // Prevent infinite loop
+        uint256 maxAttempts = 100;
 
         for (uint256 attempt = 0; attempt < maxAttempts; attempt++) {
-            // Create pseudo-random hash using multiple sources
             uint256 randomHash = uint256(
                 keccak256(
                     abi.encodePacked(
@@ -382,19 +715,15 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 )
             );
 
-            // Map to 10-digit range
             uint256 accountId = (randomHash %
                 (ACCOUNT_ID_MAX - ACCOUNT_ID_START + 1)) + ACCOUNT_ID_START;
 
-            // Check if this account ID is available
             if (accountIdToAddress[accountId] == address(0)) {
                 accountIdCounter++;
                 return accountId;
             }
         }
 
-        // Fallback: if we couldn't find a random ID, use sequential search
-        // This should be extremely rare
         for (uint256 id = ACCOUNT_ID_START; id <= ACCOUNT_ID_MAX; id++) {
             if (accountIdToAddress[id] == address(0)) {
                 accountIdCounter++;
@@ -405,13 +734,8 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         revert NoMoreAccountIdsAvailable();
     }
 
-    // ============ View Functions ============
+    // ============ Profile View Functions ============
 
-    /**
-     * @dev Get user profile by address
-     * @param _user User address
-     * @return User profile struct
-     */
     function getProfile(
         address _user
     ) external view returns (UserProfileData memory) {
@@ -419,11 +743,6 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return profiles[_user];
     }
 
-    /**
-     * @dev Get user address by username
-     * @param _username Username to lookup
-     * @return User address
-     */
     function getAddressByUsername(
         string calldata _username
     ) external view returns (address) {
@@ -432,11 +751,6 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return userAddr;
     }
 
-    /**
-     * @dev Get user address by email
-     * @param _email Email to lookup
-     * @return User address
-     */
     function getAddressByEmail(
         string calldata _email
     ) external view returns (address) {
@@ -445,11 +759,6 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return userAddr;
     }
 
-    /**
-     * @dev Get user address by phone number
-     * @param _phoneNumber Phone number to lookup
-     * @return User address
-     */
     function getAddressByPhoneNumber(
         string calldata _phoneNumber
     ) external view returns (address) {
@@ -458,11 +767,6 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return userAddr;
     }
 
-    /**
-     * @dev Get user address by account number
-     * @param _accountId Account number to lookup
-     * @return User address
-     */
     function getAddressByAccountId(
         uint256 _accountId
     ) external view returns (address) {
@@ -474,16 +778,6 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return userAddr;
     }
 
-    /**
-     * @dev Get full user details by any identifier (username, email, or phone number)
-     * @param _identifier The identifier (username, email, or phone number as string)
-     * @return userAddress User's wallet address
-     * @return fullName User's full name
-     * @return accountId User's unique account number
-     * @return email User's email
-     * @return phoneNumber User's phone number
-     * @return username User's username
-     */
     function getUserDetailsByIdentifier(
         string calldata _identifier
     )
@@ -500,20 +794,16 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     {
         address userAddr;
 
-        // First, try to find by username
         userAddr = usernameToAddress[_identifier];
 
-        // If not found, try by email
         if (userAddr == address(0)) {
             userAddr = emailToAddress[_identifier];
         }
 
-        // If not found, try by phone number
         if (userAddr == address(0)) {
             userAddr = phoneNumberToAddress[_identifier];
         }
 
-        // If still not found, revert
         if (userAddr == address(0)) {
             revert ProfileDoesNotExist();
         }
@@ -529,15 +819,6 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         );
     }
 
-    /**
-     * @dev Get full user details by account number
-     * @param _accountId The account number
-     * @return userAddress User's wallet address
-     * @return fullName User's full name
-     * @return email User's email
-     * @return phoneNumber User's phone number
-     * @return username User's username
-     */
     function getUserDetailsByAccountId(
         uint256 _accountId
     )
@@ -570,70 +851,125 @@ contract UserProfile is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         );
     }
 
-    /**
-     * @dev Check if username is available
-     * @param _username Username to check
-     * @return True if available
-     */
     function isUsernameAvailable(
         string calldata _username
     ) external view returns (bool) {
         return usernameToAddress[_username] == address(0);
     }
 
-    /**
-     * @dev Check if email is available
-     * @param _email Email to check
-     * @return True if available
-     */
     function isEmailAvailable(
         string calldata _email
     ) external view returns (bool) {
         return emailToAddress[_email] == address(0);
     }
 
-    /**
-     * @dev Check if phone number is available
-     * @param _phoneNumber Phone number to check
-     * @return True if available
-     */
     function isPhoneNumberAvailable(
         string calldata _phoneNumber
     ) external view returns (bool) {
         return phoneNumberToAddress[_phoneNumber] == address(0);
     }
 
-    /**
-     * @dev Check if address has a profile
-     * @param _user User address
-     * @return True if profile exists
-     */
     function hasUserProfile(address _user) external view returns (bool) {
         return hasProfile[_user];
     }
 
-    /**
-     * @dev Get total number of profiles
-     * @return Total number of profiles
-     */
     function getTotalProfiles() external view returns (uint256) {
         return allUsers.length;
     }
 
-    /**
-     * @dev Get remaining account numbers available
-     * @return Number of account numbers remaining
-     */
     function getRemainingAccountIds() external view returns (uint256) {
         uint256 totalAvailable = ACCOUNT_ID_MAX - ACCOUNT_ID_START + 1;
         if (accountIdCounter >= totalAvailable) return 0;
         return totalAvailable - accountIdCounter;
     }
 
+    // ============ Referral View Functions ============
+
+    function getReferrer(address _user) external view returns (address) {
+        return referredBy[_user];
+    }
+
+    function getReferralCount(address _user) external view returns (uint256) {
+        return referralCount[_user];
+    }
+
+    function wasReferred(address _user) external view returns (bool) {
+        return referredBy[_user] != address(0);
+    }
+
+    function hasReceivedFirstGoalReward(
+        address _user
+    ) external view returns (bool) {
+        return hasFirstGoalReward[_user];
+    }
+
+    function getReferralSettings(
+        address _token
+    )
+        external
+        view
+        returns (
+            bool enabled,
+            uint256 standardBonus,
+            bool inCampaign,
+            uint256 campaignBonus,
+            uint256 campaignEndsAt
+        )
+    {
+        return (
+            referralRewardsEnabled,
+            referralBonusAmount[_token],
+            campaignMode && block.timestamp <= campaignEndTime,
+            campaignBonusAmount[_token],
+            campaignEndTime
+        );
+    }
+
+    function getRewardFundBalance(
+        address _token
+    ) external view returns (uint256) {
+        return IERC20(_token).balanceOf(address(this));
+    }
+
+    function getTotalRewardsPaid(
+        address _token
+    ) external view returns (uint256) {
+        return totalRewardsPaidByToken[_token];
+    }
+
     /**
-     * @dev returns contract version
+     * @dev Get comprehensive referral stats for a user for a specific token
+     */
+    function getUserReferralStats(
+        address _user,
+        address _token
+    )
+        external
+        view
+        returns (
+            uint256 successfulReferrals,
+            address referredByAddress,
+            uint256 totalEarned
+        )
+    {
+        return (
+            referralCount[_user],
+            referredBy[_user],
+            referralCount[_user] * referralBonusAmount[_token]
+        );
+    }
+
+    /**
+     * @dev Returns list of all supported tokens
+     */
+    function getSupportedTokens() external view returns (address[] memory) {
+        return supportedTokenList;
+    }
+
+    /**
+     * @dev Returns contract version
      */
     function version() external pure returns (string memory) {
-        return "1.0.0";
+        return "2.0.0";
     }
 }

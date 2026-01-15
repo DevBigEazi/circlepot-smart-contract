@@ -118,7 +118,7 @@ contract CircleSavings is
         Visibility visibility;
         bool enableYield; // User choice - true for yield, false for standard
         address token; // ERC20 token to use for this circle
-        uint256 yieldAPR; // The current yield APR (in basis points, e.g., 500 = 5%)
+        uint256 yieldAPY; // The current yield APY (in basis points, e.g., 500 = 5%)
     }
 
     struct Vote {
@@ -188,7 +188,7 @@ contract CircleSavings is
         uint256 createdAt,
         uint256 collateralLocked,
         address token,
-        uint256 yieldAPR
+        uint256 yieldAPY
     );
     event CircleJoined(
         uint256 indexed circleId,
@@ -604,7 +604,7 @@ contract CircleSavings is
             block.timestamp,
             collateral, // Use local variable to avoid mapping lookup on stack
             token,
-            params.enableYield ? params.yieldAPR : 0
+            params.enableYield ? params.yieldAPY : 0
         );
         emit CircleJoined(circleId, msg.sender, 1, CircleState.CREATED);
 

@@ -106,7 +106,7 @@ contract CircleSavingsSetup is Test, TestHelpers {
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -161,7 +161,7 @@ contract CircleSavingsSetup is Test, TestHelpers {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         return circleSavings.createCircle(params);

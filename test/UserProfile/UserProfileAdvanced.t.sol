@@ -18,7 +18,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         vm.prank(bob);
@@ -28,7 +29,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p2"
+            "ipfs://p2",
+            address(0)
         );
     }
 
@@ -39,7 +41,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         address addr = userProfile.getAddressByUsername("alice");
@@ -61,7 +64,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
         bool available = userProfile.isUsernameAvailable("alice");
         assertFalse(available);
@@ -76,7 +80,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);
@@ -92,7 +97,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
         vm.warp(block.timestamp + 31 days);
         vm.prank(alice);
@@ -115,7 +121,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
         vm.prank(alice);
         vm.expectRevert(UserProfile.ProfileAlreadyExists.selector);
@@ -124,7 +131,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice2",
             "Alice Johnson",
-            "ipfs://p2"
+            "ipfs://p2",
+            address(0)
         );
     }
 
@@ -141,7 +149,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
     }
 
@@ -153,7 +162,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
     }
 
@@ -165,7 +175,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
     }
 
@@ -178,7 +189,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
@@ -204,7 +216,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         vm.prank(bob);
@@ -213,7 +226,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "bob",
             "Bob Smith",
-            "ipfs://p2"
+            "ipfs://p2",
+            address(0)
         );
 
         vm.prank(charlie);
@@ -222,7 +236,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "charlie",
             "Charlie Brown",
-            "ipfs://p3"
+            "ipfs://p3",
+            address(0)
         );
 
         // Get all profiles
@@ -264,7 +279,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
@@ -305,7 +321,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
@@ -349,7 +366,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         (
@@ -377,7 +395,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         (
@@ -422,7 +441,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         uint256 afterOneProfile = userProfile.getRemainingAccountIds();
@@ -442,7 +462,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         UserProfile.UserProfileData memory p = userProfile.getProfile(alice);
@@ -472,7 +493,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         vm.prank(bob);
@@ -482,7 +504,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "bob",
             "Bob Smith",
-            "ipfs://p2"
+            "ipfs://p2",
+            address(0)
         );
     }
 
@@ -493,7 +516,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         address addr = userProfile.getAddressByEmail("alice@example.com");
@@ -512,7 +536,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         bool available = userProfile.isEmailAvailable("alice@example.com");
@@ -541,7 +566,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         assertTrue(
@@ -567,7 +593,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
         assertEq(userProfile.getTotalProfiles(), 1, "Should have 1 profile");
 
@@ -577,7 +604,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "bob",
             "Bob Smith",
-            "ipfs://p2"
+            "ipfs://p2",
+            address(0)
         );
         assertEq(userProfile.getTotalProfiles(), 2, "Should have 2 profiles");
 
@@ -587,7 +615,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "charlie",
             "Charlie Brown",
-            "ipfs://p3"
+            "ipfs://p3",
+            address(0)
         );
         assertEq(userProfile.getTotalProfiles(), 3, "Should have 3 profiles");
     }
@@ -616,7 +645,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
     }
 
@@ -627,7 +657,8 @@ contract UserProfileAdvanced is UserProfileSetup {
             "",
             "alice",
             "Alice Johnson",
-            "ipfs://p1"
+            "ipfs://p1",
+            address(0)
         );
 
         vm.warp(block.timestamp + 31 days);
@@ -660,7 +691,8 @@ contract UserProfileAdvanced is UserProfileSetup {
                 "",
                 names[i],
                 string(abi.encodePacked("Full ", names[i])),
-                "ipfs://photo"
+                "ipfs://photo",
+                address(0)
             );
 
             UserProfile.UserProfileData memory p = userProfile.getProfile(users[i]);

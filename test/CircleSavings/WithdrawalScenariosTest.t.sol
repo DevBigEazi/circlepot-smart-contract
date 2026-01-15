@@ -197,7 +197,7 @@ contract WithdrawalScenariosTest is CircleSavingsSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         vm.prank(alice);

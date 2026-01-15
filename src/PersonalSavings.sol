@@ -18,11 +18,12 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
+import {IUserProfile} from "./interfaces/IUserProfile.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /**
  * @title PersonalSavings
- * @dev Personal savings goals management
+ * @dev Personal savings goals management with referral integration
  */
 contract PersonalSavings is
     Initializable,
@@ -65,13 +66,14 @@ contract PersonalSavings is
         uint256 deadline;
         bool enableYield; // User choice - true for yield, false for standard
         address token; // The ERC20 token to use for this savings goal
-        uint256 yieldAPR; // The current yield APR (in basis points, e.g., 500 = 5%)
+        uint256 yieldAPY; // The current yield APY (in basis points, e.g., 500 = 5%)
     }
 
     // ============ Storage ============
     IReputation public reputationContract;
-    address public treasury;
+    IUserProfile public userProfileContract; // UserProfile contract reference
 
+    address public treasury;
     uint256 public goalCounter;
 
     // platformFeesByToken tracks fees for each token
@@ -106,7 +108,7 @@ contract PersonalSavings is
         uint256 deadline,
         bool isActive,
         address token,
-        uint256 yieldAPR
+        uint256 yieldAPY
     );
     event GoalContribution(
         uint256 indexed goalId,
@@ -136,6 +138,7 @@ contract PersonalSavings is
     );
     event TokenAdded(address indexed token);
     event TokenRemoved(address indexed token);
+
     // ============ Errors ============
     error InvalidTreasuryAddress();
     error InvalidContributionAmount();
@@ -200,22 +203,14 @@ contract PersonalSavings is
     }
 
     /**
-     * @dev Function for upgrading the contract to a new version (reinitializer)
-     * @param _treasury Address of treasury (if changed)
-     * @param _reputationContract Address of reputation contract (if changed)
-     * @param _version Reinitializer version number
+     * @dev Sets the UserProfile contract address (admin only)
+     * @param _userProfileContract Address of the UserProfile contract
      */
-    function upgrade(
-        address _treasury,
-        address _reputationContract,
-        uint8 _version
-    ) public reinitializer(_version) onlyOwner {
-        if (_treasury != address(0)) {
-            treasury = _treasury;
-        }
-        if (_reputationContract != address(0)) {
-            reputationContract = IReputation(_reputationContract);
-        }
+    function setUserProfileContract(
+        address _userProfileContract
+    ) external onlyOwner {
+        if (_userProfileContract == address(0)) revert AddressZeroNotAllowed();
+        userProfileContract = IUserProfile(_userProfileContract);
     }
 
     /**
@@ -355,8 +350,22 @@ contract PersonalSavings is
             params.deadline,
             true,
             token,
-            params.enableYield ? params.yieldAPR : 0
+            params.enableYield ? params.yieldAPY : 0
         );
+
+        // ============ Trigger Referral Reward ============
+        // Check if this is user's FIRST goal
+        if (userGoals[msg.sender].length == 1) {
+            // Call UserProfile to pay referral reward
+            // This is safe even if it reverts - won't affect goal creation
+            try userProfileContract.payReferralReward(msg.sender, token) {
+                // Success - referrer was paid (if user was referred)
+            } catch {
+                // Failed - but goal creation still succeeds
+                // Could be: not referred, already rewarded, rewards disabled, unsupported token, or insufficient funds
+            }
+        }
+        // ============ END Referral Logic ============
 
         return gid;
     }

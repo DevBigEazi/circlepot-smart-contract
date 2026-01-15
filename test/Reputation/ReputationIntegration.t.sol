@@ -91,7 +91,7 @@ contract ReputationIntegration is ReputationSetup {
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -136,7 +136,7 @@ contract ReputationIntegration is ReputationSetup {
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -174,7 +174,7 @@ contract ReputationIntegration is ReputationSetup {
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -215,7 +215,7 @@ contract ReputationIntegration is ReputationSetup {
                     deadline: block.timestamp + DEADLINE,
                     enableYield: false,
                     token: address(mockUSDm),
-                    yieldAPR: 0
+                    yieldAPY: 0
                 });
             uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -272,7 +272,7 @@ contract ReputationIntegration is ReputationSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
 
@@ -333,7 +333,7 @@ contract ReputationIntegration is ReputationSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
 
@@ -399,7 +399,7 @@ contract ReputationIntegration is ReputationSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
 
@@ -481,7 +481,7 @@ contract ReputationIntegration is ReputationSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
 
@@ -530,7 +530,7 @@ contract ReputationIntegration is ReputationSetup {
                 deadline: block.timestamp + DEADLINE,
                 enableYield: false,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
@@ -573,7 +573,7 @@ contract ReputationIntegration is ReputationSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
 
@@ -647,7 +647,7 @@ contract ReputationIntegration is ReputationSetup {
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
                 token: address(mockUSDm),
-                yieldAPR: 0
+                yieldAPY: 0
             })
         );
 

@@ -7,6 +7,7 @@ import {
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {PersonalSavings} from "../../src/PersonalSavings.sol";
 import {Reputation} from "../../src/Reputation.sol";
+import {UserProfile} from "../../src/UserProfile.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {TestHelpers} from "../helpers/TestHelpers.sol";
 
@@ -15,6 +16,8 @@ contract PersonalSavingsSetup is Test, TestHelpers {
     PersonalSavings public personalSavings;
     Reputation public reputationImpl;
     Reputation public reputation;
+    UserProfile public userProfileImpl;
+    UserProfile public userProfile;
 
     address public testOwner = address(1);
     address public testTreasury = address(2);
@@ -34,7 +37,19 @@ contract PersonalSavingsSetup is Test, TestHelpers {
         );
         reputation = Reputation(address(repProxy));
 
-        // Deploy personal savings
+        // Deploy UserProfile
+        userProfileImpl = new UserProfile();
+        bytes memory userProfileInitData = abi.encodeWithSelector(
+            UserProfile.initialize.selector,
+            testOwner
+        );
+        ERC1967Proxy userProfileProxy = new ERC1967Proxy(
+            address(userProfileImpl),
+            userProfileInitData
+        );
+        userProfile = UserProfile(address(userProfileProxy));
+
+        // Deploy PersonalSavings
         implementation = new PersonalSavings();
 
         address[] memory supportedTokens = new address[](1);
@@ -53,6 +68,21 @@ contract PersonalSavingsSetup is Test, TestHelpers {
         );
         personalSavings = PersonalSavings(address(proxy));
 
+        // Link UserProfile to PersonalSavings and USDm
+        vm.startPrank(testOwner);
+        userProfile.setPersonalSavingsContract(address(personalSavings));
+
+        // Setup multi-token referral rewards in UserProfile
+        userProfile.addSupportedToken(address(USDm));
+        userProfile.setReferralBonusAmount(address(USDm), 5_000_000); // $5
+
+        // Link PersonalSavings to UserProfile
+        personalSavings.setUserProfileContract(address(userProfile));
+
+        // Authorize PersonalSavings in reputation system
+        reputation.authorizeContract(address(personalSavings));
+        vm.stopPrank();
+
         // Approve contract to spend user's USDm
         address[] memory users = new address[](6);
         users[0] = alice;
@@ -66,10 +96,6 @@ contract PersonalSavingsSetup is Test, TestHelpers {
             vm.prank(users[i]);
             USDm.approve(address(personalSavings), type(uint256).max);
         }
-
-        // Authorize PersonalSavings in reputation system
-        vm.prank(testOwner);
-        reputation.authorizeContract(address(personalSavings));
     }
 
     // Helper to create a default personal goal for a creator
@@ -84,7 +110,7 @@ contract PersonalSavingsSetup is Test, TestHelpers {
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
                 token: address(USDm),
-                yieldAPR: 0
+                yieldAPY: 0
             });
 
         return personalSavings.createPersonalGoal(params);

@@ -5,10 +5,10 @@ import {Script, console2} from "forge-std/Script.sol";
 import {
     ERC1967Proxy
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {UserProfileV1} from "../src/UserProfileV1.sol";
-import {PersonalSavingsV1} from "../src/PersonalSavingsV1.sol";
-import {CircleSavingsV1} from "../src/CircleSavingsV1.sol";
-import {ReputationV1} from "../src/ReputationV1.sol";
+import {UserProfile} from "../src/UserProfile.sol";
+import {PersonalSavings} from "../src/PersonalSavings.sol";
+import {CircleSavings} from "../src/CircleSavings.sol";
+import {Reputation} from "../src/Reputation.sol";
 import {CircleSavingsProxy} from "../src/proxies/CircleSavingsProxy.sol";
 import {PersonalSavingsProxy} from "../src/proxies/PersonalSavingsProxy.sol";
 import {UserProfileProxy} from "../src/proxies/UserProfileProxy.sol";
@@ -29,10 +29,10 @@ contract Deploy is Script {
         vm.startBroadcast();
 
         // Deploy implementation contracts
-        UserProfileV1 userProfileImpl = new UserProfileV1();
-        PersonalSavingsV1 personalSavingsImpl = new PersonalSavingsV1();
-        CircleSavingsV1 circleSavingsImpl = new CircleSavingsV1();
-        ReputationV1 reputationImpl = new ReputationV1();
+        UserProfile userProfileImpl = new UserProfile();
+        PersonalSavings personalSavingsImpl = new PersonalSavings();
+        // CircleSavings circleSavingsImpl = new CircleSavings();
+        Reputation reputationImpl = new Reputation();
 
         // Deploy yield vault
         YieldVault yieldVault = new YieldVault(
@@ -53,30 +53,57 @@ contract Deploy is Script {
             msg.sender // initialOwner
         );
 
+        address[] memory supportedTokens = new address[](1);
+        supportedTokens[0] = USDm;
+
         PersonalSavingsProxy personalSavingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
-            USDm, // USDm token address
+            supportedTokens, // Supported tokens array
             treasury, // treasury address
             address(reputationProxy), // reputation contract address
-            address(yieldVault), // vault address for yield
             msg.sender // initialOwner
         );
 
-        CircleSavingsProxy circleSavingsProxy = new CircleSavingsProxy(
-            address(circleSavingsImpl),
-            USDm, // USDm token address
-            treasury, // treasury address
-            address(reputationProxy), // reputation contract address
-            address(yieldVault), // vault address
-            msg.sender // initialOwner
+        // Set vault for USDm token
+        PersonalSavings(address(personalSavingsProxy)).setTokenVault(
+            USDm,
+            address(yieldVault),
+            "moola-market"
         );
+
+        // CircleSavingsProxy circleSavingsProxy = new CircleSavingsProxy(
+        //     address(circleSavingsImpl),
+        //     supportedTokens, // Supported tokens array
+        //     treasury, // treasury address
+        //     address(reputationProxy), // reputation contract address
+        //     msg.sender // initialOwner
+        // );
+
+        // Set vault for USDm token
+        // CircleSavings(address(circleSavingsProxy)).setTokenVault(
+        //     USDm,
+        //     address(yieldVault),
+        //     "moola-market"
+        // );
 
         // Authorize contracts in the reputation system
-        ReputationV1(address(reputationProxy)).authorizeContract(
+        Reputation(address(reputationProxy)).authorizeContract(
             address(personalSavingsProxy)
         );
-        ReputationV1(address(reputationProxy)).authorizeContract(
-            address(circleSavingsProxy)
+        Reputation(address(reputationProxy)).authorizeContract(
+            address(0xceB735CF16d8Cc2F388F78f1139360A0A4594102)
+        );
+
+        // Link UserProfile to PersonalSavings and setup initial reward token
+        UserProfile userProfile = UserProfile(address(userProfileProxy));
+        userProfile.setPersonalSavingsContract(address(personalSavingsProxy));
+        userProfile.addSupportedToken(USDm);
+        userProfile.setReferralBonusAmount(USDm, 1_000_000_000_000_000_00); // $0.1 bonus 18 decimal
+        userProfile.setReferralRewardsEnabled(true);
+
+        // Link PersonalSavings to UserProfile
+        PersonalSavings(address(personalSavingsProxy)).setUserProfileContract(
+            address(userProfileProxy)
         );
 
         // Log deployed addresses
@@ -89,11 +116,11 @@ contract Deploy is Script {
             address(personalSavingsImpl)
         );
         console2.log("PersonalSavings Proxy:", address(personalSavingsProxy));
-        console2.log(
-            "CircleSavings Implementation:",
-            address(circleSavingsImpl)
-        );
-        console2.log("CircleSavings Proxy:", address(circleSavingsProxy));
+        // console2.log(
+        //     "CircleSavings Implementation:",
+        //     address(circleSavingsImpl)
+        // );
+        // console2.log("CircleSavings Proxy:", address(circleSavingsProxy));
         console2.log("YieldVault:", address(yieldVault));
         console2.log("Reputation Implementation:", address(reputationImpl));
         console2.log("Reputation Proxy:", address(reputationProxy));

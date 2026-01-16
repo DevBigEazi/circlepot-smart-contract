@@ -4,30 +4,28 @@ pragma solidity ^0.8.27;
 import {
     ERC1967Proxy
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {PersonalSavingsV1} from "../PersonalSavingsV1.sol";
+import {PersonalSavings} from "../PersonalSavings.sol";
 
 /**
  * @title PersonalSavingsProxy
  * @dev ERC1967 Proxy for PersonalSavings (UUPS pattern)
- * @notice Ownership and upgrades are managed by the implementation (PersonalSavingsV1)
+ * @notice Ownership and upgrades are managed by the implementation (PersonalSavings)
  */
 contract PersonalSavingsProxy is ERC1967Proxy {
     constructor(
         address _implementation,
-        address _USDmToken,
+        address[] memory _supportedTokens,
         address _treasury,
         address _reputationContract,
-        address _vault,
         address _initialOwner
     )
         ERC1967Proxy(
             _implementation,
             abi.encodeWithSelector(
-                PersonalSavingsV1.initialize.selector,
-                _USDmToken,
+                PersonalSavings.initialize.selector,
+                _supportedTokens,
                 _treasury,
                 _reputationContract,
-                _vault,
                 _initialOwner
             )
         )
@@ -36,34 +34,31 @@ contract PersonalSavingsProxy is ERC1967Proxy {
 
 /**
  * @dev Factory function to deploy PersonalSavings with proxy
- * @param _USDmToken Address of USDm token on Celo L2
+ * @param _supportedTokens Array of supported ERC20 token addresses
  * @param _treasury Address for platform fees
  * @param _reputationContract Address of the reputation contract
- * @param _vault Address of the ERC4626 vault for yield generation
  * @param _initialOwner Address of contract owner
- * @return proxy Address of the deployed proxy (which delegates to PersonalSavingsV1)
+ * @return proxy Address of the deployed proxy (which delegates to PersonalSavings)
  */
 function createPersonalSavings(
-    address _USDmToken,
+    address[] memory _supportedTokens,
     address _treasury,
     address _reputationContract,
-    address _vault,
     address _initialOwner
-) returns (PersonalSavingsV1 proxy) {
+) returns (PersonalSavings proxy) {
     // Deploy implementation
-    PersonalSavingsV1 implementation = new PersonalSavingsV1();
+    PersonalSavings implementation = new PersonalSavings();
 
     // Deploy proxy pointing to the implementation
     PersonalSavingsProxy _proxy = new PersonalSavingsProxy(
         address(implementation),
-        _USDmToken,
+        _supportedTokens,
         _treasury,
         _reputationContract,
-        _vault,
         _initialOwner
     );
 
-    // Return proxy as PersonalSavingsV1 interface
-    proxy = PersonalSavingsV1(address(_proxy));
+    // Return proxy as PersonalSavings interface
+    proxy = PersonalSavings(address(_proxy));
     return proxy;
 }

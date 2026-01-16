@@ -70,11 +70,15 @@ contract UserProfile is
     mapping(address => address) public referredBy; // Who referred this user
     mapping(address => uint256) public referralCount; // Successful referrals count
     mapping(address => bool) public hasFirstGoalReward; // Track if referee triggered reward
+    mapping(address => mapping(address => uint256)) public pendingRewards; // referrer => token => amount
+    mapping(address => address[]) public tokenPendingUsers; // token => users with unpaid rewards
+    mapping(address => mapping(address => bool)) public isUserPendingForToken; // token => user => isPending
 
     // Admin controls
     bool public referralRewardsEnabled;
     mapping(address => uint256) public referralBonusAmount; // token => amount
     mapping(address => uint256) public totalRewardsPaidByToken; // token => amount
+    mapping(address => mapping(address => uint256)) public userTotalPaidRewards; // user => token => total paid amount
 
     // Campaign mode
     bool public campaignMode;
@@ -134,14 +138,16 @@ contract UserProfile is
         uint256 timestamp
     );
     event CampaignEnded(uint256 timestamp);
-    event RewardFundsDeposited(
-        address indexed from,
-        address indexed token,
-        uint256 amount
-    );
     event TokenAdded(address indexed token);
     event TokenRemoved(address indexed token);
     event PersonalSavingsContractUpdated(address indexed newContract);
+    event ReferralRewardPending(
+        address indexed referrer,
+        address indexed referee,
+        address indexed token,
+        uint256 amount,
+        uint256 timestamp
+    );
 
     // ============ Profile Errors ============
     error ProfileAlreadyExists();
@@ -478,54 +484,182 @@ contract UserProfile is
         if (msg.sender != personalSavingsContract)
             revert OnlyPersonalSavingsContract();
 
-        // Check if token is supported
-        if (!supportedTokens[_token]) return;
-
         // Check if user was referred
         address referrer = referredBy[_referee];
         if (referrer == address(0)) return; // Not referred, exit silently
 
-        // Check if already rewarded
+        // Check if referral has already been processed for this referee
         if (hasFirstGoalReward[_referee]) return;
 
-        // Check if rewards are enabled
-        if (!referralRewardsEnabled) return; // Silently skip if disabled
-
-        // Calculate reward amount for this token
-        uint256 rewardAmount = _calculateReward(_token);
-        if (rewardAmount == 0) return;
-
-        // Check contract has sufficient funds
-        uint256 contractBalance = IERC20(_token).balanceOf(address(this));
-        if (contractBalance < rewardAmount) {
-            // Insufficient funds - skip silently to not block goal creation
-            return;
-        }
-
-        // Mark as rewarded (BEFORE transfer for reentrancy protection)
+        // Mark as processed and increment count (Successful Referral Condition Met)
         hasFirstGoalReward[_referee] = true;
-
-        // Increment referrer's successful referral count
         referralCount[referrer]++;
 
-        // Pay reward directly to referrer
-        bool success = IERC20(_token).transfer(referrer, rewardAmount);
+        // ============ Reward Payment Logic (Optional) ============
 
-        if (success) {
-            totalRewardsPaidByToken[_token] += rewardAmount;
-            emit ReferralRewardPaid(
+        // 1. Check if rewards are enabled
+        if (!referralRewardsEnabled) return;
+
+        // 2. Check if token is supported for rewards
+        if (!supportedTokens[_token]) return;
+
+        // 3. Calculate payout amount (Current Reward + any Pending Rewards)
+        uint256 currentBonus = _calculateReward(_token);
+        uint256 totalOwed = currentBonus + pendingRewards[referrer][_token];
+
+        if (totalOwed == 0) return;
+
+        // 4. Check contract balance and determine how much we can pay
+        uint256 contractBalance = IERC20(_token).balanceOf(address(this));
+
+        if (contractBalance == 0) {
+            // No funds? All goes to pending
+            pendingRewards[referrer][_token] = totalOwed;
+            emit ReferralRewardPending(
                 referrer,
                 _referee,
                 _token,
-                rewardAmount,
+                currentBonus,
                 block.timestamp
             );
         } else {
-            // Transfer failed - revert the state changes
-            hasFirstGoalReward[_referee] = false;
-            referralCount[referrer]--;
-            revert RewardTransferFailed();
+            uint256 toPay = totalOwed > contractBalance
+                ? contractBalance
+                : totalOwed;
+            uint256 remainder = totalOwed - toPay;
+
+            // 5. Pay as much as possible
+            bool success = IERC20(_token).transfer(referrer, toPay);
+
+            if (success) {
+                // Success! Update debt and total paid
+                pendingRewards[referrer][_token] = remainder;
+                totalRewardsPaidByToken[_token] += toPay;
+                userTotalPaidRewards[referrer][_token] += toPay;
+
+                emit ReferralRewardPaid(
+                    referrer,
+                    _referee,
+                    _token,
+                    toPay,
+                    block.timestamp
+                );
+
+                if (remainder > 0) {
+                    // If we still owe money, log it
+                    emit ReferralRewardPending(
+                        referrer,
+                        _referee,
+                        _token,
+                        remainder,
+                        block.timestamp
+                    );
+                }
+            } else {
+                // Transfer failed unexpectedly - keep total debt as pending
+                pendingRewards[referrer][_token] = totalOwed;
+                emit ReferralRewardPending(
+                    referrer,
+                    _referee,
+                    _token,
+                    currentBonus,
+                    block.timestamp
+                );
+            }
         }
+
+        // Update pending users list
+        if (pendingRewards[referrer][_token] > 0) {
+            if (!isUserPendingForToken[_token][referrer]) {
+                tokenPendingUsers[_token].push(referrer);
+                isUserPendingForToken[_token][referrer] = true;
+            }
+        } else {
+            // If debt is cleared (can happen in future iterations or if fully paid above)
+            // Note: Manual cleanup for this specific user if debt is 0 is usually done in admin process
+            // but for simplicity and gas we check here too if they were previously pending.
+            if (isUserPendingForToken[_token][referrer]) {
+                _removeFromPendingList(_token, referrer);
+            }
+        }
+    }
+
+    /**
+     * @dev Process pending rewards for multiple users (Admin only)
+     * @param _token The token to pay
+     * @param _maxUsers Maximum number of users to process in this call
+     */
+    function processPendingRewards(
+        address _token,
+        uint256 _maxUsers
+    ) external onlyOwner nonReentrant {
+        address[] storage users = tokenPendingUsers[_token];
+        uint256 contractBalance = IERC20(_token).balanceOf(address(this));
+        if (contractBalance == 0) revert InsufficientRewardFunds();
+
+        uint256 iterations = _maxUsers > users.length
+            ? users.length
+            : _maxUsers;
+        uint256 processedCount = 0;
+
+        // Iterating from the end to allow safe removal using pop()
+        for (
+            uint256 i = users.length;
+            i > 0 && processedCount < iterations;
+            i--
+        ) {
+            address user = users[i - 1];
+            uint256 amount = pendingRewards[user][_token];
+
+            if (amount == 0) {
+                _removeFromPendingList(_token, user);
+                continue;
+            }
+
+            uint256 toPay = amount > contractBalance ? contractBalance : amount;
+            uint256 remainder = amount - toPay;
+
+            bool success = IERC20(_token).transfer(user, toPay);
+
+            if (success) {
+                pendingRewards[user][_token] = remainder;
+                totalRewardsPaidByToken[_token] += toPay;
+                userTotalPaidRewards[user][_token] += toPay;
+                contractBalance -= toPay;
+                processedCount++;
+
+                emit ReferralRewardPaid(
+                    user,
+                    address(0), // No specific referee for bulk process
+                    _token,
+                    toPay,
+                    block.timestamp
+                );
+
+                if (remainder == 0) {
+                    _removeFromPendingList(_token, user);
+                }
+
+                if (contractBalance == 0) break;
+            }
+        }
+    }
+
+    /**
+     * @dev Helper to remove user from token pending list
+     */
+    function _removeFromPendingList(address _token, address _user) internal {
+        if (!isUserPendingForToken[_token][_user]) return;
+
+        address[] storage users = tokenPendingUsers[_token];
+        for (uint256 i = 0; i < users.length; i++) {
+            if (users[i] == _user) {
+                users[i] = users[users.length - 1];
+                users.pop();
+                break;
+            }
+        }
+        isUserPendingForToken[_token][_user] = false;
     }
 
     /**
@@ -615,26 +749,6 @@ contract UserProfile is
         campaignEndTime = block.timestamp;
 
         emit CampaignEnded(block.timestamp);
-    }
-
-    /**
-     * @dev Fund the contract with rewards for a specific token
-     * @param _token Address of the token
-     * @param _amount Amount to deposit
-     */
-    function fundReferralRewards(
-        address _token,
-        uint256 _amount
-    ) external onlyOwner {
-        if (!supportedTokens[_token]) revert TokenNotSupported();
-        bool success = IERC20(_token).transferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
-        require(success, "TransferFailed");
-
-        emit RewardFundsDeposited(msg.sender, _token, _amount);
     }
 
     /**
@@ -925,6 +1039,24 @@ contract UserProfile is
         );
     }
 
+    /**
+     * @dev Returns the number of users who have pending rewards for a specific token
+     */
+    function getPendingUserCount(
+        address _token
+    ) external view returns (uint256) {
+        return tokenPendingUsers[_token].length;
+    }
+
+    /**
+     * @dev Returns the list of users who have pending rewards for a specific token
+     */
+    function getPendingUsers(
+        address _token
+    ) external view returns (address[] memory) {
+        return tokenPendingUsers[_token];
+    }
+
     function getRewardFundBalance(
         address _token
     ) external view returns (uint256) {
@@ -955,7 +1087,7 @@ contract UserProfile is
         return (
             referralCount[_user],
             referredBy[_user],
-            referralCount[_user] * referralBonusAmount[_token]
+            userTotalPaidRewards[_user][_token] + pendingRewards[_user][_token]
         );
     }
 

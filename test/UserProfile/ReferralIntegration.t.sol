@@ -18,15 +18,11 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
         // Mint USDm to testOwner for funding referral rewards
         USDm.mint(testOwner, 10000e18);
 
-        // Fund the UserProfile contract with USDm for rewards
-        vm.prank(testOwner);
-        USDm.approve(address(userProfile), type(uint256).max);
-        vm.prank(testOwner);
-        userProfile.fundReferralRewards(address(USDm), 1000e18); // Fund with 1000 USDm
-
-        // Enable referral rewards
-        vm.prank(testOwner);
+        // Fund the UserProfile contract with USDm for rewards and enable rewards
+        vm.startPrank(testOwner);
+        USDm.transfer(address(userProfile), 10000e18); // Fund the contract
         userProfile.setReferralRewardsEnabled(true);
+        vm.stopPrank();
     }
 
     function test_ReferralReward_PaidOnFirstGoal() public {
@@ -229,15 +225,15 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
             "Alice should not receive reward when disabled"
         );
 
-        // Referral count should still be 0
+        // Referral count should be 1 (condition fulfilled)
         assertEq(
             userProfile.referralCount(alice),
-            0,
-            "Alice should have 0 successful referrals"
+            1,
+            "Alice should have 1 successful referral"
         );
-        assertFalse(
+        assertTrue(
             userProfile.hasFirstGoalReward(bob),
-            "Bob should not be marked as rewarded"
+            "Bob should be marked as processed"
         );
     }
 
@@ -501,5 +497,169 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
             0,
             "Alice should have 0 successful referrals"
         );
+    }
+
+    function test_ReferralReward_CumulativePayout() public {
+        // Alice refers Bob
+        vm.prank(alice);
+        userProfile.createProfile(
+            "alice@example.com",
+            "",
+            "alice",
+            "Alice Johnson",
+            "ipfs://alice",
+            address(0)
+        );
+
+        vm.prank(bob);
+        userProfile.createProfile(
+            "bob@example.com",
+            "",
+            "bob",
+            "Bob Smith",
+            "ipfs://bob",
+            alice
+        );
+
+        // Charlie also referred by Alice
+        vm.prank(charlie);
+        userProfile.createProfile(
+            "charlie@example.com",
+            "",
+            "charlie",
+            "Charlie Brown",
+            "ipfs://charlie",
+            alice
+        );
+
+        // 1. Drain UserProfile funds
+        uint256 currentBalance = USDm.balanceOf(address(userProfile));
+        vm.prank(testOwner);
+        userProfile.withdrawReferralFunds(address(USDm), currentBalance);
+
+        // 2. Bob creates first goal - should record PENDING reward
+        vm.prank(bob);
+        personalSavings.createPersonalGoal(
+            PersonalSavings.CreateGoalParams({
+                name: "Bob's Goal",
+                targetAmount: 500e18,
+                contributionAmount: 100e18,
+                frequency: PersonalSavings.Frequency.WEEKLY,
+                deadline: block.timestamp + 30 days,
+                enableYield: false,
+                token: address(USDm),
+                yieldAPY: 0
+            })
+        );
+
+        uint256 expectedReward = userProfile.referralBonusAmount(address(USDm));
+        assertEq(
+            userProfile.pendingRewards(alice, address(USDm)),
+            expectedReward,
+            "Reward should be pending for Alice"
+        );
+
+        // 3. Fund the contract
+        vm.startPrank(testOwner);
+        USDm.transfer(address(userProfile), 1000e18);
+        vm.stopPrank();
+
+        // 4. Charlie creates first goal - should trigger CUMULATIVE payout
+        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        vm.prank(charlie);
+        personalSavings.createPersonalGoal(
+            PersonalSavings.CreateGoalParams({
+                name: "Charlie's Goal",
+                targetAmount: 500e18,
+                contributionAmount: 100e18,
+                frequency: PersonalSavings.Frequency.WEEKLY,
+                deadline: block.timestamp + 30 days,
+                enableYield: false,
+                token: address(USDm),
+                yieldAPY: 0
+            })
+        );
+
+        // Total should be 2 rewards (5 from Bob + 5 from Charlie)
+        assertEq(
+            USDm.balanceOf(alice),
+            aliceBalanceBefore + (expectedReward * 2),
+            "Alice should receive cumulative reward (Current + Pending)"
+        );
+        assertEq(
+            userProfile.pendingRewards(alice, address(USDm)),
+            0,
+            "Pending reward should be cleared"
+        );
+        assertEq(
+            userProfile.referralCount(alice),
+            2,
+            "Alice should have 2 successful referrals"
+        );
+    }
+
+    function test_ReferralReward_AdminProcessPending() public {
+        // Alice refers Bob
+        vm.prank(alice);
+        userProfile.createProfile(
+            "alice@example.com",
+            "",
+            "alice",
+            "Alice Johnson",
+            "ipfs://alice",
+            address(0)
+        );
+
+        vm.prank(bob);
+        userProfile.createProfile(
+            "bob@example.com",
+            "",
+            "bob",
+            "Bob Smith",
+            "ipfs://bob",
+            alice
+        );
+
+        // 1. Drain funds
+        uint256 currentBalance = USDm.balanceOf(address(userProfile));
+        vm.prank(testOwner);
+        userProfile.withdrawReferralFunds(address(USDm), currentBalance);
+
+        // 2. Bob creates goal -> Pending
+        vm.prank(bob);
+        personalSavings.createPersonalGoal(
+            PersonalSavings.CreateGoalParams({
+                name: "Bob's Goal",
+                targetAmount: 500e18,
+                contributionAmount: 100e18,
+                frequency: PersonalSavings.Frequency.WEEKLY,
+                deadline: block.timestamp + 30 days,
+                enableYield: false,
+                token: address(USDm),
+                yieldAPY: 0
+            })
+        );
+
+        uint256 expectedReward = userProfile.referralBonusAmount(address(USDm));
+        assertEq(
+            userProfile.pendingRewards(alice, address(USDm)),
+            expectedReward
+        );
+        assertTrue(userProfile.isUserPendingForToken(address(USDm), alice));
+        assertEq(userProfile.getPendingUserCount(address(USDm)), 1);
+
+        // 3. Fund contract
+        vm.prank(testOwner);
+        USDm.transfer(address(userProfile), 1000e18);
+
+        // 4. Admin processes pending rewards
+        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        vm.prank(testOwner);
+        userProfile.processPendingRewards(address(USDm), 10); // Process up to 10 users
+
+        assertEq(USDm.balanceOf(alice), aliceBalanceBefore + expectedReward);
+        assertEq(userProfile.pendingRewards(alice, address(USDm)), 0);
+        assertFalse(userProfile.isUserPendingForToken(address(USDm), alice));
+        assertEq(userProfile.getPendingUserCount(address(USDm)), 0);
     }
 }

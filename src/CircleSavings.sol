@@ -199,14 +199,16 @@ contract CircleSavings is
     event CircleStarted(
         uint256 indexed circleId,
         uint256 startedAt,
-        CircleState state
+        CircleState state,
+        uint256 roundDeadline
     );
     event PayoutDistributed(
         uint256 indexed circleId,
         uint256 indexed round,
         address indexed recipient,
         uint256 amount,
-        address token
+        address token,
+        uint256 nextRoundDeadline
     );
     event PositionAssigned(
         uint256 indexed circleId,
@@ -743,7 +745,6 @@ contract CircleSavings is
 
         if (stat.currentMembers == conf.maxMembers) {
             _startCircleInternal(_circleId);
-            emit CircleStarted(_circleId, block.timestamp, stat.state);
         }
     }
 
@@ -1145,12 +1146,10 @@ contract CircleSavings is
         stat.startedAt = block.timestamp;
         stat.currentRound = 1;
 
-        circleRoundDeadlines[_circleId][1] = _nextDeadline(
-            conf.frequency,
-            block.timestamp
-        );
+        uint256 deadline = _nextDeadline(conf.frequency, block.timestamp);
+        circleRoundDeadlines[_circleId][1] = deadline;
 
-        emit CircleStarted(_circleId, block.timestamp, stat.state);
+        emit CircleStarted(_circleId, block.timestamp, stat.state, deadline);
     }
 
     /**
@@ -1402,7 +1401,19 @@ contract CircleSavings is
         // Update reputation via reputation contract
         _increaseReputation(recip, 5, "Circle Payout Received");
 
-        emit PayoutDistributed(cid, round, recip, amt, token);
+        uint256 nextRoundDeadline = 0;
+        if (round < stat.totalRounds) {
+            nextRoundDeadline = _nextDeadline(conf.frequency, block.timestamp);
+        }
+
+        emit PayoutDistributed(
+            cid,
+            round,
+            recip,
+            amt,
+            token,
+            nextRoundDeadline
+        );
 
         _progressNextRound(cid, round);
     }

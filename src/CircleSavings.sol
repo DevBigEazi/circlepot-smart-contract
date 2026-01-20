@@ -1617,7 +1617,6 @@ contract CircleSavings is
      */
     function _checkComplete(uint256 cid) private {
         CircleStatus storage stat = circleStatus[cid];
-        CircleConfig storage conf = circleConfigs[cid];
         uint256 round = stat.currentRound;
 
         // Condition 1: All active members have contributed
@@ -1626,17 +1625,11 @@ contract CircleSavings is
             return;
         }
 
-        // Condition 2: After grace period, if only recipient hasn't contributed
-        uint256 deadline = circleRoundDeadlines[cid][round];
-        uint256 graceDeadline = deadline + _getGracePeriod(conf.frequency);
-
-        if (block.timestamp > graceDeadline) {
-            // Only recipient is missing
-            if (stat.contributionsThisRound == stat.currentMembers - 1) {
-                address recipient = _getByPos(cid, round);
-                if (!roundContributions[cid][round][recipient]) {
-                    _payoutRound(cid, round);
-                }
+        // Condition 2:if only recipient hasn't contributed
+        if (stat.contributionsThisRound == stat.currentMembers - 1) {
+            address recipient = _getByPos(cid, round);
+            if (!roundContributions[cid][round][recipient]) {
+                _payoutRound(cid, round);
             }
         }
     }

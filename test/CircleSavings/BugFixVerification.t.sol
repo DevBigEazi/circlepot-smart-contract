@@ -28,8 +28,8 @@ contract BugFixVerificationTest is CircleSavingsSetup {
         circleSavings.contribute(cid);
         vm.prank(david);
         circleSavings.contribute(cid);
-        vm.prank(eve);
-        circleSavings.contribute(cid);
+        // vm.prank(eve);
+        // circleSavings.contribute(cid);
 
         // Warp past grace period
         vm.warp(block.timestamp + 9 days + 1 hours);
@@ -154,9 +154,7 @@ contract BugFixVerificationTest is CircleSavingsSetup {
         vm.prank(eve);
         circleSavings.contribute(cid);
 
-        // Alice contributes to complete round 1
-        vm.prank(alice);
-        circleSavings.contribute(cid);
+        // Alice (recipient) does NOT need to contribute anymore as round 1 advanced automatically
 
         // Now in Round 2: Bob is recipient (position 2)
         vm.warp(block.timestamp + 7 days);
@@ -168,8 +166,8 @@ contract BugFixVerificationTest is CircleSavingsSetup {
         circleSavings.contribute(cid);
         vm.prank(david);
         circleSavings.contribute(cid);
-        vm.prank(eve);
-        circleSavings.contribute(cid);
+// vm.prank(eve);
+// circleSavings.contribute(cid);
 
         // Warp past grace period
         vm.warp(block.timestamp + 9 days + 1 hours);

@@ -36,7 +36,8 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
             ,
             ,
             ,
-
+            ,
+            uint256 contributionCount
         ) = personalSavings.personalGoals(gid);
         assertEq(owner, alice);
         assertEq(targetAmount, 1000e18);
@@ -66,9 +67,9 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         vm.warp(block.timestamp + 7 days);
 
         vm.prank(alice);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
 
-        (, , , uint256 currentAmount, , , , , , , ) = personalSavings
+        (, , , uint256 currentAmount, , , , , , , , ) = personalSavings
             .personalGoals(gid);
         assertEq(currentAmount, 100e18); // First contribution (50) + second contribution (50)
 
@@ -97,14 +98,14 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         vm.warp(block.timestamp + 7 days);
 
         vm.prank(alice);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
 
         vm.prank(alice);
         personalSavings.completeGoal(gid);
 
-        // Should gain reputation for completing goal (+10) = 10 * 5 = 50 points
-        // The actual score is 350 (300 + 50)
-        assertEq(reputation.getReputation(alice), 350);
+        // Should gain reputation for completing goal (+1) = 1 * 5 = 5 points
+        // The actual score is 305 (300 + 5)
+        assertEq(reputation.getReputation(alice), 305);
     }
 
     function testEarlyWithdrawalPenalty() public {
@@ -130,6 +131,39 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
 
         // Should lose reputation for early withdrawal but not below MIN_SCORE (300)
         assertEq(reputation.getReputation(alice), 300);
+    }
+
+    function testCompleteGoalWithManyContributions() public {
+        vm.prank(alice);
+        PersonalSavings.CreateGoalParams memory params = PersonalSavings
+            .CreateGoalParams({
+                name: "Many Contributions",
+                targetAmount: 200e18,
+                contributionAmount: 50e18,
+                frequency: PersonalSavings.Frequency.WEEKLY,
+                deadline: block.timestamp + 365 days,
+                enableYield: false,
+                token: address(USDm),
+                yieldAPY: 0
+            });
+
+        uint256 gid = personalSavings.createPersonalGoal(params); // Count 1
+
+        // Make 3 more contributions (Total 4)
+        uint256 nextContribution = block.timestamp + 7 days;
+        for (uint256 i = 0; i < 3; i++) {
+            vm.warp(nextContribution);
+            vm.prank(alice);
+            personalSavings.contributeToGoal(gid, 0);
+            nextContribution += 7 days;
+        }
+
+        vm.prank(alice);
+        personalSavings.completeGoal(gid);
+
+        // Should gain reputation for completing goal (+10) = 10 * 5 = 50 points
+        // The actual score is 350 (300 + 50) because contributions >= 4
+        assertEq(reputation.getReputation(alice), 350);
     }
 
     function testMultipleGoalReputationTracking() public {
@@ -170,24 +204,24 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         // Complete first goal - need only one more contribution
         vm.warp(block.timestamp + 7 days);
         vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid1);
+        personalSavings.contributeToGoal(gid1, 0);
         personalSavings.completeGoal(gid1);
         vm.stopPrank();
 
-        // Should have reputation from first goal (10 on complete) added to DEFAULT_SCORE
-        // The actual score is 350 (300 + 50)
-        assertEq(reputation.getReputation(alice), 350);
+        // Should have reputation from first goal (1 on complete) added to DEFAULT_SCORE
+        // The actual score is 305 (300 + 5)
+        assertEq(reputation.getReputation(alice), 305);
 
         // Complete second goal - need only one more contribution
         vm.warp(block.timestamp + 7 days + 1);
         vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid2);
+        personalSavings.contributeToGoal(gid2, 0);
         personalSavings.completeGoal(gid2);
         vm.stopPrank();
 
-        // Should have cumulative reputation from both goals (10 + 10) added to DEFAULT_SCORE
-        // The actual score is 400 (300 + 50 + 50)
-        assertEq(reputation.getReputation(alice), 400);
+        // Should have cumulative reputation from both goals (1 + 1) added to DEFAULT_SCORE
+        // The actual score is 310 (300 + 5 + 5)
+        assertEq(reputation.getReputation(alice), 310);
     }
 
     function testCreateGoal_MonthlyFrequency() public {
@@ -208,7 +242,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         // Verify by making second contribution after interval
         vm.warp(block.timestamp + 31 days);
         vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
         vm.stopPrank();
     }
 
@@ -231,10 +265,10 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         t += 7 days + 1;
         vm.warp(t);
         vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
         t += 7 days + 1;
         vm.warp(t);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
         // Now at 75% progress (150e18 / 200e18) - penalty should apply
         uint256 balBefore = USDm.balanceOf(alice);
         personalSavings.withdrawFromGoal(gid, 50e18);
@@ -281,7 +315,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         // First contribution already made
         vm.warp(block.timestamp + 1 days + 1);
         vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
         vm.stopPrank();
     }
 }

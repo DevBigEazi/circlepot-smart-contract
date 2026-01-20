@@ -73,9 +73,18 @@ contract YieldIntegrationTest is CircleSavingsSetup {
         members[3] = david;
         members[4] = eve;
 
-        for (uint256 r = 1; r <= 5; r++) {
+        for (uint256 r = 0; r < 5; r++) {
+            // Recipient for this round should contribute first to avoid early auto-payout
+            address recipient = members[r];
+            vm.prank(recipient);
+            circleSavings.contribute(cid);
+
+            // Others contribute
             for (uint256 i = 0; i < 5; i++) {
-                _contributeOnTime(cid, members[i]);
+                if (members[i] != recipient) {
+                    vm.prank(members[i]);
+                    circleSavings.contribute(cid);
+                }
             }
         }
 

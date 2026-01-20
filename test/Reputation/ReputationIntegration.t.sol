@@ -99,7 +99,7 @@ contract ReputationIntegration is ReputationSetup {
 
         // Make contributions to reach target
         for (uint256 i = 0; i < 5; i++) {
-            personalSavings.contributeToGoal(goalId);
+            personalSavings.contributeToGoal(goalId, 0);
             vm.warp(block.timestamp + 1 days);
         }
 
@@ -144,7 +144,7 @@ contract ReputationIntegration is ReputationSetup {
 
         // Make contributions to reach target
         for (uint256 i = 0; i < 5; i++) {
-            personalSavings.contributeToGoal(goalId);
+            personalSavings.contributeToGoal(goalId, 0);
             vm.warp(block.timestamp + 1 days);
         }
 
@@ -179,7 +179,7 @@ contract ReputationIntegration is ReputationSetup {
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
         // Make one contribution
-        personalSavings.contributeToGoal(goalId);
+        personalSavings.contributeToGoal(goalId, 0);
 
         uint256 scoreBefore = reputation.getReputation(user1);
 
@@ -221,7 +221,7 @@ contract ReputationIntegration is ReputationSetup {
 
             // Contribute to reach target
             for (uint256 j = 0; j < 5; j++) {
-                personalSavings.contributeToGoal(goalId);
+                personalSavings.contributeToGoal(goalId, 0);
                 vm.warp(block.timestamp + 1 days);
             }
 
@@ -410,20 +410,38 @@ contract ReputationIntegration is ReputationSetup {
 
         // Complete all 5 rounds
         for (uint256 round = 0; round < 5; round++) {
-            for (uint256 i = 0; i < users.length; i++) {
-                vm.prank(users[i]);
-                circleSavings.contribute(circleId);
+            // Recipient for this round should contribute first to avoid early auto-payout
+            address recipient = users[round];
+            vm.prank(recipient);
+            circleSavings.contribute(circleId);
 
-                // Explicitly increase reputation for on-time contributions
-                address mockContract = makeAddr("mockContract");
-                vm.prank(owner);
-                reputation.authorizeContract(mockContract);
-                vm.prank(mockContract);
-                reputation.increaseReputation(
-                    users[i],
-                    10,
-                    "On-time contribution"
-                );
+            // Explicitly increase reputation for on-time contributions
+            address mockContract = makeAddr("mockContract");
+            vm.prank(owner);
+            reputation.authorizeContract(mockContract);
+            vm.prank(mockContract);
+            reputation.increaseReputation(
+                recipient,
+                10,
+                "On-time contribution"
+            );
+
+            // Others contribute
+            for (uint256 i = 0; i < users.length; i++) {
+                if (users[i] != recipient) {
+                    vm.prank(users[i]);
+                    circleSavings.contribute(circleId);
+
+                    // Explicitly increase reputation for on-time contributions
+                    vm.prank(owner);
+                    reputation.authorizeContract(mockContract);
+                    vm.prank(mockContract);
+                    reputation.increaseReputation(
+                        users[i],
+                        10,
+                        "On-time contribution"
+                    );
+                }
             }
             vm.warp(block.timestamp + 1 days);
         }
@@ -535,7 +553,7 @@ contract ReputationIntegration is ReputationSetup {
         uint256 goalId = personalSavings.createPersonalGoal(params);
 
         for (uint256 i = 0; i < 5; i++) {
-            personalSavings.contributeToGoal(goalId);
+            personalSavings.contributeToGoal(goalId, 0);
             vm.warp(block.timestamp + 1 days);
         }
         personalSavings.completeGoal(goalId);

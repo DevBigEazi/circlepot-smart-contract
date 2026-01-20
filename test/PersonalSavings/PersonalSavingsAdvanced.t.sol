@@ -31,13 +31,13 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
         t += 8 days + 1;
         vm.warp(t);
         vm.startPrank(alice);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
         t += 8 days + 1;
         vm.warp(t);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
         t += 8 days + 1;
         vm.warp(t);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
         vm.stopPrank();
 
         uint256 balBefore = USDm.balanceOf(alice);
@@ -68,7 +68,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
         // try to contribute again immediately
         vm.prank(alice);
         vm.expectRevert(PersonalSavings.AlreadyContributed.selector);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
     }
 
     function test_RevertWithdrawInsufficientBalance() public {
@@ -154,7 +154,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
         uint256 gid = _createDefaultGoal(alice);
         vm.prank(bob);
         vm.expectRevert(PersonalSavings.NotGoalOwner.selector);
-        personalSavings.contributeToGoal(gid);
+        personalSavings.contributeToGoal(gid, 0);
     }
 
     function test_Withdraw_RevertNotOwner() public {
@@ -174,7 +174,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
         for (uint256 i = 0; i < 4; i++) {
             t += 8 days;
             vm.warp(t);
-            personalSavings.contributeToGoal(gid);
+            personalSavings.contributeToGoal(gid, 0);
         }
         vm.stopPrank();
         vm.prank(bob);

@@ -114,30 +114,33 @@ contract CircleSavingsReputationTests is CircleSavingsSetup {
     function testSuccessfulCircleCompletionReputation() public {
         uint256 cid = _createAndStartCircle();
 
-        // Complete all 5 rounds with all members contributing
-        for (uint256 round = 0; round < 5; round++) {
-            vm.prank(alice);
-            circleSavings.contribute(cid);
-            vm.prank(bob);
-            circleSavings.contribute(cid);
-            vm.prank(charlie);
-            circleSavings.contribute(cid);
-            vm.prank(david);
-            circleSavings.contribute(cid);
-            vm.prank(eve);
-            circleSavings.contribute(cid);
-
-            // Move to next round
-            vm.warp(block.timestamp + 7 days);
-        }
-
-        // Check reputation for all members
         address[] memory members = new address[](5);
         members[0] = alice;
         members[1] = bob;
         members[2] = charlie;
         members[3] = david;
         members[4] = eve;
+
+        // Complete all 5 rounds with all members contributing
+        for (uint256 round = 0; round < 5; round++) {
+            // Recipient for this round should contribute first to avoid early auto-payout
+            address recipient = members[round];
+            vm.prank(recipient);
+            circleSavings.contribute(cid);
+
+            // Others contribute
+            for (uint256 i = 0; i < 5; i++) {
+                if (members[i] != recipient) {
+                    vm.prank(members[i]);
+                    circleSavings.contribute(cid);
+                }
+            }
+
+            // Move to next round
+            vm.warp(block.timestamp + 7 days);
+        }
+
+        // Check reputation for all members
 
         for (uint256 i = 0; i < members.length; i++) {
             (

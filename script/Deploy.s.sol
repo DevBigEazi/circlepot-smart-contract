@@ -31,7 +31,7 @@ contract Deploy is Script {
         // Deploy implementation contracts
         UserProfile userProfileImpl = new UserProfile();
         PersonalSavings personalSavingsImpl = new PersonalSavings();
-        // CircleSavings circleSavingsImpl = new CircleSavings();
+        CircleSavings circleSavingsImpl = new CircleSavings();
         Reputation reputationImpl = new Reputation();
 
         // Deploy yield vault
@@ -71,20 +71,20 @@ contract Deploy is Script {
             "moola-market"
         );
 
-        // CircleSavingsProxy circleSavingsProxy = new CircleSavingsProxy(
-        //     address(circleSavingsImpl),
-        //     supportedTokens, // Supported tokens array
-        //     treasury, // treasury address
-        //     address(reputationProxy), // reputation contract address
-        //     msg.sender // initialOwner
-        // );
+        CircleSavingsProxy circleSavingsProxy = new CircleSavingsProxy(
+            address(circleSavingsImpl),
+            supportedTokens, // Supported tokens array
+            treasury, // treasury address
+            address(reputationProxy), // reputation contract address
+            msg.sender // initialOwner
+        );
 
         // Set vault for USDm token
-        // CircleSavings(address(circleSavingsProxy)).setTokenVault(
-        //     USDm,
-        //     address(yieldVault),
-        //     "moola-market"
-        // );
+        CircleSavings(address(circleSavingsProxy)).setTokenVault(
+            USDm,
+            address(yieldVault),
+            "moola-market"
+        );
 
         // Authorize contracts in the reputation system
         Reputation(address(reputationProxy)).authorizeContract(
@@ -116,11 +116,11 @@ contract Deploy is Script {
             address(personalSavingsImpl)
         );
         console2.log("PersonalSavings Proxy:", address(personalSavingsProxy));
-        // console2.log(
-        //     "CircleSavings Implementation:",
-        //     address(circleSavingsImpl)
-        // );
-        // console2.log("CircleSavings Proxy:", address(circleSavingsProxy));
+        console2.log(
+            "CircleSavings Implementation:",
+            address(circleSavingsImpl)
+        );
+        console2.log("CircleSavings Proxy:", address(circleSavingsProxy));
         console2.log("YieldVault:", address(yieldVault));
         console2.log("Reputation Implementation:", address(reputationImpl));
         console2.log("Reputation Proxy:", address(reputationProxy));

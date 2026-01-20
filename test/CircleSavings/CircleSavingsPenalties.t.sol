@@ -184,18 +184,27 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
     function test_CircleCompletion_CollateralReleased() public {
         uint256 cid = _createAndStartCircle();
         uint256 balBefore = USDm.balanceOf(alice);
+        address[] memory members = new address[](5);
+        members[0] = alice;
+        members[1] = bob;
+        members[2] = charlie;
+        members[3] = david;
+        members[4] = eve;
+
         // Complete all 5 rounds
         for (uint256 round = 0; round < 5; round++) {
-            vm.prank(alice);
+            // Recipient for this round should contribute first to avoid early auto-payout
+            address recipient = members[round];
+            vm.prank(recipient);
             circleSavings.contribute(cid);
-            vm.prank(bob);
-            circleSavings.contribute(cid);
-            vm.prank(charlie);
-            circleSavings.contribute(cid);
-            vm.prank(david);
-            circleSavings.contribute(cid);
-            vm.prank(eve);
-            circleSavings.contribute(cid);
+
+            // Others contribute
+            for (uint256 i = 0; i < 5; i++) {
+                if (members[i] != recipient) {
+                    vm.prank(members[i]);
+                    circleSavings.contribute(cid);
+                }
+            }
             vm.warp(block.timestamp + 7 days);
         }
         // Alice should receive collateral back

@@ -15,33 +15,32 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
     function test_AutoResolution_RecipientMissing_AfterGrace() public {
         uint256 cid = _createAndStartCircle();
 
-        // Round 1: Everyone except Alice (recipient) contributes
+        // Round 1: Only 3 members contribute (not Alice the recipient, not Eve)
         vm.prank(bob);
         circleSavings.contribute(cid);
         vm.prank(charlie);
         circleSavings.contribute(cid);
         vm.prank(david);
         circleSavings.contribute(cid);
-        vm.prank(eve);
-        circleSavings.contribute(cid);
 
         // Warp past grace period
         vm.warp(block.timestamp + 9 days + 1 hours);
 
-        // Alice (recipient) has NOT contributed. Pot should be 400.
+        // Alice (recipient) and Eve have NOT contributed. Pot should be 300.
         (, CircleSavings.CircleStatus memory statusBefore, , ) = circleSavings
             .getCircleDetails(cid);
         assertEq(
             statusBefore.totalPot,
-            400e18,
-            "Pot should have 4 members' contributions"
+            300e18,
+            "Pot should have 3 members' contributions"
         );
         assertEq(statusBefore.currentRound, 1, "Should still be round 1");
 
-        // Bob calls forfeitMember (with an empty list or just checking completion)
-        address[] memory emptyList = new address[](0);
+        // Bob calls forfeitMember to forfeit Eve and trigger auto-resolution for Alice
+        address[] memory lateMembers = new address[](1);
+        lateMembers[0] = eve;
         vm.prank(bob);
-        circleSavings.forfeitMember(cid, emptyList);
+        circleSavings.forfeitMember(cid, lateMembers);
 
         // Round should have advanced because Alice was the only one missing after grace
         (, CircleSavings.CircleStatus memory statusAfter, , ) = circleSavings
@@ -54,7 +53,8 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
         assertEq(statusAfter.totalPot, 0, "Pot should be empty after payout");
 
         // Verify Alice received the payout (Creator pays NO platform fee)
-        // Alice balance = 100000 (init) - 505 (collateral) + 400 (payout) = 99895
+        // Alice balance = 100000 (init) - 505 (collateral) + 400 (payout: 300 contributions + 100 from Eve's forfeit)
+        // Note: Eve's 1e18 late fee goes to late fee pool (yield circle), not the pot
         assertEq(
             USDm.balanceOf(alice),
             99895e18,

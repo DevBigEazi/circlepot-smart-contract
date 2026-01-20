@@ -1,10 +1,10 @@
 # Circlepot Smart Contracts
 
-A comprehensive DeFi savings platform built on Celo blockchain, enabling both community-based and individual savings solutions with reputation-based trust mechanisms and yield-bearing options.
+A comprehensive DeFi savings platform built on blockchain, enabling both community-based and individual savings solutions with reputation-based trust mechanisms and yield-bearing options.
 
 ## Overview
 
-Circlepot digitizes traditional rotating savings and credit associations (ROSCAs) using blockchain technology. Unlike traditional ROSCAs, Circlepot puts idle funds to work through yield-bearing vaults. By combining Celo's L2 infrastructure, Mento Protocol's stablecoins (USDm and others), ERC-4626 Yield Vaults, and Thirdweb's Account Abstraction, Circlepot delivers a seamless Web2-like experience with decentralized finance benefits.
+Circlepot digitizes traditional rotating savings and credit associations (ROSCAs) using blockchain technology. Unlike traditional ROSCAs, Circlepot puts idle funds to work through yield-bearing vaults.
 
 ## Core Features
 
@@ -12,7 +12,7 @@ Circlepot digitizes traditional rotating savings and credit associations (ROSCAs
 - **Gasless Transactions**: EIP-7702 account abstraction powered by Thirdweb sponsors all user gas fees.
 - **Reputation Scoring**: On-chain credit scoring adapted from standard FICO/VantageScore models.
 - **90/10 Yield Sharing**: 90% of earned yield goes to the community/user, while 10% supports the platform.
-- **Extensible Architecture**: Built with future-proof support for dynamic ERC20 tokens (primary currency: Mento USDm).
+- **Extensible Architecture**: Built with future-proof support for dynamic ERC20 tokens.
 
 ## Smart Contracts
 
@@ -60,15 +60,6 @@ An on-chain credit scoring system that tracks financial behavior to build trust 
 Manages user identity and cross-platform profile data using unique usernames.
 
 ---
-
-## Technical Stack
-
-- **L2 Network**: Celo (Fast, stable, affordable)
-- **Stablecoins**: Mento Protocol (USDm)
-- **Yield Engine**: ERC-4626 Tokenized Vaults (Aave V3, Mento Reserve, etc.)
-- **Account Abstraction**: Thirdweb (EIP-7702, In-App Wallets, Gas Sponsorship)
-- **Smart Contracts**: Solidity (Foundry framework)
-
 ## Visual Workflow
 
 ```mermaid
@@ -175,15 +166,6 @@ flowchart TD
     class F goalJourney
     class G infrastructure
 ```
-
-## Business Model & Sustainability
-
-### Revenue Streams
-
-- **Tiered Payout Fees**: 1% for payouts ≤ $1,000; fixed $10 for payouts > $1,000.
-- **Yield Share**: 10% platform share of total interest earned in Yield circles/goals.
-- **Late Fees**: 100% to platform for Standard circles; shared with community in Yield circles.
-- **Operational Fees**: Small fees for visibility toggles ($0.50 USDm) and external withdrawals ($0.20 USDm).
 
 ## Security
 

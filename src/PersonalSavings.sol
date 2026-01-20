@@ -56,6 +56,7 @@ contract PersonalSavings is
         bool isActive;
         uint256 lastContributionAt;
         bool isYieldEnabled; // true = yield goal, false = standard (no DeFi risk)
+        uint256 contributionCount;
     }
 
     struct CreateGoalParams {
@@ -335,7 +336,8 @@ contract PersonalSavings is
             createdAt: block.timestamp,
             isActive: true,
             lastContributionAt: block.timestamp,
-            isYieldEnabled: params.enableYield
+            isYieldEnabled: params.enableYield,
+            contributionCount: 1
         });
 
         userGoals[msg.sender].push(gid);
@@ -373,13 +375,18 @@ contract PersonalSavings is
     /**
      * @dev Contribute to a personal goal
      * @param _goalId Goal ID
+     * @param _amount Optional contribution amount (if 0, uses goal's contributionAmount)
      */
-    function contributeToGoal(uint256 _goalId) external nonReentrant {
+    function contributeToGoal(
+        uint256 _goalId,
+        uint256 _amount
+    ) external nonReentrant {
         if (_goalId == 0 || _goalId >= goalCounter) revert InvalidSavingGoal();
 
         PersonalGoal storage g = personalGoals[_goalId];
         if (g.owner != msg.sender) revert NotGoalOwner();
         if (!g.isActive) revert GoalNotActive();
+        if (_amount > g.contributionAmount) revert InvalidContributionAmount();
 
         if (g.lastContributionAt > 0) {
             uint256 interval = _freqSeconds(g.frequency);
@@ -389,32 +396,34 @@ contract PersonalSavings is
             }
         }
 
+        uint256 contributionAmt = _amount > 0 ? _amount : g.contributionAmount;
+        if (contributionAmt == 0) revert InvalidContributionAmount();
+
         address token = goalToken[_goalId];
         IERC20(token).safeTransferFrom(
             msg.sender,
             address(this),
-            g.contributionAmount
+            contributionAmt
         );
 
         // Deposit to vault if yield is enabled for this goal
         address vault = tokenVaults[token];
-        if (
-            g.isYieldEnabled && vault != address(0) && g.contributionAmount > 0
-        ) {
-            IERC20(token).approve(vault, g.contributionAmount);
+        if (g.isYieldEnabled && vault != address(0) && contributionAmt > 0) {
+            IERC20(token).approve(vault, contributionAmt);
             goalShares[_goalId] += IERC4626(vault).deposit(
-                g.contributionAmount,
+                contributionAmt,
                 address(this)
             );
         }
 
-        g.currentAmount += g.contributionAmount;
+        g.currentAmount += contributionAmt;
         g.lastContributionAt = block.timestamp;
+        g.contributionCount++;
 
         emit GoalContribution(
             _goalId,
             msg.sender,
-            g.contributionAmount,
+            contributionAmt,
             g.currentAmount,
             token
         );
@@ -502,9 +511,10 @@ contract PersonalSavings is
             IERC20(token).safeTransfer(msg.sender, _amount + yieldEarned);
         }
 
+        uint256 pointsToDecrease = g.currentAmount == 0 ? 5 : 2;
         reputationContract.decreaseReputation(
             msg.sender,
-            5,
+            pointsToDecrease,
             "Early withdrawal"
         );
 
@@ -570,7 +580,13 @@ contract PersonalSavings is
         }
 
         IERC20(token).safeTransfer(msg.sender, principal + yieldEarned);
-        reputationContract.increaseReputation(msg.sender, 10, "Goal completed");
+
+        uint256 reputationPoints = g.contributionCount < 4 ? 1 : 10;
+        reputationContract.increaseReputation(
+            msg.sender,
+            reputationPoints,
+            "Goal completed"
+        );
 
         // Record goal completion in reputation contract
         _recordGoalCompleted(msg.sender, _goalId);

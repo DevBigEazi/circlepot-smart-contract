@@ -1648,20 +1648,18 @@ contract CircleSavings is
      */
     function _handleLate(uint256 cid, uint256 round, uint256 amt) internal {
         uint256 fee = (amt * LATE_FEE_BPS) / 10000;
-        uint256 totalRequired = amt + fee;
 
         address token = circleToken[cid];
-
-        // Transfer contribution + late fee from member's balance
-        IERC20(token).safeTransferFrom(
-            msg.sender,
-            address(this),
-            totalRequired
-        );
-
         CircleConfig storage conf = circleConfigs[cid];
         CircleStatus storage stat = circleStatus[cid];
         Member storage m = circleMembers[cid][msg.sender];
+
+        // Deduct late fee from member's locked collateral (late fee buffer)
+        if (m.collateralLocked < fee) revert InsufficientCollateral();
+        m.collateralLocked -= fee;
+
+        // Transfer only the contribution amount from member's balance
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amt);
 
         stat.totalPot += amt;
         m.totalContributed += amt;

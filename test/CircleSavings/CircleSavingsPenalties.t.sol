@@ -18,8 +18,8 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         uint256 lateFee = (contribution * circleSavings.LATE_FEE_BPS()) / 10000;
 
         deal(address(USDm), alice, contribution);
-        // Bob needs extra for the late fee
-        deal(address(USDm), bob, contribution + lateFee);
+        // Bob only needs the contribution amount now (late fee comes from collateral)
+        deal(address(USDm), bob, contribution);
         deal(address(USDm), charlie, contribution);
         deal(address(USDm), david, contribution);
         deal(address(USDm), eve, contribution);
@@ -60,10 +60,10 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         uint256 collateralAfter = bobMemberAfter.collateralLocked;
         uint256 balanceAfter = USDm.balanceOf(bob);
 
-        // Collateral should be unchanged
-        assertEq(collateralBefore, collateralAfter);
-        // Balance should have decreased by contribution + fee
-        assertEq(balanceBefore - balanceAfter, contribution + lateFee);
+        // Late fee should be deducted from collateral
+        assertEq(collateralBefore - collateralAfter, lateFee);
+        // Balance should have decreased by contribution only (not the late fee)
+        assertEq(balanceBefore - balanceAfter, contribution);
 
         (, , , , , , , uint256 latePayments, ) = reputation
             .getUserReputationDetails(bob);

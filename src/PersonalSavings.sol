@@ -96,6 +96,7 @@ contract PersonalSavings is
     mapping(uint256 => uint256) public goalShares;
 
     uint256 public constant PLATFORM_YIELD_SHARE_BPS = 1000; // 10%
+    uint256 public constant COMPLETION_FEE_BPS = 10; // 0.1%
 
     //   ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
@@ -445,19 +446,11 @@ contract PersonalSavings is
         if (!g.isActive) revert GoalNotActive();
         if (_amount > g.currentAmount) revert InsufficientBalance();
 
-        uint256 net;
-        uint256 penalty;
         address token = goalToken[_goalId];
-
-        {
-            uint256 progress = (g.currentAmount * 10000) / g.targetAmount; // progress in percent
-            uint256 penaltyBps = _penaltyBps(progress);
-            penalty = (_amount * penaltyBps) / 10000;
-            net = _amount - penalty;
-        }
+        uint256 actualAmountReceived = _amount;
+        uint256 yieldEarned = 0;
 
         // Handle vault redemption for yield-enabled goals
-        uint256 yieldEarned = 0;
         {
             address vault = tokenVaults[token];
             uint256 shares = goalShares[_goalId];
@@ -478,17 +471,18 @@ contract PersonalSavings is
                         address(this)
                     );
 
-                    uint256 withdrawn = balanceAfter - balanceBefore;
+                    actualAmountReceived = balanceAfter - balanceBefore;
                     goalShares[_goalId] -= sharesToRedeem;
 
                     // Calculate yield (any excess over principal)
-                    if (withdrawn > _amount) {
-                        yieldEarned = withdrawn - _amount;
+                    if (actualAmountReceived > _amount) {
+                        uint256 totalYield = actualAmountReceived - _amount;
                         // Platform takes 10% of yield
-                        uint256 platformYield = (yieldEarned *
+                        uint256 platformYield = (totalYield *
                             PLATFORM_YIELD_SHARE_BPS) / 10000;
                         platformFeesByToken[token] += platformYield;
-                        yieldEarned -= platformYield;
+                        yieldEarned = totalYield - platformYield;
+                        actualAmountReceived = _amount; // Cap the base amount at requested principal
 
                         emit YieldDistributed(
                             _goalId,
@@ -502,14 +496,19 @@ contract PersonalSavings is
             }
         }
 
+        // Calculate penalty based on the actual amount returned from vault (capped at requested)
+        uint256 progress = (g.currentAmount * 10000) / g.targetAmount;
+        uint256 penaltyBps = _penaltyBps(progress);
+        uint256 penalty = (actualAmountReceived * penaltyBps) / 10000;
+        uint256 net = actualAmountReceived - penalty;
+
         g.currentAmount -= _amount;
 
         if (penalty > 0) {
-            IERC20(token).safeTransfer(msg.sender, net + yieldEarned);
             platformFeesByToken[token] += penalty;
-        } else {
-            IERC20(token).safeTransfer(msg.sender, _amount + yieldEarned);
         }
+
+        IERC20(token).safeTransfer(msg.sender, net + yieldEarned);
 
         uint256 pointsToDecrease = g.currentAmount == 0 ? 5 : 2;
         reputationContract.decreaseReputation(
@@ -539,47 +538,57 @@ contract PersonalSavings is
         if (g.currentAmount < g.targetAmount) revert InsufficientBalance();
 
         uint256 principal = g.currentAmount;
-        g.isActive = false;
-        g.currentAmount = 0;
-
-        uint256 yieldEarned = 0;
-        uint256 platformYield = 0;
-
         address token = goalToken[_goalId];
-        address vault = tokenVaults[token];
+        uint256 actualAmountReceived = principal;
+        uint256 yieldEarned = 0;
 
         // Handle vault redemption for yield-enabled goals
-        if (
-            g.isYieldEnabled && vault != address(0) && goalShares[_goalId] > 0
-        ) {
-            uint256 shares = goalShares[_goalId];
-            goalShares[_goalId] = 0;
+        {
+            address vault = tokenVaults[token];
+            if (
+                g.isYieldEnabled &&
+                vault != address(0) &&
+                goalShares[_goalId] > 0
+            ) {
+                uint256 shares = goalShares[_goalId];
+                goalShares[_goalId] = 0;
 
-            uint256 balanceBefore = IERC20(token).balanceOf(address(this));
-            IERC4626(vault).redeem(shares, address(this), address(this));
-            uint256 balanceAfter = IERC20(token).balanceOf(address(this));
+                uint256 balanceBefore = IERC20(token).balanceOf(address(this));
+                IERC4626(vault).redeem(shares, address(this), address(this));
+                uint256 balanceAfter = IERC20(token).balanceOf(address(this));
 
-            uint256 withdrawn = balanceAfter - balanceBefore;
+                actualAmountReceived = balanceAfter - balanceBefore;
 
-            // Calculate yield (any excess over principal)
-            if (withdrawn > principal) {
-                uint256 totalYield = withdrawn - principal;
-                // Platform takes 10% of yield
-                platformYield = (totalYield * PLATFORM_YIELD_SHARE_BPS) / 10000;
-                platformFeesByToken[token] += platformYield;
-                yieldEarned = totalYield - platformYield;
+                // Calculate yield (any excess over principal)
+                if (actualAmountReceived > principal) {
+                    uint256 totalYield = actualAmountReceived - principal;
+                    // Platform takes 10% of yield
+                    uint256 platformYield = (totalYield *
+                        PLATFORM_YIELD_SHARE_BPS) / 10000;
+                    platformFeesByToken[token] += platformYield;
+                    yieldEarned = totalYield - platformYield;
+                    actualAmountReceived = principal; // Base for completion fee is capped at principal
 
-                emit YieldDistributed(
-                    _goalId,
-                    msg.sender,
-                    yieldEarned,
-                    platformYield,
-                    token
-                );
+                    emit YieldDistributed(
+                        _goalId,
+                        msg.sender,
+                        yieldEarned,
+                        platformYield,
+                        token
+                    );
+                }
             }
         }
 
-        IERC20(token).safeTransfer(msg.sender, principal + yieldEarned);
+        uint256 penaltyBps = _penaltyBps(10000); // gets the 10 BPS
+        uint256 fee = (actualAmountReceived * penaltyBps) / 10000;
+        uint256 amountToUser = actualAmountReceived - fee;
+
+        g.isActive = false;
+        g.currentAmount = 0;
+
+        IERC20(token).safeTransfer(msg.sender, amountToUser + yieldEarned);
+        platformFeesByToken[token] += fee;
 
         uint256 reputationPoints = g.contributionCount < 4 ? 1 : 10;
         reputationContract.increaseReputation(
@@ -593,8 +602,8 @@ contract PersonalSavings is
         emit GoalWithdrawn(
             _goalId,
             msg.sender,
-            principal + yieldEarned,
-            0,
+            amountToUser + yieldEarned,
+            fee,
             token
         );
     }
@@ -636,8 +645,8 @@ contract PersonalSavings is
         if (prog < 2500) return 100; // 1.0%
         if (prog < 5000) return 60; // 0.6%
         if (prog < 7500) return 30; // 0.3%
-        if (prog < 10000) return 10; // 0.1%
-        return 0;
+        if (prog < 10000) return 25; // 0.25%
+        return COMPLETION_FEE_BPS;
     }
 
     /**

@@ -178,7 +178,7 @@ contract CircleSavingsReputationTests is CircleSavingsSetup {
         uint256 aliceRep = reputation.getReputation(alice);
 
         vm.prank(testOwner);
-        circleSavings.withdrawPlatformFees(address(USDm));
+        circleSavings.withdrawPlatformFees(address(USDC));
 
         assertEq(
             reputation.getReputation(alice),

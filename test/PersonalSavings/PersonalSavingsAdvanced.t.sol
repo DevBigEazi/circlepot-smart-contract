@@ -19,7 +19,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -40,23 +40,24 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
         personalSavings.contributeToGoal(gid, 0);
         vm.stopPrank();
 
-        uint256 balBefore = USDm.balanceOf(alice);
+        uint256 balBefore = USDC.balanceOf(alice);
 
         vm.prank(alice);
         personalSavings.completeGoal(gid);
 
-        uint256 balAfter = USDm.balanceOf(alice);
-        assertEq(balAfter - balBefore, 200e18);
+        uint256 balAfter = USDC.balanceOf(alice);
+        // User pays 0.1% fee on completion (200e18 * 0.001 = 0.2e18)
+        assertEq(balAfter - balBefore, 199.8e18);
     }
 
     function test_WithdrawFromGoalWithPenaltyLevels() public {
         uint256 gid = _createDefaultGoal(alice);
         // First contribution already made (100e18)
 
-        uint256 balBefore = USDm.balanceOf(alice);
+        uint256 balBefore = USDC.balanceOf(alice);
         vm.prank(alice);
         personalSavings.withdrawFromGoal(gid, 50e18);
-        uint256 balAfter = USDm.balanceOf(alice);
+        uint256 balAfter = USDC.balanceOf(alice);
         // Progress is 100/500 = 20% (< 25%), so penalty is 1% = 0.5e18
         assertEq(balAfter - balBefore, 49.5e18);
     }
@@ -81,7 +82,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         uint256 gid = personalSavings.createPersonalGoal(params);
@@ -103,7 +104,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -120,7 +121,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -137,7 +138,7 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp - 1,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -192,15 +193,15 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
         // First contribution made (50e18), progress = 25%
-        uint256 balBefore = USDm.balanceOf(alice);
+        uint256 balBefore = USDC.balanceOf(alice);
         vm.prank(alice);
         personalSavings.withdrawFromGoal(gid, 25e18);
-        uint256 balAfter = USDm.balanceOf(alice);
+        uint256 balAfter = USDC.balanceOf(alice);
         assertLt(balAfter - balBefore, 25e18);
     }
 
@@ -214,15 +215,15 @@ contract PersonalSavingsAdvanced is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
         // First contribution made (50e18), progress = 50%
-        uint256 balBefore = USDm.balanceOf(alice);
+        uint256 balBefore = USDC.balanceOf(alice);
         vm.prank(alice);
         personalSavings.withdrawFromGoal(gid, 25e18);
-        uint256 balAfter = USDm.balanceOf(alice);
+        uint256 balAfter = USDC.balanceOf(alice);
         assertLt(balAfter - balBefore, 25e18);
         vm.stopPrank();
     }

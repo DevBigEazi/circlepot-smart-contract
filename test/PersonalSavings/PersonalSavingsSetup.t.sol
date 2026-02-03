@@ -53,7 +53,7 @@ contract PersonalSavingsSetup is Test, TestHelpers {
         implementation = new PersonalSavings();
 
         address[] memory supportedTokens = new address[](1);
-        supportedTokens[0] = address(USDm);
+        supportedTokens[0] = address(USDC);
 
         bytes memory initData = abi.encodeWithSelector(
             PersonalSavings.initialize.selector,
@@ -68,13 +68,13 @@ contract PersonalSavingsSetup is Test, TestHelpers {
         );
         personalSavings = PersonalSavings(address(proxy));
 
-        // Link UserProfile to PersonalSavings and USDm
+        // Link UserProfile to PersonalSavings and USDC
         vm.startPrank(testOwner);
         userProfile.setPersonalSavingsContract(address(personalSavings));
 
         // Setup multi-token referral rewards in UserProfile
-        userProfile.addSupportedToken(address(USDm));
-        userProfile.setReferralBonusAmount(address(USDm), 5_000_000); // $5
+        userProfile.addSupportedToken(address(USDC));
+        userProfile.setReferralBonusAmount(address(USDC), 5_000_000); // $5
 
         // Link PersonalSavings to UserProfile
         personalSavings.setUserProfileContract(address(userProfile));
@@ -83,7 +83,7 @@ contract PersonalSavingsSetup is Test, TestHelpers {
         reputation.authorizeContract(address(personalSavings));
         vm.stopPrank();
 
-        // Approve contract to spend user's USDm
+        // Approve contract to spend user's USDC
         address[] memory users = new address[](6);
         users[0] = alice;
         users[1] = bob;
@@ -94,7 +94,7 @@ contract PersonalSavingsSetup is Test, TestHelpers {
 
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
-            USDm.approve(address(personalSavings), type(uint256).max);
+            USDC.approve(address(personalSavings), type(uint256).max);
         }
     }
 
@@ -109,7 +109,7 @@ contract PersonalSavingsSetup is Test, TestHelpers {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 

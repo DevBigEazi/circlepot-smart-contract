@@ -15,12 +15,12 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
     function setUp() public override {
         super.setUp();
 
-        // Mint USDm to testOwner for funding referral rewards
-        USDm.mint(testOwner, 10000e18);
+        // Mint USDC to testOwner for funding referral rewards
+        USDC.mint(testOwner, 10000e18);
 
-        // Fund the UserProfile contract with USDm for rewards and enable rewards
+        // Fund the UserProfile contract with USDC for rewards and enable rewards
         vm.startPrank(testOwner);
-        USDm.transfer(address(userProfile), 10000e18); // Fund the contract
+        USDC.transfer(address(userProfile), 10000e18); // Fund the contract
         userProfile.setReferralRewardsEnabled(true);
         vm.stopPrank();
     }
@@ -64,7 +64,7 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
             "Bob shouldn't have first goal reward yet"
         );
 
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
 
         // Bob creates his first savings goal - this should trigger referral reward
         vm.prank(bob);
@@ -76,15 +76,15 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         personalSavings.createPersonalGoal(params);
 
-        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter = USDC.balanceOf(alice);
 
         // Alice should receive referral reward
-        uint256 expectedReward = userProfile.referralBonusAmount(address(USDm));
+        uint256 expectedReward = userProfile.referralBonusAmount(address(USDC));
         assertEq(
             aliceBalanceAfter,
             aliceBalanceBefore + expectedReward,
@@ -134,12 +134,12 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         personalSavings.createPersonalGoal(params1);
 
-        uint256 aliceBalanceAfter1st = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter1st = USDC.balanceOf(alice);
 
         // Bob creates second goal - should NOT trigger reward
         vm.prank(bob);
@@ -151,12 +151,12 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.MONTHLY,
                 deadline: block.timestamp + 60 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         personalSavings.createPersonalGoal(params2);
 
-        uint256 aliceBalanceAfter2nd = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter2nd = USDC.balanceOf(alice);
 
         // Alice balance should not change
         assertEq(
@@ -199,7 +199,7 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
             alice
         );
 
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
 
         // Bob creates first goal
         vm.prank(bob);
@@ -211,12 +211,12 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         personalSavings.createPersonalGoal(params);
 
-        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter = USDC.balanceOf(alice);
 
         // Alice should NOT receive reward
         assertEq(
@@ -259,7 +259,7 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         personalSavings.createPersonalGoal(params);
@@ -279,7 +279,7 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
 
         // Set higher bonus for campaign
         vm.prank(testOwner);
-        userProfile.setCampaignBonusAmount(address(USDm), 10_000_000); // $10 bonus
+        userProfile.setCampaignBonusAmount(address(USDC), 10_000_000); // $10 bonus
 
         // Alice refers Bob
         vm.prank(alice);
@@ -302,7 +302,7 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
             alice
         );
 
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
 
         // Bob creates first goal during campaign
         vm.prank(bob);
@@ -314,12 +314,12 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         personalSavings.createPersonalGoal(params);
 
-        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter = USDC.balanceOf(alice);
 
         // Alice should receive CAMPAIGN bonus (higher)
         assertEq(
@@ -363,7 +363,7 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
             alice
         );
 
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
 
         // Bob creates first goal
         vm.prank(bob);
@@ -375,13 +375,13 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
 
-        uint256 expectedReward = userProfile.referralBonusAmount(address(USDm));
-        uint256 aliceBalanceAfter1 = USDm.balanceOf(alice);
+        uint256 expectedReward = userProfile.referralBonusAmount(address(USDC));
+        uint256 aliceBalanceAfter1 = USDC.balanceOf(alice);
         assertEq(
             aliceBalanceAfter1,
             aliceBalanceBefore + expectedReward,
@@ -403,12 +403,12 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
 
-        uint256 aliceBalanceAfter2 = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter2 = USDC.balanceOf(alice);
         assertEq(
             aliceBalanceAfter2,
             aliceBalanceAfter1 + expectedReward,
@@ -455,8 +455,8 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
             bob
         );
 
-        uint256 bobBalanceBefore = USDm.balanceOf(bob);
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 bobBalanceBefore = USDC.balanceOf(bob);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
 
         // Charlie creates first goal - should reward Bob, not Alice
         vm.prank(charlie);
@@ -468,15 +468,15 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
 
-        uint256 bobBalanceAfter = USDm.balanceOf(bob);
-        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        uint256 bobBalanceAfter = USDC.balanceOf(bob);
+        uint256 aliceBalanceAfter = USDC.balanceOf(alice);
 
-        uint256 expectedReward = userProfile.referralBonusAmount(address(USDm));
+        uint256 expectedReward = userProfile.referralBonusAmount(address(USDC));
         assertEq(
             bobBalanceAfter,
             bobBalanceBefore + expectedReward,
@@ -533,9 +533,9 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
         );
 
         // 1. Drain UserProfile funds
-        uint256 currentBalance = USDm.balanceOf(address(userProfile));
+        uint256 currentBalance = USDC.balanceOf(address(userProfile));
         vm.prank(testOwner);
-        userProfile.withdrawReferralFunds(address(USDm), currentBalance);
+        userProfile.withdrawReferralFunds(address(USDC), currentBalance);
 
         // 2. Bob creates first goal - should record PENDING reward
         vm.prank(bob);
@@ -547,25 +547,25 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
 
-        uint256 expectedReward = userProfile.referralBonusAmount(address(USDm));
+        uint256 expectedReward = userProfile.referralBonusAmount(address(USDC));
         assertEq(
-            userProfile.pendingRewards(alice, address(USDm)),
+            userProfile.pendingRewards(alice, address(USDC)),
             expectedReward,
             "Reward should be pending for Alice"
         );
 
         // 3. Fund the contract
         vm.startPrank(testOwner);
-        USDm.transfer(address(userProfile), 1000e18);
+        USDC.transfer(address(userProfile), 1000e18);
         vm.stopPrank();
 
         // 4. Charlie creates first goal - should trigger CUMULATIVE payout
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
         vm.prank(charlie);
         personalSavings.createPersonalGoal(
             PersonalSavings.CreateGoalParams({
@@ -575,19 +575,19 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
 
         // Total should be 2 rewards (5 from Bob + 5 from Charlie)
         assertEq(
-            USDm.balanceOf(alice),
+            USDC.balanceOf(alice),
             aliceBalanceBefore + (expectedReward * 2),
             "Alice should receive cumulative reward (Current + Pending)"
         );
         assertEq(
-            userProfile.pendingRewards(alice, address(USDm)),
+            userProfile.pendingRewards(alice, address(USDC)),
             0,
             "Pending reward should be cleared"
         );
@@ -621,9 +621,9 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
         );
 
         // 1. Drain funds
-        uint256 currentBalance = USDm.balanceOf(address(userProfile));
+        uint256 currentBalance = USDC.balanceOf(address(userProfile));
         vm.prank(testOwner);
-        userProfile.withdrawReferralFunds(address(USDm), currentBalance);
+        userProfile.withdrawReferralFunds(address(USDC), currentBalance);
 
         // 2. Bob creates goal -> Pending
         vm.prank(bob);
@@ -635,31 +635,31 @@ contract ReferralIntegrationTest is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
 
-        uint256 expectedReward = userProfile.referralBonusAmount(address(USDm));
+        uint256 expectedReward = userProfile.referralBonusAmount(address(USDC));
         assertEq(
-            userProfile.pendingRewards(alice, address(USDm)),
+            userProfile.pendingRewards(alice, address(USDC)),
             expectedReward
         );
-        assertTrue(userProfile.isUserPendingForToken(address(USDm), alice));
-        assertEq(userProfile.getPendingUserCount(address(USDm)), 1);
+        assertTrue(userProfile.isUserPendingForToken(address(USDC), alice));
+        assertEq(userProfile.getPendingUserCount(address(USDC)), 1);
 
         // 3. Fund contract
         vm.prank(testOwner);
-        USDm.transfer(address(userProfile), 1000e18);
+        USDC.transfer(address(userProfile), 1000e18);
 
         // 4. Admin processes pending rewards
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
         vm.prank(testOwner);
-        userProfile.processPendingRewards(address(USDm), 10); // Process up to 10 users
+        userProfile.processPendingRewards(address(USDC), 10); // Process up to 10 users
 
-        assertEq(USDm.balanceOf(alice), aliceBalanceBefore + expectedReward);
-        assertEq(userProfile.pendingRewards(alice, address(USDm)), 0);
-        assertFalse(userProfile.isUserPendingForToken(address(USDm), alice));
-        assertEq(userProfile.getPendingUserCount(address(USDm)), 0);
+        assertEq(USDC.balanceOf(alice), aliceBalanceBefore + expectedReward);
+        assertEq(userProfile.pendingRewards(alice, address(USDC)), 0);
+        assertFalse(userProfile.isUserPendingForToken(address(USDC), alice));
+        assertEq(userProfile.getPendingUserCount(address(USDC)), 0);
     }
 }

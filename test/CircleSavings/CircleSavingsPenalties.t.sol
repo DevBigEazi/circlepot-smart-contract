@@ -17,12 +17,12 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         uint256 contribution = 100e18;
         uint256 lateFee = (contribution * circleSavings.LATE_FEE_BPS()) / 10000;
 
-        deal(address(USDm), alice, contribution);
+        deal(address(USDC), alice, contribution);
         // Bob only needs the contribution amount now (late fee comes from collateral)
-        deal(address(USDm), bob, contribution);
-        deal(address(USDm), charlie, contribution);
-        deal(address(USDm), david, contribution);
-        deal(address(USDm), eve, contribution);
+        deal(address(USDC), bob, contribution);
+        deal(address(USDC), charlie, contribution);
+        deal(address(USDC), david, contribution);
+        deal(address(USDC), eve, contribution);
 
         // other members contribute
         vm.prank(alice);
@@ -40,7 +40,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         (CircleSavings.Member memory bobMemberBefore, , ) = circleSavings
             .getMemberInfo(cid, bob);
         uint256 collateralBefore = bobMemberBefore.collateralLocked;
-        uint256 balanceBefore = USDm.balanceOf(bob);
+        uint256 balanceBefore = USDC.balanceOf(bob);
 
         vm.expectEmit(true, true, true, true);
         emit CircleSavings.LateContributionMade(
@@ -49,7 +49,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
             bob,
             contribution,
             lateFee,
-            address(USDm)
+            address(USDC)
         );
 
         vm.prank(bob);
@@ -58,7 +58,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         (CircleSavings.Member memory bobMemberAfter, , ) = circleSavings
             .getMemberInfo(cid, bob);
         uint256 collateralAfter = bobMemberAfter.collateralLocked;
-        uint256 balanceAfter = USDm.balanceOf(bob);
+        uint256 balanceAfter = USDC.balanceOf(bob);
 
         // Late fee should be deducted from collateral
         assertEq(collateralBefore - collateralAfter, lateFee);
@@ -75,13 +75,13 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
 
         // Fund everyone for contributions
         uint256 contribution = 100e18;
-        deal(address(USDm), alice, contribution);
-        deal(address(USDm), bob, contribution);
-        deal(address(USDm), charlie, contribution);
-        deal(address(USDm), david, contribution);
-        deal(address(USDm), eve, contribution);
+        deal(address(USDC), alice, contribution);
+        deal(address(USDC), bob, contribution);
+        deal(address(USDC), charlie, contribution);
+        deal(address(USDC), david, contribution);
+        deal(address(USDC), eve, contribution);
 
-        uint256 aliceBalBefore = USDm.balanceOf(alice);
+        uint256 aliceBalBefore = USDC.balanceOf(alice);
 
         vm.prank(alice);
         circleSavings.contribute(cid);
@@ -94,7 +94,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         vm.prank(eve);
         circleSavings.contribute(cid);
 
-        uint256 aliceBalAfter = USDm.balanceOf(alice);
+        uint256 aliceBalAfter = USDC.balanceOf(alice);
         // Creator receives pot (500) minus their own contribution (100)
         assertEq(aliceBalAfter - aliceBalBefore, 500e18 - 100e18);
 
@@ -135,7 +135,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
 
     function test_Payout_CreatorReceivesFullAmount() public {
         uint256 cid = _createAndStartCircle();
-        uint256 balBefore = USDm.balanceOf(alice);
+        uint256 balBefore = USDC.balanceOf(alice);
         vm.prank(alice);
         circleSavings.contribute(cid);
         vm.prank(bob);
@@ -146,7 +146,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         circleSavings.contribute(cid);
         vm.prank(eve);
         circleSavings.contribute(cid);
-        uint256 balAfter = USDm.balanceOf(alice);
+        uint256 balAfter = USDC.balanceOf(alice);
         assertGt(balAfter, balBefore);
     }
 
@@ -164,7 +164,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         vm.prank(eve);
         circleSavings.contribute(cid);
         // Round 2 - bob gets payout (non-creator, fee applies)
-        uint256 balBefore = USDm.balanceOf(bob);
+        uint256 balBefore = USDC.balanceOf(bob);
         vm.prank(alice);
         circleSavings.contribute(cid);
         vm.prank(bob);
@@ -175,7 +175,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
         circleSavings.contribute(cid);
         vm.prank(eve);
         circleSavings.contribute(cid);
-        uint256 balAfter = USDm.balanceOf(bob);
+        uint256 balAfter = USDC.balanceOf(bob);
         assertGt(balAfter, balBefore);
         // Payout should be less than full 500e18 due to 1% fee
         assertLt(balAfter - balBefore, 500e18);
@@ -183,7 +183,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
 
     function test_CircleCompletion_CollateralReleased() public {
         uint256 cid = _createAndStartCircle();
-        uint256 balBefore = USDm.balanceOf(alice);
+        uint256 balBefore = USDC.balanceOf(alice);
         address[] memory members = new address[](5);
         members[0] = alice;
         members[1] = bob;
@@ -208,7 +208,7 @@ contract CircleSavingsPenalties is CircleSavingsSetup {
             vm.warp(block.timestamp + 7 days);
         }
         // Alice should receive collateral back
-        uint256 balAfter = USDm.balanceOf(alice);
+        uint256 balAfter = USDC.balanceOf(alice);
         assertGt(balAfter, balBefore);
     }
 }

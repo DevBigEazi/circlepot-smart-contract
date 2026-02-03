@@ -19,7 +19,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -57,7 +57,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -87,7 +87,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -118,7 +118,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -143,7 +143,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -177,7 +177,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -194,7 +194,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -234,7 +234,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.MONTHLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -256,7 +256,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -270,9 +270,9 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         vm.warp(t);
         personalSavings.contributeToGoal(gid, 0);
         // Now at 75% progress (150e18 / 200e18) - penalty should apply
-        uint256 balBefore = USDm.balanceOf(alice);
+        uint256 balBefore = USDC.balanceOf(alice);
         personalSavings.withdrawFromGoal(gid, 50e18);
-        uint256 balAfter = USDm.balanceOf(alice);
+        uint256 balAfter = USDC.balanceOf(alice);
         assertLt(balAfter - balBefore, 50e18); // penalty applied
         vm.stopPrank();
     }
@@ -288,7 +288,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -308,7 +308,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
                 frequency: PersonalSavings.Frequency.DAILY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );

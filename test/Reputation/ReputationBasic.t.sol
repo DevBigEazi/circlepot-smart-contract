@@ -199,8 +199,10 @@ contract ReputationBasic is ReputationSetup {
         address mockContract = makeAddr("mockContract");
         _authorizeContract(mockContract);
 
-        vm.prank(mockContract);
+        vm.startPrank(mockContract);
         reputation.increaseReputation(user1, 10, "Goal completed");
+        reputation.recordGoalCompleted(user1, 1);
+        vm.stopPrank();
 
         Reputation.UserReputation memory userRep = _getUserReputation(user1);
         assertEq(userRep.goalsCompleted, 1, "Should track goal completion");
@@ -211,7 +213,7 @@ contract ReputationBasic is ReputationSetup {
         _authorizeContract(mockContract);
 
         vm.prank(mockContract);
-        reputation.increaseReputation(user1, 10, "Goal target reached");
+        reputation.increaseReputation(user1, 10, "Goal completed");
 
         Reputation.UserReputation memory userRep = _getUserReputation(user1);
         assertEq(
@@ -652,6 +654,7 @@ contract ReputationBasic is ReputationSetup {
 
         vm.startPrank(mockContract);
         reputation.increaseReputation(user1, 20, "Goal completed");
+        reputation.recordGoalCompleted(user1, 1); // Explicitly record goal
         reputation.increaseReputation(user1, 10, "Contribution");
         reputation.recordCircleCompleted(user1, 1);
         reputation.recordLatePayment(user1, 1, 1, 1);
@@ -677,7 +680,7 @@ contract ReputationBasic is ReputationSetup {
         assertEq(consecutivePayments, 0); // Reset by decrease
         assertEq(circlesCompleted, 1);
         assertEq(goalsCompleted, 1);
-        assertEq(latePayments, 1); // Only one from recordLatePayment, since we removed tracking from decreaseReputation
+        assertEq(latePayments, 1);
         assertGt(lastUpdated, 0);
     }
 

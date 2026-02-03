@@ -20,7 +20,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -53,7 +53,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -72,29 +72,29 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
 
         // Fund accounts for joining
         uint256 collateral = 100e18 * 5 + ((100e18 * 5 * 100) / 10000); // contributionAmount * maxMembers + 1% buffer
-        deal(address(USDm), bob, collateral);
-        deal(address(USDm), charlie, collateral);
-        deal(address(USDm), david, collateral);
-        deal(address(USDm), eve, collateral);
+        deal(address(USDC), bob, collateral);
+        deal(address(USDC), charlie, collateral);
+        deal(address(USDC), david, collateral);
+        deal(address(USDC), eve, collateral);
 
         // Approve token spending
         vm.startPrank(bob);
-        USDm.approve(address(circleSavings), collateral);
+        USDC.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(charlie);
-        USDm.approve(address(circleSavings), collateral);
+        USDC.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(david);
-        USDm.approve(address(circleSavings), collateral);
+        USDC.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(eve);
-        USDm.approve(address(circleSavings), collateral);
+        USDC.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
@@ -153,7 +153,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -202,7 +202,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -225,7 +225,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -267,7 +267,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );

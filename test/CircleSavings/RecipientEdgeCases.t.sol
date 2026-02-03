@@ -56,7 +56,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
         // Alice balance = 100000 (init) - 505 (collateral) + 400 (payout: 300 contributions + 100 from Eve's forfeit)
         // Note: Eve's 1e18 late fee goes to late fee pool (yield circle), not the pot
         assertEq(
-            USDm.balanceOf(alice),
+            USDC.balanceOf(alice),
             99895e18,
             "Alice (creator) should receive the full pot"
         );
@@ -113,7 +113,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
         // Bob paid R1: 1000 - 100 = 900
         // Bob payout R2: 900 + 396 = 1296
         assertEq(
-            USDm.balanceOf(bob),
+            USDC.balanceOf(bob),
             1296e18,
             "Bob (non-creator) should receive pot minus 1% fee"
         );
@@ -200,7 +200,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
 
         // Payout to Alice: Alice balance should be 99895 (as calculated above)
         assertEq(
-            USDm.balanceOf(alice),
+            USDC.balanceOf(alice),
             99895e18,
             "Alice should receive payout from forfeited members"
         );

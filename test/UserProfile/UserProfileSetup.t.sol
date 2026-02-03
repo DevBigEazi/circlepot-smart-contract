@@ -37,8 +37,8 @@ contract UserProfileSetup is Test, TestHelpers {
         userProfile.setPersonalSavingsContract(testPersonalSavings);
 
         // Setup multi-token referral rewards
-        userProfile.addSupportedToken(address(USDm));
-        userProfile.setReferralBonusAmount(address(USDm), 5_000_000); // $5
+        userProfile.addSupportedToken(address(USDC));
+        userProfile.setReferralBonusAmount(address(USDC), 5_000_000); // $5
         vm.stopPrank();
     }
 }

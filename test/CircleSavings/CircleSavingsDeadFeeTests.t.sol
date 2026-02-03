@@ -25,8 +25,8 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         // WithdrawCollateral is allowed
 
         // SCENARIO 1: Bob withdraws first. This triggers bulk release and sets state to DEAD.
-        uint256 bobBalBefore = USDm.balanceOf(bob);
-        uint256 aliceBalBefore = USDm.balanceOf(alice);
+        uint256 bobBalBefore = USDC.balanceOf(bob);
+        uint256 aliceBalBefore = USDC.balanceOf(alice);
 
         (CircleSavings.Member memory mVal, , ) = circleSavings.getMemberInfo(
             cid,
@@ -37,8 +37,8 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         vm.prank(bob);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 bobBalAfter = USDm.balanceOf(bob);
-        uint256 aliceBalAfter = USDm.balanceOf(alice);
+        uint256 bobBalAfter = USDC.balanceOf(bob);
+        uint256 aliceBalAfter = USDC.balanceOf(alice);
 
         // Bob should get full collateral back (no fee for non-creator)
         assertGt(bobBalAfter, bobBalBefore);
@@ -80,7 +80,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         // State is CREATED (not DEAD yet)
         // Fee condition (isCreator && DEAD) is false.
 
-        uint256 aliceBalBefore = USDm.balanceOf(alice);
+        uint256 aliceBalBefore = USDC.balanceOf(alice);
         (CircleSavings.Member memory mVal, , ) = circleSavings.getMemberInfo(
             cid,
             alice
@@ -90,7 +90,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 aliceBalAfter = USDm.balanceOf(alice);
+        uint256 aliceBalAfter = USDC.balanceOf(alice);
 
         // Fee SHOULD be deducted
         assertLt(
@@ -120,7 +120,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         uint256 cid = circleSavings.createCircle(params);
@@ -201,7 +201,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
         uint256 cid = circleSavings.createCircle(params);

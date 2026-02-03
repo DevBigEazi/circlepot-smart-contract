@@ -42,18 +42,18 @@ contract WithdrawalScenariosTest is CircleSavingsSetup {
         vm.warp(block.timestamp + 7 days + 1 hours);
 
         // Now Alice should be able to withdraw (solo creator, below 60% threshold)
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
 
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
         // Verify withdrawal
-        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter = USDC.balanceOf(alice);
         (CircleSavings.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
 
         // Creator pays dead circle fee
-        uint256 expectedFee = 0.5 * 10 ** 18; // PUBLIC_CIRCLE_DEAD_FEE = 0.5 USDm
+        uint256 expectedFee = 0.5 * 10 ** 18; // PUBLIC_CIRCLE_DEAD_FEE = 0.5 USDC
         uint256 expectedReturn = collateralBefore - expectedFee;
 
         assertEq(
@@ -113,8 +113,8 @@ contract WithdrawalScenariosTest is CircleSavingsSetup {
         vm.warp(block.timestamp + 7 days + 1 hours);
 
         // Both should be able to withdraw WITHOUT voting
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
-        uint256 bobBalanceBefore = USDm.balanceOf(bob);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
+        uint256 bobBalanceBefore = USDC.balanceOf(bob);
 
         // Alice (creator) withdraws - this triggers bulk release for everyone
         vm.prank(alice);
@@ -126,11 +126,11 @@ contract WithdrawalScenariosTest is CircleSavingsSetup {
         circleSavings.WithdrawCollateral(cid);
 
         // Verify withdrawals
-        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
-        uint256 bobBalanceAfter = USDm.balanceOf(bob);
+        uint256 aliceBalanceAfter = USDC.balanceOf(alice);
+        uint256 bobBalanceAfter = USDC.balanceOf(bob);
 
         // Alice pays dead fee, Bob doesn't
-        uint256 expectedFee = 0.5 * 10 ** 18; // PUBLIC_CIRCLE_DEAD_FEE = 0.5 USDm
+        uint256 expectedFee = 0.5 * 10 ** 18; // PUBLIC_CIRCLE_DEAD_FEE = 0.5 USDC
         assertEq(
             aliceBalanceAfter - aliceBalanceBefore,
             aliceCollateral - expectedFee,
@@ -196,7 +196,7 @@ contract WithdrawalScenariosTest is CircleSavingsSetup {
                 maxMembers: 10,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -212,11 +212,11 @@ contract WithdrawalScenariosTest is CircleSavingsSetup {
         members[4] = makeAddr("member6");
 
         for (uint256 i = 0; i < 5; i++) {
-            // Mint USDm for the member (collateral requirement)
-            USDm.mint(members[i], 1100 * 10 ** 18); // Enough for collateral
+            // Mint USDC for the member (collateral requirement)
+            USDC.mint(members[i], 1100 * 10 ** 18); // Enough for collateral
 
             vm.prank(members[i]);
-            USDm.approve(address(circleSavings), type(uint256).max);
+            USDC.approve(address(circleSavings), type(uint256).max);
 
             vm.prank(members[i]);
             circleSavings.joinCircle(cid);

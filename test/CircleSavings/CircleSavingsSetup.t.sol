@@ -42,14 +42,14 @@ contract CircleSavingsSetup is Test, TestHelpers {
 
         // Deploy yield vault
         yieldVault = new YieldVault(
-            address(USDm),
-            "Yield Bearing USDm",
-            "yUSDm"
+            address(USDC),
+            "Yield Bearing USDC",
+            "yUSDC"
         );
 
         // Prepare supported tokens array
         address[] memory supportedTokens = new address[](1);
-        supportedTokens[0] = address(USDm);
+        supportedTokens[0] = address(USDC);
 
         bytes memory initData = abi.encodeWithSelector(
             CircleSavings.initialize.selector,
@@ -65,15 +65,15 @@ contract CircleSavingsSetup is Test, TestHelpers {
         );
         circleSavings = CircleSavings(address(proxy));
 
-        // Set vault for USDm token
+        // Set vault for USDC token
         vm.prank(testOwner);
         circleSavings.setTokenVault(
-            address(USDm),
+            address(USDC),
             address(yieldVault),
             "Mock Yield Vault"
         );
 
-        // Approve contract to spend user's USDm
+        // Approve contract to spend user's USDC
         address[] memory users = new address[](6);
         users[0] = alice;
         users[1] = bob;
@@ -84,7 +84,7 @@ contract CircleSavingsSetup is Test, TestHelpers {
 
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
-            USDm.approve(address(circleSavings), type(uint256).max);
+            USDC.approve(address(circleSavings), type(uint256).max);
         }
 
         // Authorize CircleSavings in reputation system
@@ -105,7 +105,7 @@ contract CircleSavingsSetup is Test, TestHelpers {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -124,16 +124,16 @@ contract CircleSavingsSetup is Test, TestHelpers {
 
         // Fund accounts for joining
         uint256 collateral = 100e18 * 5 + ((100e18 * 5 * 100) / 10000); // contributionAmount * maxMembers + 1% buffer
-        deal(address(USDm), bob, collateral);
-        deal(address(USDm), charlie, collateral);
-        deal(address(USDm), david, collateral);
-        deal(address(USDm), eve, collateral);
+        deal(address(USDC), bob, collateral);
+        deal(address(USDC), charlie, collateral);
+        deal(address(USDC), david, collateral);
+        deal(address(USDC), eve, collateral);
 
         // Provide additional funds for contributions across rounds
-        USDm.mint(bob, 1000e18);
-        USDm.mint(charlie, 1000e18);
-        USDm.mint(david, 1000e18);
-        USDm.mint(eve, 1000e18);
+        USDC.mint(bob, 1000e18);
+        USDC.mint(charlie, 1000e18);
+        USDC.mint(david, 1000e18);
+        USDC.mint(eve, 1000e18);
 
         // Have members join
         vm.prank(bob);
@@ -160,7 +160,7 @@ contract CircleSavingsSetup is Test, TestHelpers {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 

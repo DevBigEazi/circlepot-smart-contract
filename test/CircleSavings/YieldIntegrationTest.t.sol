@@ -21,7 +21,7 @@ contract YieldIntegrationTest is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             });
 
@@ -57,12 +57,12 @@ contract YieldIntegrationTest is CircleSavingsSetup {
 
         // Total Collateral = 5 * 505e18 = 2525e18
         // Let's simulate 100e18 organic yield in the vault
-        deal(address(USDm), address(this), 100e18);
-        USDm.approve(address(yieldVault), 100e18);
+        deal(address(USDC), address(this), 100e18);
+        USDC.approve(address(yieldVault), 100e18);
         yieldVault.simulateYield(100e18);
 
         uint256 platformFeesBefore = circleSavings.getPlatformFees(
-            address(USDm)
+            address(USDC)
         );
 
         // Complete 5 rounds
@@ -89,7 +89,7 @@ contract YieldIntegrationTest is CircleSavingsSetup {
         }
 
         uint256 platformFeesAfter = circleSavings.getPlatformFees(
-            address(USDm)
+            address(USDC)
         );
         uint256 platformFeesCollected = platformFeesAfter - platformFeesBefore;
 
@@ -117,7 +117,7 @@ contract YieldIntegrationTest is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );
@@ -127,22 +127,22 @@ contract YieldIntegrationTest is CircleSavingsSetup {
         // Alice shares = 505 for 505 assets.
 
         // Add 10e18 yield to the vault while it's pending
-        deal(address(USDm), address(this), 10e18);
-        USDm.approve(address(yieldVault), 10e18);
+        deal(address(USDC), address(this), 10e18);
+        USDC.approve(address(yieldVault), 10e18);
         yieldVault.simulateYield(10e18);
 
         // Alice decides to withdraw (Ultimatum passed)
         vm.warp(block.timestamp + 8 days);
 
         uint256 platformFeesBefore = circleSavings.getPlatformFees(
-            address(USDm)
+            address(USDC)
         );
 
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
         uint256 platformFeesAfter = circleSavings.getPlatformFees(
-            address(USDm)
+            address(USDC)
         );
         uint256 collection = platformFeesAfter - platformFeesBefore;
 
@@ -171,7 +171,7 @@ contract YieldIntegrationTest is CircleSavingsSetup {
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
                 enableYield: true,
-                token: address(USDm),
+                token: address(USDC),
                 yieldAPY: 0
             })
         );

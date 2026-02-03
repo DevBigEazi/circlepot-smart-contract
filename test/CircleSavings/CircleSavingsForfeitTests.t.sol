@@ -401,7 +401,7 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
         // Warp past grace period
         vm.warp(block.timestamp + 9 days + 1 hours);
 
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDC.balanceOf(alice);
 
         // Forfeit eve (this should complete the round)
         address[] memory lateMembers = new address[](2);
@@ -421,7 +421,7 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
         );
 
         // Check alice DID receive payout (Creator gets full 400 pot)
-        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter = USDC.balanceOf(alice);
         assertEq(
             aliceBalanceAfter,
             aliceBalanceBefore + 400e18,

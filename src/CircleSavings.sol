@@ -942,6 +942,9 @@ contract CircleSavings is
             stat.totalPot += conf.contributionAmount;
             m.totalContributed += conf.contributionAmount;
 
+            // Update reputation via reputation contract
+            _increaseReputation(recipient, 2, "Contribution");
+
             // Award performance points for on-time payment (not after grace), if yield is enabled
             address vault = tokenVaults[token];
             if (!afterGrace && conf.isYieldEnabled && vault != address(0)) {
@@ -1394,6 +1397,12 @@ contract CircleSavings is
             circleShares[cid] -= sharesToBurn;
         }
 
+        // Final check: cap the payout at the actual contract balance to prevent SafeERC20 revert
+        uint256 finalBalance = IERC20(token).balanceOf(address(this));
+        if (amt > finalBalance) {
+            amt = finalBalance;
+        }
+
         IERC20(token).safeTransfer(recip, amt);
         m.hasReceivedPayout = true;
         stat.totalPot = 0;
@@ -1453,12 +1462,16 @@ contract CircleSavings is
         }
 
         uint256 communityShare;
+        uint256 lossMultiplierBps = 10000; // Default 100%
+
         {
-            uint256 totalSurplus = _processVaultRedemption(
+            (uint256 totalSurplus, uint256 lMult) = _processVaultRedemption(
                 cid,
                 conf,
                 totalPrincipal
             );
+            lossMultiplierBps = lMult;
+
             if (totalSurplus > 0) {
                 uint256 platformShare = (totalSurplus *
                     PLATFORM_YIELD_SHARE_BPS) / 10000;
@@ -1478,7 +1491,13 @@ contract CircleSavings is
 
         // Loop 2: Distribute to members via helper
         for (uint256 i = 0; i < mlist.length; i++) {
-            _returnMemberCollateral(cid, mlist[i], communityShare, tPoints);
+            _returnMemberCollateral(
+                cid,
+                mlist[i],
+                communityShare,
+                tPoints,
+                lossMultiplierBps
+            );
         }
     }
 
@@ -1489,22 +1508,35 @@ contract CircleSavings is
         uint256 cid,
         CircleConfig storage conf,
         uint256 totalPrincipal
-    ) internal returns (uint256 surplus) {
+    ) internal returns (uint256 surplus, uint256 lossMultiplierBps) {
         uint256 shares = circleShares[cid];
         address token = circleToken[cid];
         address vault = tokenVaults[token];
+        lossMultiplierBps = 10000; // Default 100%
+
         if (conf.isYieldEnabled && vault != address(0) && shares > 0) {
             uint256 balanceBefore = IERC20(token).balanceOf(address(this));
             IERC4626(vault).redeem(shares, address(this), address(this));
             uint256 balanceAfter = IERC20(token).balanceOf(address(this));
 
             uint256 totalWithdrawn = balanceAfter - balanceBefore;
-            uint256 interest = totalWithdrawn > totalPrincipal
-                ? totalWithdrawn - totalPrincipal
-                : 0;
-            return interest + circleLateFeePool[cid];
+
+            if (totalWithdrawn > totalPrincipal) {
+                surplus =
+                    (totalWithdrawn - totalPrincipal) +
+                    circleLateFeePool[cid];
+            } else {
+                // VAULT LOSS: Calculate loss multiplier
+                if (totalPrincipal > 0) {
+                    lossMultiplierBps =
+                        (totalWithdrawn * 10000) /
+                        totalPrincipal;
+                }
+                surplus = circleLateFeePool[cid]; // Late fees can still be distributed as reward
+            }
+            return (surplus, lossMultiplierBps);
         }
-        return 0;
+        return (circleLateFeePool[cid], 10000);
     }
 
     /**
@@ -1514,12 +1546,13 @@ contract CircleSavings is
         uint256 cid,
         address memberAddr,
         uint256 communityShare,
-        uint256 tPoints
+        uint256 tPoints,
+        uint256 lossMultiplierBps
     ) internal {
         Member storage m = circleMembers[cid][memberAddr];
         if (!m.isActive) return;
 
-        uint256 amt = m.collateralLocked;
+        uint256 amt = (m.collateralLocked * lossMultiplierBps) / 10000;
         uint256 reward = 0;
 
         if (tPoints > 0 && communityShare > 0 && m.performancePoints > 0) {
@@ -1566,6 +1599,19 @@ contract CircleSavings is
 
         address[] storage mlist = circleMemberList[cid];
         uint256 totalPrincipalReturned = 0;
+        uint256 totalOwed = 0;
+        for (uint256 i = 0; i < mlist.length; i++) {
+            totalOwed += circleMembers[cid][mlist[i]].collateralLocked;
+        }
+
+        uint256 lossMultiplierBps = 10000;
+        if (
+            totalOwed > 0 &&
+            conf.isYieldEnabled &&
+            withdrawnFromVault < totalOwed
+        ) {
+            lossMultiplierBps = (withdrawnFromVault * 10000) / totalOwed;
+        }
 
         for (uint256 i = 0; i < mlist.length; i++) {
             address memberAddr = mlist[i];
@@ -1573,7 +1619,7 @@ contract CircleSavings is
 
             if (!m.isActive || m.collateralLocked == 0) continue;
 
-            uint256 amt = m.collateralLocked;
+            uint256 amt = (m.collateralLocked * lossMultiplierBps) / 10000;
             m.collateralLocked = 0;
             m.isActive = false;
 

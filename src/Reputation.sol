@@ -199,17 +199,13 @@ contract Reputation is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         rep.lastUpdated = block.timestamp;
 
         // Track specific achievements
-        if (
-            _containsString(_reason, "Goal completed") ||
-            _containsString(_reason, "Goal target reached")
-        ) {
-            rep.goalsCompleted++;
+        if (_containsString(_reason, "Goal completed")) {
             rep.consecutiveOnTimePayments++;
         }
 
         if (
             _containsString(_reason, "Contribution") ||
-            _containsString(_reason, "Payment")
+            _containsString(_reason, "Circle Payout Received")
         ) {
             rep.consecutiveOnTimePayments++;
         }
@@ -598,6 +594,13 @@ contract Reputation is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function revokeContract(address _contract) external onlyOwner {
         authorizedContracts[_contract] = false;
         emit ContractRevoked(_contract);
+    }
+
+    /**
+     * @dev Check if a contract is authorized (IReputation implementation)
+     */
+    function isAuthorized(address _contract) external view returns (bool) {
+        return authorizedContracts[_contract];
     }
 
     // ============ Helper Functions ============

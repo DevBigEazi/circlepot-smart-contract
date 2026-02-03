@@ -18,7 +18,7 @@ Circlepot digitizes traditional rotating savings and credit associations (ROSCAs
 
 ### 🔄 CircleSavings
 
-A community-based savings platform for groups. Members contribute funds (primarily Mento USDm) regularly and rotate receiving the collective pot.
+A community-based savings platform for groups. Members contribute funds (primarily Mento USDC) regularly and rotate receiving the collective pot.
 
 **Key Features:**
 
@@ -37,7 +37,7 @@ An individual savings solution for personal financial goals with yield options a
 **Key Features:**
 
 - **Goal-Mode Selection**: Choose Standard for safety or Yield to earn interest on your progress.
-- **Primary Support for USDm**: Optimized for Mento USDm with architectural support for future assets.
+- **Primary Support for USDC**: Optimized for Circle USDC with architectural support for future assets.
 - **Graduated Penalties**: Access funds early with progress-based fees (0% penalty at 100% completion).
 - **Reputation Rewards**: Completing goals boosts your on-chain credit score.
 
@@ -60,6 +60,7 @@ An on-chain credit scoring system that tracks financial behavior to build trust 
 Manages user identity and cross-platform profile data using unique usernames.
 
 ---
+
 ## Visual Workflow
 
 ```mermaid
@@ -68,10 +69,10 @@ flowchart TD
         direction TB
         A1[Start] --> A2[Sign Up<br>60s - Email/Google/Phone]
         A2 --> A3[Thirdweb Creates<br>Smart Contract Wallet]
-        A3 --> A4[Add Funds USDm]
+        A3 --> A4[Add Funds USDC]
 
         subgraph A4_Sub [Funding Methods]
-            A4_1[🏦 Celo Partner On-Ramp]
+            A4_1[🏦 Base Partner On-Ramp]
             A4_2[🔄 Crypto Exchange]
         end
 
@@ -124,7 +125,7 @@ flowchart TD
         E2 --> E2_1{Yield Mode?}
         E2_1 -- Yes --> E2_2[90/10 Yield Split<br>Community + Owner Share]
         E2_1 -- No --> E3
-        E2_2 --> E3[💰 Instant USDm to Wallet]
+        E2_2 --> E3[💰 Instant USDC to Wallet]
         E3 --> E4[Reputation Boost]
         E4 --> E5[Circle Progresses/Completes]
         E1 -- No --> D1
@@ -149,13 +150,13 @@ flowchart TD
 
     subgraph G [KEY FEATURES & INFRASTRUCTURE]
         G1[🟡 Thirdweb Account Abstraction]
-        G2[💚 Celo L2 & Mento USDm]
+        G2[💚 Base L2 & Mento USDC]
         G3[📈 ERC-4626 Yield Vaults]
         G4[🗳️ Democratic Voting System]
         G5[⛽ Sponsored Gas EIP-7702]
         G6[🔒 Collateral Security]
         G7[⭐ Reputation Scoring]
-        G8[🏦 Celo Ecosystem On/Off-Ramps]
+        G8[🏦 Base Ecosystem On/Off-Ramps]
     end
 
     classDef primaryJourney fill:#e1f5fe,stroke:#01579b,stroke-width:2px

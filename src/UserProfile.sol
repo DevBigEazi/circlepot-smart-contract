@@ -177,7 +177,6 @@ contract UserProfile is
     error TokenAlreadySupported();
     error TokenNotSupported();
     error UnsupportedToken();
-    error InvalidUSDmTokenAddress();
     error AlreadyReceivedFirstGoalReward();
     error OnlyPersonalSavingsContract();
     error InvalidContractAddress();

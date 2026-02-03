@@ -20,10 +20,10 @@ contract Deploy is Script {
 
     function run() external {
         address treasury = vm.envOr("TREASURY_ADDRESS", msg.sender);
-        // Celo Sepolia USDm (formerly cUSD) address
-        address USDm = vm.envOr(
-            "USDm_ADDRESS",
-            address(0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b)
+        // Base Sepolia USDC address
+        address USDC = vm.envOr(
+            "USDC_ADDRESS",
+            address(0x036CbD53842c5426634e7929541eC2318f3dCF7e)
         );
 
         vm.startBroadcast();
@@ -36,9 +36,9 @@ contract Deploy is Script {
 
         // Deploy yield vault
         YieldVault yieldVault = new YieldVault(
-            USDm,
-            "Yield Bearing USDm",
-            "yUSDm"
+            USDC,
+            "Yield Bearing USDC",
+            "yUSDC"
         );
 
         // Deploy reputation proxy first as it's needed by other contracts
@@ -54,7 +54,7 @@ contract Deploy is Script {
         );
 
         address[] memory supportedTokens = new address[](1);
-        supportedTokens[0] = USDm;
+        supportedTokens[0] = USDC;
 
         PersonalSavingsProxy personalSavingsProxy = new PersonalSavingsProxy(
             address(personalSavingsImpl),
@@ -64,9 +64,9 @@ contract Deploy is Script {
             msg.sender // initialOwner
         );
 
-        // Set vault for USDm token
+        // Set vault for USDC token
         PersonalSavings(address(personalSavingsProxy)).setTokenVault(
-            USDm,
+            USDC,
             address(yieldVault),
             "moola-market"
         );
@@ -79,9 +79,9 @@ contract Deploy is Script {
             msg.sender // initialOwner
         );
 
-        // Set vault for USDm token
+        // Set vault for USDC token
         CircleSavings(address(circleSavingsProxy)).setTokenVault(
-            USDm,
+            USDC,
             address(yieldVault),
             "moola-market"
         );
@@ -97,8 +97,8 @@ contract Deploy is Script {
         // Link UserProfile to PersonalSavings and setup initial reward token
         UserProfile userProfile = UserProfile(address(userProfileProxy));
         userProfile.setPersonalSavingsContract(address(personalSavingsProxy));
-        userProfile.addSupportedToken(USDm);
-        userProfile.setReferralBonusAmount(USDm, 1_000_000_000_000_000_00); // $0.1 bonus 18 decimal
+        userProfile.addSupportedToken(USDC);
+        userProfile.setReferralBonusAmount(USDC, 1_000_000_000_000_000_00); // $0.1 bonus 18 decimal
         userProfile.setReferralRewardsEnabled(true);
 
         // Link PersonalSavings to UserProfile

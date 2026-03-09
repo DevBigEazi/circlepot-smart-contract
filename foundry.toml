@@ -5,11 +5,20 @@ libs = ["lib"]
 optimizer = true
 optimizer_runs = 200
 via_ir = true
+evm_version = "cancun"
 
 [rpc_endpoints]
 celo-sepolia = "https://forno.celo-sepolia.celo-testnet.org/"
 celo = "https://forno.celo.org"
 base-sepolia = "https://sepolia.base.org"
 base = "https://mainnet.base.org"
+fuji = "https://api.avax-test.network/ext/bc/C/rpc"
+avalanche = "https://api.avax.network/ext/bc/C/rpc"
+
+# Routescan is the verification backend for testnet.snowtrace.io
+# Use "verifyContract" as the API key (Routescan accepts any non-empty string)
+[etherscan]
+fuji = { key = "verifyContract", chain = 43113, url = "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan" }
+avalanche = { key = "${SNOWTRACE_API_KEY}", chain = 43114, url = "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan" }
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

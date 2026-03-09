@@ -7,7 +7,7 @@ import {
 } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {PersonalSavings} from "../../src/PersonalSavings.sol";
 import {Reputation} from "../../src/Reputation.sol";
-import {UserProfile} from "../../src/UserProfile.sol";
+import {ReferralRewards} from "../../src/ReferralRewards.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {TestHelpers} from "../helpers/TestHelpers.sol";
 
@@ -16,8 +16,8 @@ contract PersonalSavingsSetup is Test, TestHelpers {
     PersonalSavings public personalSavings;
     Reputation public reputationImpl;
     Reputation public reputation;
-    UserProfile public userProfileImpl;
-    UserProfile public userProfile;
+    ReferralRewards public referralRewardsImpl;
+    ReferralRewards public referralRewards;
 
     address public testOwner = address(1);
     address public testTreasury = address(2);
@@ -37,23 +37,23 @@ contract PersonalSavingsSetup is Test, TestHelpers {
         );
         reputation = Reputation(address(repProxy));
 
-        // Deploy UserProfile
-        userProfileImpl = new UserProfile();
-        bytes memory userProfileInitData = abi.encodeWithSelector(
-            UserProfile.initialize.selector,
+        // Deploy ReferralRewards
+        referralRewardsImpl = new ReferralRewards();
+        bytes memory referralRewardsInitData = abi.encodeWithSelector(
+            ReferralRewards.initialize.selector,
             testOwner
         );
-        ERC1967Proxy userProfileProxy = new ERC1967Proxy(
-            address(userProfileImpl),
-            userProfileInitData
+        ERC1967Proxy referralRewardsProxy = new ERC1967Proxy(
+            address(referralRewardsImpl),
+            referralRewardsInitData
         );
-        userProfile = UserProfile(address(userProfileProxy));
+        referralRewards = ReferralRewards(address(referralRewardsProxy));
 
         // Deploy PersonalSavings
         implementation = new PersonalSavings();
 
         address[] memory supportedTokens = new address[](1);
-        supportedTokens[0] = address(USDC);
+        supportedTokens[0] = address(USDT);
 
         bytes memory initData = abi.encodeWithSelector(
             PersonalSavings.initialize.selector,
@@ -68,22 +68,22 @@ contract PersonalSavingsSetup is Test, TestHelpers {
         );
         personalSavings = PersonalSavings(address(proxy));
 
-        // Link UserProfile to PersonalSavings and USDC
+        // Link ReferralRewards to PersonalSavings and USDT
         vm.startPrank(testOwner);
-        userProfile.setPersonalSavingsContract(address(personalSavings));
+        referralRewards.setPersonalSavingsContract(address(personalSavings));
 
-        // Setup multi-token referral rewards in UserProfile
-        userProfile.addSupportedToken(address(USDC));
-        userProfile.setReferralBonusAmount(address(USDC), 5_000_000); // $5
+        // Setup multi-token referral rewards in ReferralRewards
+        referralRewards.setTokenSupport(address(USDT), true);
+        referralRewards.setBonusAmount(address(USDT), 5_000_000); // $5
 
-        // Link PersonalSavings to UserProfile
-        personalSavings.setUserProfileContract(address(userProfile));
+        // Link PersonalSavings to ReferralRewards
+        personalSavings.setReferralRewardsContract(address(referralRewards));
 
         // Authorize PersonalSavings in reputation system
         reputation.authorizeContract(address(personalSavings));
         vm.stopPrank();
 
-        // Approve contract to spend user's USDC
+        // Approve contract to spend user's USDT
         address[] memory users = new address[](6);
         users[0] = alice;
         users[1] = bob;
@@ -94,7 +94,7 @@ contract PersonalSavingsSetup is Test, TestHelpers {
 
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
-            USDC.approve(address(personalSavings), type(uint256).max);
+            USDT.approve(address(personalSavings), type(uint256).max);
         }
     }
 
@@ -104,12 +104,12 @@ contract PersonalSavingsSetup is Test, TestHelpers {
         PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Default Goal",
-                targetAmount: 500e18,
-                contributionAmount: 100e18,
+                targetAmount: 500e6,
+                contributionAmount: 100e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 30 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             });
 

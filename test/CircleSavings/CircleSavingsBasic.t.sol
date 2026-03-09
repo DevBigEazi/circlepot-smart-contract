@@ -15,13 +15,11 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
-                enableYield: true,
-                token: address(USDC),
-                yieldAPY: 0
+                token: address(USDT)
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -34,7 +32,7 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
         ) = circleSavings.getCircleDetails(cid);
 
         assertEq(config.creator, alice);
-        assertEq(config.contributionAmount, 100e18);
+        assertEq(config.contributionAmount, 100e6);
         assertEq(config.maxMembers, 5);
         assertEq(
             uint256(status.state),
@@ -48,13 +46,11 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
-                enableYield: true,
-                token: address(USDC),
-                yieldAPY: 0
+                token: address(USDT)
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -71,30 +67,26 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
         circleSavings.inviteMembers(cid, invitees);
 
         // Fund accounts for joining
-        uint256 collateral = 100e18 * 5 + ((100e18 * 5 * 100) / 10000); // contributionAmount * maxMembers + 1% buffer
-        deal(address(USDC), bob, collateral);
-        deal(address(USDC), charlie, collateral);
-        deal(address(USDC), david, collateral);
-        deal(address(USDC), eve, collateral);
+        uint256 collateral = 100e6 * 5 + ((100e6 * 5 * 100) / 10000); // contributionAmount * maxMembers + 1% buffer
+        deal(address(USDT), bob, collateral);
+        deal(address(USDT), charlie, collateral);
+        deal(address(USDT), david, collateral);
+        deal(address(USDT), eve, collateral);
 
-        // Approve token spending
+        // Members join circle
         vm.startPrank(bob);
-        USDC.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(charlie);
-        USDC.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(david);
-        USDC.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
         vm.startPrank(eve);
-        USDC.approve(address(circleSavings), collateral);
         circleSavings.joinCircle(cid);
         vm.stopPrank();
 
@@ -148,13 +140,11 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
             CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
-                enableYield: true,
-                token: address(USDC),
-                yieldAPY: 0
+                token: address(USDT)
             })
         );
         address[] memory invitees = new address[](1);
@@ -197,13 +187,11 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
             CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.DAILY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
-                enableYield: true,
-                token: address(USDC),
-                yieldAPY: 0
+                token: address(USDT)
             })
         );
         (CircleSavings.CircleConfig memory config, , , ) = circleSavings
@@ -220,13 +208,11 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
             CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.MONTHLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
-                enableYield: true,
-                token: address(USDC),
-                yieldAPY: 0
+                token: address(USDT)
             })
         );
         (CircleSavings.CircleConfig memory config, , , ) = circleSavings
@@ -262,13 +248,11 @@ contract CircleSavingsBasicTests is CircleSavingsSetup {
             CircleSavings.CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
-                enableYield: true,
-                token: address(USDC),
-                yieldAPY: 0
+                token: address(USDT)
             })
         );
         (CircleSavings.CircleConfig memory config, , , ) = circleSavings

@@ -61,20 +61,14 @@ contract PositionSortingTest is CircleSavingsSetup {
         // Circle should auto-start and assign positions
 
         // Get positions
-        (uint256 alicePos, , , , , , ) = circleSavings.circleMembers(
-            cid,
-            alice
-        );
-        (uint256 bobPos, , , , , , ) = circleSavings.circleMembers(cid, bob);
-        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(
+        (uint256 alicePos, , , , , ) = circleSavings.circleMembers(cid, alice);
+        (uint256 bobPos, , , , , ) = circleSavings.circleMembers(cid, bob);
+        (uint256 charliePos, , , , , ) = circleSavings.circleMembers(
             cid,
             charlie
         );
-        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(
-            cid,
-            david
-        );
-        (uint256 evePos, , , , , , ) = circleSavings.circleMembers(cid, eve);
+        (uint256 davidPos, , , , , ) = circleSavings.circleMembers(cid, david);
+        (uint256 evePos, , , , , ) = circleSavings.circleMembers(cid, eve);
 
         emit log_named_uint("Alice position (creator, always 1)", alicePos);
         emit log_named_uint("David position (450 rep, should be 2)", davidPos);
@@ -133,16 +127,13 @@ contract PositionSortingTest is CircleSavingsSetup {
         circleSavings.joinCircle(cid); // 450 rep joins LAST
 
         // Get positions
-        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(
-            cid,
-            david
-        );
-        (uint256 bobPos, , , , , , ) = circleSavings.circleMembers(cid, bob);
-        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(
+        (uint256 davidPos, , , , , ) = circleSavings.circleMembers(cid, david);
+        (uint256 bobPos, , , , , ) = circleSavings.circleMembers(cid, bob);
+        (uint256 charliePos, , , , , ) = circleSavings.circleMembers(
             cid,
             charlie
         );
-        (uint256 evePos, , , , , , ) = circleSavings.circleMembers(cid, eve);
+        (uint256 evePos, , , , , ) = circleSavings.circleMembers(cid, eve);
 
         // Positions should STILL be by reputation, not join order
         assertEq(
@@ -180,20 +171,14 @@ contract PositionSortingTest is CircleSavingsSetup {
         circleSavings.joinCircle(cid);
 
         // Get positions
-        (uint256 alicePos, , , , , , ) = circleSavings.circleMembers(
-            cid,
-            alice
-        );
-        (uint256 bobPos, , , , , , ) = circleSavings.circleMembers(cid, bob);
-        (uint256 charliePos, , , , , , ) = circleSavings.circleMembers(
+        (uint256 alicePos, , , , , ) = circleSavings.circleMembers(cid, alice);
+        (uint256 bobPos, , , , , ) = circleSavings.circleMembers(cid, bob);
+        (uint256 charliePos, , , , , ) = circleSavings.circleMembers(
             cid,
             charlie
         );
-        (uint256 davidPos, , , , , , ) = circleSavings.circleMembers(
-            cid,
-            david
-        );
-        (uint256 evePos, , , , , , ) = circleSavings.circleMembers(cid, eve);
+        (uint256 davidPos, , , , , ) = circleSavings.circleMembers(cid, david);
+        (uint256 evePos, , , , , ) = circleSavings.circleMembers(cid, eve);
 
         // Creator always position 1
         assertEq(alicePos, 1, "Alice (creator) always position 1");

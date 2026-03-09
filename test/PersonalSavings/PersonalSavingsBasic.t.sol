@@ -14,12 +14,12 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
-                targetAmount: 1000e18,
-                contributionAmount: 50e18,
+                targetAmount: 1000e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             });
 
@@ -40,8 +40,8 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
             uint256 contributionCount
         ) = personalSavings.personalGoals(gid);
         assertEq(owner, alice);
-        assertEq(targetAmount, 1000e18);
-        assertEq(currentAmount, 50e18); // First contribution made automatically
+        assertEq(targetAmount, 1000e6);
+        assertEq(currentAmount, 50e6); // First contribution made automatically
 
         // Should start with DEFAULT_SCORE reputation
         assertEq(reputation.getReputation(alice), 300);
@@ -52,12 +52,12 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
-                targetAmount: 200e18,
-                contributionAmount: 50e18,
+                targetAmount: 200e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             });
 
@@ -71,7 +71,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
 
         (, , , uint256 currentAmount, , , , , , , , ) = personalSavings
             .personalGoals(gid);
-        assertEq(currentAmount, 100e18); // First contribution (50) + second contribution (50)
+        assertEq(currentAmount, 100e6); // First contribution (50) + second contribution (50)
 
         // Should still have DEFAULT_SCORE reputation (not complete yet)
         assertEq(reputation.getReputation(alice), 300);
@@ -82,19 +82,19 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
-                targetAmount: 100e18,
-                contributionAmount: 50e18,
+                targetAmount: 100e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
-        // First contribution already made (50e18)
+        // First contribution already made (50e6)
 
-        // Make one more contribution to reach target (total 100e18)
+        // Make one more contribution to reach target (total 100e6)
         vm.warp(block.timestamp + 7 days);
 
         vm.prank(alice);
@@ -113,21 +113,21 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
-                targetAmount: 200e18,
-                contributionAmount: 50e18,
+                targetAmount: 200e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             });
 
         uint256 gid = personalSavings.createPersonalGoal(params);
-        // First contribution already made (50e18)
+        // First contribution already made (50e6)
 
         // Withdraw early from the initial contribution
         vm.prank(alice);
-        personalSavings.withdrawFromGoal(gid, 25e18);
+        personalSavings.withdrawFromGoal(gid, 25e6);
 
         // Should lose reputation for early withdrawal but not below MIN_SCORE (300)
         assertEq(reputation.getReputation(alice), 300);
@@ -138,12 +138,12 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         PersonalSavings.CreateGoalParams memory params = PersonalSavings
             .CreateGoalParams({
                 name: "Many Contributions",
-                targetAmount: 200e18,
-                contributionAmount: 50e18,
+                targetAmount: 200e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             });
 
@@ -172,34 +172,34 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         PersonalSavings.CreateGoalParams memory params1 = PersonalSavings
             .CreateGoalParams({
                 name: "Emergency Fund",
-                targetAmount: 100e18,
-                contributionAmount: 50e18,
+                targetAmount: 100e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             });
 
         uint256 gid1 = personalSavings.createPersonalGoal(params1);
-        // First contribution already made (50e18)
+        // First contribution already made (50e6)
 
         // Create second goal
         vm.prank(alice);
         PersonalSavings.CreateGoalParams memory params2 = PersonalSavings
             .CreateGoalParams({
                 name: "Vacation Fund",
-                targetAmount: 200e18,
-                contributionAmount: 100e18,
+                targetAmount: 200e6,
+                contributionAmount: 100e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             });
 
         uint256 gid2 = personalSavings.createPersonalGoal(params2);
-        // First contribution already made (100e18)
+        // First contribution already made (100e6)
 
         // Complete first goal - need only one more contribution
         vm.warp(block.timestamp + 7 days);
@@ -229,12 +229,12 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         uint256 gid = personalSavings.createPersonalGoal(
             PersonalSavings.CreateGoalParams({
                 name: "Monthly Goal",
-                targetAmount: 200e18,
-                contributionAmount: 50e18,
+                targetAmount: 200e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.MONTHLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             })
         );
@@ -251,16 +251,16 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         uint256 gid = personalSavings.createPersonalGoal(
             PersonalSavings.CreateGoalParams({
                 name: "High Progress",
-                targetAmount: 200e18,
-                contributionAmount: 50e18,
+                targetAmount: 200e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             })
         );
-        // First contribution already made (50e18)
+        // First contribution already made (50e6)
         uint256 t = block.timestamp;
         t += 7 days + 1;
         vm.warp(t);
@@ -269,11 +269,11 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         t += 7 days + 1;
         vm.warp(t);
         personalSavings.contributeToGoal(gid, 0);
-        // Now at 75% progress (150e18 / 200e18) - penalty should apply
-        uint256 balBefore = USDC.balanceOf(alice);
-        personalSavings.withdrawFromGoal(gid, 50e18);
-        uint256 balAfter = USDC.balanceOf(alice);
-        assertLt(balAfter - balBefore, 50e18); // penalty applied
+        // Now at 75% progress (150e6 / 200e6) - penalty should apply
+        uint256 balBefore = USDT.balanceOf(alice);
+        personalSavings.withdrawFromGoal(gid, 50e6);
+        uint256 balAfter = USDT.balanceOf(alice);
+        assertLt(balAfter - balBefore, 50e6); // penalty applied
         vm.stopPrank();
     }
 
@@ -283,12 +283,12 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         uint256 gid2 = personalSavings.createPersonalGoal(
             PersonalSavings.CreateGoalParams({
                 name: "Goal 2",
-                targetAmount: 100e18,
-                contributionAmount: 50e18,
+                targetAmount: 100e6,
+                contributionAmount: 50e6,
                 frequency: PersonalSavings.Frequency.WEEKLY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             })
         );
@@ -303,12 +303,12 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
         uint256 gid = personalSavings.createPersonalGoal(
             PersonalSavings.CreateGoalParams({
                 name: "Daily",
-                targetAmount: 100e18,
-                contributionAmount: 10e18,
+                targetAmount: 100e6,
+                contributionAmount: 10e6,
                 frequency: PersonalSavings.Frequency.DAILY,
                 deadline: block.timestamp + 365 days,
                 enableYield: false,
-                token: address(USDC),
+                token: address(USDT),
                 yieldAPY: 0
             })
         );

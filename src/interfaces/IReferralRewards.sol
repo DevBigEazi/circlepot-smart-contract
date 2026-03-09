@@ -2,9 +2,9 @@
 pragma solidity ^0.8.27;
 
 /**
- * @title IUserProfile
- * @dev Interface for UserProfile contract to trigger referral rewards
+ * @title IReferralRewards
+ * @dev Interface for ReferralRewards contract to trigger referral rewards
  */
-interface IUserProfile {
+interface IReferralRewards {
     function payReferralReward(address _referee, address _token) external;
 }

@@ -80,8 +80,8 @@
       "function": null,
       "arguments": [
         "0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b",
-        "Yield Bearing USDm",
-        "yUSDm"
+        "Yield Bearing USDC",
+        "yUSDC"
       ],
       "transaction": {
         "from": "0x4781070885ea1e2ec9ae46201703172c576cda1a",

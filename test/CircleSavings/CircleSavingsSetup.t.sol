@@ -42,14 +42,14 @@ contract CircleSavingsSetup is Test, TestHelpers {
 
         // Deploy yield vault
         yieldVault = new YieldVault(
-            address(USDm),
-            "Yield Bearing USDm",
-            "yUSDm"
+            address(USDT),
+            "Yield Bearing USDT",
+            "yUSDT"
         );
 
         // Prepare supported tokens array
         address[] memory supportedTokens = new address[](1);
-        supportedTokens[0] = address(USDm);
+        supportedTokens[0] = address(USDT);
 
         bytes memory initData = abi.encodeWithSelector(
             CircleSavings.initialize.selector,
@@ -65,15 +65,7 @@ contract CircleSavingsSetup is Test, TestHelpers {
         );
         circleSavings = CircleSavings(address(proxy));
 
-        // Set vault for USDm token
-        vm.prank(testOwner);
-        circleSavings.setTokenVault(
-            address(USDm),
-            address(yieldVault),
-            "Mock Yield Vault"
-        );
-
-        // Approve contract to spend user's USDm
+        // Approve contract to spend user's USDT
         address[] memory users = new address[](6);
         users[0] = alice;
         users[1] = bob;
@@ -84,7 +76,7 @@ contract CircleSavingsSetup is Test, TestHelpers {
 
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
-            USDm.approve(address(circleSavings), type(uint256).max);
+            USDT.approve(address(circleSavings), type(uint256).max);
         }
 
         // Authorize CircleSavings in reputation system
@@ -100,13 +92,11 @@ contract CircleSavingsSetup is Test, TestHelpers {
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
-                enableYield: true,
-                token: address(USDm),
-                yieldAPY: 0
+                token: address(USDT)
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -123,17 +113,17 @@ contract CircleSavingsSetup is Test, TestHelpers {
         circleSavings.inviteMembers(cid, invitees);
 
         // Fund accounts for joining
-        uint256 collateral = 100e18 * 5 + ((100e18 * 5 * 100) / 10000); // contributionAmount * maxMembers + 1% buffer
-        deal(address(USDm), bob, collateral);
-        deal(address(USDm), charlie, collateral);
-        deal(address(USDm), david, collateral);
-        deal(address(USDm), eve, collateral);
+        uint256 collateral = 100e6 * 5 + ((100e6 * 5 * 100) / 10000); // contributionAmount * maxMembers + 1% buffer
+        deal(address(USDT), bob, collateral);
+        deal(address(USDT), charlie, collateral);
+        deal(address(USDT), david, collateral);
+        deal(address(USDT), eve, collateral);
 
         // Provide additional funds for contributions across rounds
-        USDm.mint(bob, 1000e18);
-        USDm.mint(charlie, 1000e18);
-        USDm.mint(david, 1000e18);
-        USDm.mint(eve, 1000e18);
+        USDT.mint(bob, 1000e6);
+        USDT.mint(charlie, 1000e6);
+        USDT.mint(david, 1000e6);
+        USDT.mint(eve, 1000e6);
 
         // Have members join
         vm.prank(bob);
@@ -155,13 +145,11 @@ contract CircleSavingsSetup is Test, TestHelpers {
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
-                enableYield: true,
-                token: address(USDm),
-                yieldAPY: 0
+                token: address(USDT)
             });
 
         return circleSavings.createCircle(params);

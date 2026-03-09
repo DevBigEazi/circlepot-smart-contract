@@ -60,14 +60,14 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsSetup {
         vm.warp(block.timestamp + 3 days);
 
         // after failed vote, members are automatically paid out during execution
-        uint256 aliceBalBefore = USDm.balanceOf(alice);
-        uint256 bobBalBefore = USDm.balanceOf(bob);
+        uint256 aliceBalBefore = USDT.balanceOf(alice);
+        uint256 bobBalBefore = USDT.balanceOf(bob);
 
         vm.prank(alice);
         circleSavings.executeVote(cid);
 
-        uint256 aliceBalAfter = USDm.balanceOf(alice);
-        uint256 bobBalAfter = USDm.balanceOf(bob);
+        uint256 aliceBalAfter = USDT.balanceOf(alice);
+        uint256 bobBalAfter = USDT.balanceOf(bob);
 
         assertTrue(
             aliceBalAfter > aliceBalBefore,
@@ -114,13 +114,11 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsSetup {
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PRIVATE,
-                enableYield: true,
-                token: address(USDm),
-                yieldAPY: 0
+                token: address(USDT)
             });
 
         uint256 cid = circleSavings.createCircle(params);
@@ -213,10 +211,10 @@ contract CircleSavingsVotingAndWithdraw is CircleSavingsSetup {
     function test_WithdrawCollateral_UltimatumPath() public {
         uint256 cid = _createDefaultCircle(alice);
         vm.warp(block.timestamp + 8 days);
-        uint256 balBefore = USDm.balanceOf(alice);
+        uint256 balBefore = USDT.balanceOf(alice);
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
-        uint256 balAfter = USDm.balanceOf(alice);
+        uint256 balAfter = USDT.balanceOf(alice);
         assertGt(balAfter, balBefore);
     }
 

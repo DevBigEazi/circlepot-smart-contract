@@ -9,18 +9,26 @@ interface IReputation {
     /**
      * @dev Increase user's reputation
      * @param _user User address
-     * @param _amount Amount to increase
-     * @param _source Source description
+     * @param _points Amount to increase
+     * @param _reason Source description
      */
-    function increaseReputation(address _user, uint256 _amount, string calldata _source) external;
+    function increaseReputation(
+        address _user,
+        uint256 _points,
+        string calldata _reason
+    ) external;
 
     /**
      * @dev Decrease user's reputation
      * @param _user User address
-     * @param _amount Amount to decrease
-     * @param _source Source description
+     * @param _points Amount to decrease
+     * @param _reason Source description
      */
-    function decreaseReputation(address _user, uint256 _amount, string calldata _source) external;
+    function decreaseReputation(
+        address _user,
+        uint256 _points,
+        string calldata _reason
+    ) external;
 
     /**
      * @dev Record a completed circle for a user
@@ -36,7 +44,12 @@ interface IReputation {
      * @param _round Round number
      * @param _fee Fee amount
      */
-    function recordLatePayment(address _user, uint256 _cid, uint256 _round, uint256 _fee) external;
+    function recordLatePayment(
+        address _user,
+        uint256 _cid,
+        uint256 _round,
+        uint256 _fee
+    ) external;
 
     /**
      * @dev Record a completed goal for a user
@@ -55,15 +68,22 @@ interface IReputation {
     /**
      * @dev Get comprehensive reputation data for a user
      * @param _user User address
-     * @return reputation Total reputation score
+     * @return positiveActions Total positive actions
+     * @return negativeActions Total negative actions
      * @return circlesCompleted Number of circles completed
-     * @return latePaymentsCount Number of late payments
-     * @return reputationScore Calculated weighted score
+     * @return score Calculated weighted score
      */
-    function getUserReputationData(address _user)
+    function getUserReputationData(
+        address _user
+    )
         external
         view
-        returns (uint256 reputation, uint256 circlesCompleted, uint256 latePaymentsCount, uint256 reputationScore);
+        returns (
+            uint256 positiveActions,
+            uint256 negativeActions,
+            uint256 circlesCompleted,
+            uint256 score
+        );
 
     /**
      * @dev Check if a contract is authorized

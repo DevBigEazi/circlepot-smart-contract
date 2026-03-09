@@ -31,7 +31,7 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
             .getCircleDetails(cid);
         assertEq(
             statusBefore.totalPot,
-            300e18,
+            300e6,
             "Pot should have 3 members' contributions"
         );
         assertEq(statusBefore.currentRound, 1, "Should still be round 1");
@@ -54,10 +54,10 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
 
         // Verify Alice received the payout (Creator pays NO platform fee)
         // Alice balance = 100000 (init) - 505 (collateral) + 400 (payout: 300 contributions + 100 from Eve's forfeit)
-        // Note: Eve's 1e18 late fee goes to late fee pool (yield circle), not the pot
+        // Note: Eve's 1e6 late fee goes to platform fee pool, not the pot
         assertEq(
-            USDm.balanceOf(alice),
-            99895e18,
+            USDT.balanceOf(alice),
+            99895e6,
             "Alice (creator) should receive the full pot"
         );
     }
@@ -113,8 +113,8 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
         // Bob paid R1: 1000 - 100 = 900
         // Bob payout R2: 900 + 396 = 1296
         assertEq(
-            USDm.balanceOf(bob),
-            1296e18,
+            USDT.balanceOf(bob),
+            1296e6,
             "Bob (non-creator) should receive pot minus 1% fee"
         );
     }
@@ -144,16 +144,6 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
             aliceAfter.collateralLocked,
             collateralBefore,
             "Recipient should not lose collateral"
-        );
-
-        // Check reputation - should NOT have on-time payment points (10 points)
-        // But also should not have "Late Payment" penalty (-5 points)
-        // Wait, current implementation of _handleLate does -5.
-        // My implementation bypassed _handleLate but also bypassed the points award.
-        assertEq(
-            aliceAfter.performancePoints,
-            0,
-            "Should not get on-time points"
         );
 
         // Verify reputation data (late payments counter)
@@ -200,8 +190,8 @@ contract CircleSavingsRecipientEdgeCasesTests is CircleSavingsSetup {
 
         // Payout to Alice: Alice balance should be 99895 (as calculated above)
         assertEq(
-            USDm.balanceOf(alice),
-            99895e18,
+            USDT.balanceOf(alice),
+            99895e6,
             "Alice should receive payout from forfeited members"
         );
     }

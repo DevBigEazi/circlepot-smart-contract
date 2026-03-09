@@ -18,7 +18,6 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /**
  * @title CircleSavings
@@ -38,18 +37,18 @@ contract CircleSavings is
 
     // ============ Constants ============
     uint256 public constant PLATFORM_FEE_BPS = 100; // 1% for payouts ≤ $1000
-    uint256 public constant FIXED_FEE_THRESHOLD = 1000e18; // $1000 threshold
-    uint256 public constant FIXED_FEE_AMOUNT = 10e18; // $10 fixed fee for payouts
+    uint256 public constant FIXED_FEE_THRESHOLD = 1000e6; // $1000 threshold
+    uint256 public constant FIXED_FEE_AMOUNT = 10e6; // $10 fixed fee for payouts >= $1000
     uint256 public constant LATE_FEE_BPS = 100; // 1%
-    uint256 public constant MAX_CONTRIBUTION = 5000e18;
-    uint256 public constant MIN_CONTRIBUTION = 1e18;
+    uint256 public constant MAX_CONTRIBUTION = 5000e6;
+    uint256 public constant MIN_CONTRIBUTION = 1e6;
     uint256 public constant MIN_MEMBERS = 5;
     uint256 public constant MAX_MEMBERS = 20;
-    uint256 public constant VISIBILITY_UPDATE_FEE = 0.5e18; // $0.50
+    uint256 public constant VISIBILITY_UPDATE_FEE = 0.5e6; // $0.50
     uint256 public constant VOTING_PERIOD = 2 days;
     uint256 public constant START_VOTE_THRESHOLD = 5100; //51% IN BASIS POINTS
-    uint256 public constant PRIVATE_CIRCLE_DEAD_FEE = 1e18; // $1 fee for dead private circles
-    uint256 public constant PUBLIC_CIRCLE_DEAD_FEE = 0.5e18; // $0.50 fee for dead public circles
+    uint256 public constant PRIVATE_CIRCLE_DEAD_FEE = 1e6; // $1 fee for dead private circles
+    uint256 public constant PUBLIC_CIRCLE_DEAD_FEE = 0.5e6; // $0.50 fee for dead public circles
 
     // ============ Enums ============
     enum CircleState {
@@ -86,7 +85,6 @@ contract CircleSavings is
         uint256 maxMembers;
         Visibility visibility;
         uint256 createdAt;
-        bool isYieldEnabled; // true = yield circle, false = standard (no DeFi risk)
     }
 
     struct CircleStatus {
@@ -106,7 +104,6 @@ contract CircleSavings is
         bool isActive;
         uint256 collateralLocked;
         uint256 joinedAt;
-        uint256 performancePoints;
     }
 
     struct CreateCircleParams {
@@ -116,9 +113,7 @@ contract CircleSavings is
         Frequency frequency;
         uint256 maxMembers;
         Visibility visibility;
-        bool enableYield; // User choice - true for yield, false for standard
         address token; // ERC20 token to use for this circle
-        uint256 yieldAPY; // The current yield APY (in basis points, e.g., 500 = 5%)
     }
 
     struct Vote {
@@ -162,14 +157,6 @@ contract CircleSavings is
     uint256 public platformFeeBps;
     uint256 public fixedFeeThreshold;
 
-    // Yield and Performance storage
-    mapping(address => address) public tokenVaults; // token => vault mapping
-    mapping(uint256 => uint256) public circleShares;
-    mapping(uint256 => uint256) public circleLateFeePool;
-    mapping(uint256 => uint256) public totalCirclePoints;
-    uint256 public constant PLATFORM_YIELD_SHARE_BPS = 1000; // 10%
-
-    // ============ Events ============
     event ContractUpgraded(address indexed newImplementation, uint256 version);
     event VisibilityUpdated(
         uint256 indexed circleId,
@@ -187,8 +174,7 @@ contract CircleSavings is
         Visibility visibility,
         uint256 createdAt,
         uint256 collateralLocked,
-        address token,
-        uint256 yieldAPY
+        address token
     );
     event CircleJoined(
         uint256 indexed circleId,
@@ -277,33 +263,6 @@ contract CircleSavings is
         uint256 indexed amount
     );
     event ReputationContractUpdated(address indexed newContract);
-    event PointsAwarded(
-        uint256 indexed circleId,
-        address indexed member,
-        uint256 points,
-        string reason
-    );
-    event YieldDistributed(
-        uint256 indexed circleId,
-        uint256 totalSurplus,
-        uint256 platformShare,
-        uint256 communityShare
-    );
-    event LateFeeAddedToPool(
-        uint256 indexed circleId,
-        address indexed member,
-        uint256 amount
-    );
-    event MemberRewardClaimed(
-        uint256 indexed circleId,
-        address indexed member,
-        uint256 rewardAmount
-    );
-    event VaultUpdated(
-        address indexed token,
-        address indexed newVault,
-        string project
-    );
     event TokenAdded(address indexed token);
     event TokenRemoved(address indexed token);
 
@@ -406,23 +365,6 @@ contract CircleSavings is
         if (_reputationContract != address(0)) {
             reputationContract = _reputationContract;
         }
-        // Vault is handled separately or in next upgrade
-    }
-
-    /**
-     * @dev Set the vault address for a specific token (admin only)
-     * @param _token Token address
-     * @param _vault Vault address for this token
-     */
-    function setTokenVault(
-        address _token,
-        address _vault,
-        string memory _project
-    ) external onlyOwner {
-        if (_token == address(0)) revert AddressZeroNotAllowed();
-        if (!supportedTokens[_token]) revert UnsupportedToken();
-        tokenVaults[_token] = _vault; // Allow setting to address(0) to disable yield for a token
-        emit VaultUpdated(_token, _vault, _project);
     }
 
     /**
@@ -555,7 +497,6 @@ contract CircleSavings is
             conf.maxMembers = params.maxMembers;
             conf.visibility = params.visibility;
             conf.createdAt = block.timestamp;
-            conf.isYieldEnabled = params.enableYield;
         }
 
         // Initialize Status using storage pointer
@@ -570,16 +511,6 @@ contract CircleSavings is
             stat.contributionsThisRound = 0;
         }
 
-        // Only deposit to vault if yield is enabled
-        address vault = tokenVaults[token];
-        if (params.enableYield && vault != address(0) && collateral > 0) {
-            IERC20(token).approve(vault, collateral);
-            circleShares[circleId] = IERC4626(vault).deposit(
-                collateral,
-                address(this)
-            );
-        }
-
         // Initialize Member
         {
             Member storage m = circleMembers[circleId][msg.sender];
@@ -589,7 +520,6 @@ contract CircleSavings is
             m.isActive = true;
             m.collateralLocked = collateral;
             m.joinedAt = block.timestamp;
-            m.performancePoints = 0;
         }
 
         circleMemberList[circleId].push(msg.sender);
@@ -605,8 +535,7 @@ contract CircleSavings is
             params.visibility,
             block.timestamp,
             collateral, // Use local variable to avoid mapping lookup on stack
-            token,
-            params.enableYield ? params.yieldAPY : 0
+            token
         );
         emit CircleJoined(circleId, msg.sender, 1, CircleState.CREATED);
 
@@ -718,17 +647,6 @@ contract CircleSavings is
             m.isActive = true;
             m.collateralLocked = collateral;
             m.joinedAt = block.timestamp;
-            m.performancePoints = 0;
-        }
-
-        // Only deposit to vault if this circle has yield enabled
-        address vault = tokenVaults[token];
-        if (conf.isYieldEnabled && vault != address(0) && collateral > 0) {
-            IERC20(token).approve(vault, collateral);
-            circleShares[_circleId] += IERC4626(vault).deposit(
-                collateral,
-                address(this)
-            );
         }
 
         circleMemberList[_circleId].push(msg.sender);
@@ -942,18 +860,8 @@ contract CircleSavings is
             stat.totalPot += conf.contributionAmount;
             m.totalContributed += conf.contributionAmount;
 
-            // Award performance points for on-time payment (not after grace), if yield is enabled
-            address vault = tokenVaults[token];
-            if (!afterGrace && conf.isYieldEnabled && vault != address(0)) {
-                m.performancePoints += 10;
-                totalCirclePoints[_circleId] += 10;
-                emit PointsAwarded(
-                    _circleId,
-                    msg.sender,
-                    10,
-                    "On-Time Payment"
-                );
-            }
+            // Update reputation via reputation contract
+            _increaseReputation(recipient, 2, "Contribution");
 
             emit ContributionMade(
                 _circleId,
@@ -1096,13 +1004,8 @@ contract CircleSavings is
 
             _stat.totalPot += toPot;
 
-            if (_conf.isYieldEnabled) {
-                circleLateFeePool[_circleId] += toFees;
-                emit LateFeeAddedToPool(_circleId, _memberAddr, toFees);
-            } else {
-                address token = circleToken[_circleId];
-                platformFeesByToken[token] += toFees;
-            }
+            address token = circleToken[_circleId];
+            platformFeesByToken[token] += toFees;
         }
 
         roundContributions[_circleId][_round][_memberAddr] = true;
@@ -1363,35 +1266,10 @@ contract CircleSavings is
             }
         }
 
-        // Vault Integration: If contract balance is low (due to forfeitures covered by collateral), withdraw from vault
-        uint256 sharesToBurn;
-        {
-            uint256 currentBalance = IERC20(token).balanceOf(address(this));
-            address vault = tokenVaults[token];
-            uint256 shares = circleShares[cid];
-            if (
-                currentBalance < totalAmount &&
-                vault != address(0) &&
-                shares > 0
-            ) {
-                uint256 needed = totalAmount - currentBalance;
-                // Ensure we don't try to withdraw more than available shares represent
-                uint256 maxWithdraw = IERC4626(vault).previewRedeem(shares);
-                uint256 toWithdraw = needed > maxWithdraw
-                    ? maxWithdraw
-                    : needed;
-
-                if (toWithdraw > 0) {
-                    sharesToBurn = IERC4626(vault).withdraw(
-                        toWithdraw,
-                        address(this),
-                        address(this)
-                    );
-                }
-            }
-        }
-        if (sharesToBurn > 0) {
-            circleShares[cid] -= sharesToBurn;
+        // Final check: cap the payout at the actual contract balance to prevent SafeERC20 revert
+        uint256 finalBalance = IERC20(token).balanceOf(address(this));
+        if (amt > finalBalance) {
+            amt = finalBalance;
         }
 
         IERC20(token).safeTransfer(recip, amt);
@@ -1452,87 +1330,25 @@ contract CircleSavings is
             totalPrincipal += circleMembers[cid][mlist[i]].collateralLocked;
         }
 
-        uint256 communityShare;
-        {
-            uint256 totalSurplus = _processVaultRedemption(
-                cid,
-                conf,
-                totalPrincipal
-            );
-            if (totalSurplus > 0) {
-                uint256 platformShare = (totalSurplus *
-                    PLATFORM_YIELD_SHARE_BPS) / 10000;
-                communityShare = totalSurplus - platformShare;
-                address token = circleToken[cid];
-                platformFeesByToken[token] += platformShare;
-                emit YieldDistributed(
-                    cid,
-                    totalSurplus,
-                    platformShare,
-                    communityShare
-                );
-            }
-        }
-
-        uint256 tPoints = totalCirclePoints[cid];
-
         // Loop 2: Distribute to members via helper
         for (uint256 i = 0; i < mlist.length; i++) {
-            _returnMemberCollateral(cid, mlist[i], communityShare, tPoints);
+            _returnMemberCollateral(cid, mlist[i]);
         }
     }
 
     /**
-     * @dev Helper to handle vault logic and calculate surplus interest
+     * @dev Helper to return collateral to a single member
      */
-    function _processVaultRedemption(
-        uint256 cid,
-        CircleConfig storage conf,
-        uint256 totalPrincipal
-    ) internal returns (uint256 surplus) {
-        uint256 shares = circleShares[cid];
-        address token = circleToken[cid];
-        address vault = tokenVaults[token];
-        if (conf.isYieldEnabled && vault != address(0) && shares > 0) {
-            uint256 balanceBefore = IERC20(token).balanceOf(address(this));
-            IERC4626(vault).redeem(shares, address(this), address(this));
-            uint256 balanceAfter = IERC20(token).balanceOf(address(this));
-
-            uint256 totalWithdrawn = balanceAfter - balanceBefore;
-            uint256 interest = totalWithdrawn > totalPrincipal
-                ? totalWithdrawn - totalPrincipal
-                : 0;
-            return interest + circleLateFeePool[cid];
-        }
-        return 0;
-    }
-
-    /**
-     * @dev Helper to return collateral and rewards to a single member
-     */
-    function _returnMemberCollateral(
-        uint256 cid,
-        address memberAddr,
-        uint256 communityShare,
-        uint256 tPoints
-    ) internal {
+    function _returnMemberCollateral(uint256 cid, address memberAddr) internal {
         Member storage m = circleMembers[cid][memberAddr];
         if (!m.isActive) return;
 
         uint256 amt = m.collateralLocked;
-        uint256 reward = 0;
 
-        if (tPoints > 0 && communityShare > 0 && m.performancePoints > 0) {
-            reward = (m.performancePoints * communityShare) / tPoints;
-        }
-
-        if (amt > 0 || reward > 0) {
+        if (amt > 0) {
             m.collateralLocked = 0;
             address token = circleToken[cid];
-            IERC20(token).safeTransfer(memberAddr, amt + reward);
-            if (reward > 0) {
-                emit MemberRewardClaimed(cid, memberAddr, reward);
-            }
+            IERC20(token).safeTransfer(memberAddr, amt);
             emit CollateralReturned(cid, memberAddr, amt, token);
         }
     }
@@ -1549,23 +1365,15 @@ contract CircleSavings is
         if (stat.state == CircleState.COMPLETED) return;
         stat.state = CircleState.DEAD;
 
-        uint256 withdrawnFromVault = 0;
         address token = circleToken[cid];
-        address vault = tokenVaults[token];
-        if (
-            conf.isYieldEnabled && vault != address(0) && circleShares[cid] > 0
-        ) {
-            uint256 shares = circleShares[cid];
-            circleShares[cid] = 0;
-
-            uint256 balanceBefore = IERC20(token).balanceOf(address(this));
-            IERC4626(vault).redeem(shares, address(this), address(this));
-            uint256 balanceAfter = IERC20(token).balanceOf(address(this));
-            withdrawnFromVault = balanceAfter - balanceBefore;
-        }
-
         address[] storage mlist = circleMemberList[cid];
         uint256 totalPrincipalReturned = 0;
+        uint256 totalOwed = 0;
+        for (uint256 i = 0; i < mlist.length; i++) {
+            totalOwed += circleMembers[cid][mlist[i]].collateralLocked;
+        }
+
+        uint256 lossMultiplierBps = 10000;
 
         for (uint256 i = 0; i < mlist.length; i++) {
             address memberAddr = mlist[i];
@@ -1573,7 +1381,7 @@ contract CircleSavings is
 
             if (!m.isActive || m.collateralLocked == 0) continue;
 
-            uint256 amt = m.collateralLocked;
+            uint256 amt = (m.collateralLocked * lossMultiplierBps) / 10000;
             m.collateralLocked = 0;
             m.isActive = false;
 
@@ -1594,12 +1402,6 @@ contract CircleSavings is
                 IERC20(token).safeTransfer(memberAddr, amt);
                 emit CollateralWithdrawn(cid, memberAddr, amt, token);
             }
-        }
-
-        // Yield Sweep: If we got more back from the vault than the principal we owed everyone, platform takes the profit
-        if (withdrawnFromVault > totalPrincipalReturned) {
-            platformFeesByToken[token] += (withdrawnFromVault -
-                totalPrincipalReturned);
         }
     }
 
@@ -1648,33 +1450,23 @@ contract CircleSavings is
      */
     function _handleLate(uint256 cid, uint256 round, uint256 amt) internal {
         uint256 fee = (amt * LATE_FEE_BPS) / 10000;
-        uint256 totalRequired = amt + fee;
 
         address token = circleToken[cid];
-
-        // Transfer contribution + late fee from member's balance
-        IERC20(token).safeTransferFrom(
-            msg.sender,
-            address(this),
-            totalRequired
-        );
-
         CircleConfig storage conf = circleConfigs[cid];
         CircleStatus storage stat = circleStatus[cid];
         Member storage m = circleMembers[cid][msg.sender];
 
+        // Deduct late fee from member's locked collateral (late fee buffer)
+        if (m.collateralLocked < fee) revert InsufficientCollateral();
+        m.collateralLocked -= fee;
+
+        // Transfer only the contribution amount from member's balance
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amt);
+
         stat.totalPot += amt;
         m.totalContributed += amt;
 
-        // Late fee routing based on circle mode
-        if (conf.isYieldEnabled) {
-            // Yield circles: late fees go to community reward pool
-            circleLateFeePool[cid] += fee;
-            emit LateFeeAddedToPool(cid, msg.sender, fee);
-        } else {
-            // No-yield circles: late fees go to platform
-            platformFeesByToken[token] += fee;
-        }
+        platformFeesByToken[token] += fee;
 
         // Update reputation via reputation contract
         _decreaseReputation(msg.sender, 5, "Late Payment");
@@ -1866,26 +1658,20 @@ contract CircleSavings is
             uint256 currentRound,
             uint256 totalRounds,
             uint256 contributionsThisRound,
-            uint256 totalMembers,
-            uint256 lateFeePool,
-            uint256 totalPoints
+            uint256 totalMembers
         )
     {
         CircleStatus storage stat = circleStatus[_circleId];
         currentRound = stat.currentRound;
         totalRounds = stat.totalRounds;
         totalMembers = stat.currentMembers;
-        lateFeePool = circleLateFeePool[_circleId];
-        totalPoints = totalCirclePoints[_circleId];
         contributionsThisRound = stat.contributionsThisRound;
 
         return (
             currentRound,
             totalRounds,
             contributionsThisRound,
-            totalMembers,
-            lateFeePool,
-            totalPoints
+            totalMembers
         );
     }
 

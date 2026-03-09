@@ -27,7 +27,7 @@ contract ReputationSetup is Test {
     address public user3;
 
     // Mock contracts
-    MockERC20 public USDmToken;
+    MockERC20 public USDTToken;
 
     function setUp() public virtual {
         // Setup accounts
@@ -39,8 +39,8 @@ contract ReputationSetup is Test {
 
         vm.startPrank(owner);
 
-        // Deploy mock USDm token
-        USDmToken = new MockERC20();
+        // Deploy mock USDT token
+        USDTToken = new MockERC20();
 
         // Deploy reputation implementation and proxy
         reputationImpl = new Reputation();

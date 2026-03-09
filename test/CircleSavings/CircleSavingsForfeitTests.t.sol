@@ -245,7 +245,7 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
         (CircleSavings.Member memory eveAfter, , ) = circleSavings
             .getMemberInfo(cid, eve);
 
-        uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000; // contribution + late fee
+        uint256 expectedDeduction = 100e6 + (100e6 * 100) / 10000; // contribution + late fee
 
         // Alice is the recipient, so she should NOT be forfeited
         assertEq(
@@ -323,7 +323,7 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
             .getMemberInfo(cid, alice);
 
         // If alice has sufficient collateral, forfeit should succeed
-        if (aliceBefore.collateralLocked >= 101e18) {
+        if (aliceBefore.collateralLocked >= 101e6) {
             address[] memory lateMembers = new address[](1);
             lateMembers[0] = alice;
             vm.prank(bob);
@@ -377,7 +377,7 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
         );
 
         // In Round 2, contributionsThisRound resets to 0
-        (, , uint256 contributionsThisRound, , , ) = circleSavings
+        (, , uint256 contributionsThisRound, ) = circleSavings
             .getCircleProgress(cid);
         assertEq(
             contributionsThisRound,
@@ -401,7 +401,7 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
         // Warp past grace period
         vm.warp(block.timestamp + 9 days + 1 hours);
 
-        uint256 aliceBalanceBefore = USDm.balanceOf(alice);
+        uint256 aliceBalanceBefore = USDT.balanceOf(alice);
 
         // Forfeit eve (this should complete the round)
         address[] memory lateMembers = new address[](2);
@@ -421,10 +421,10 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
         );
 
         // Check alice DID receive payout (Creator gets full 400 pot)
-        uint256 aliceBalanceAfter = USDm.balanceOf(alice);
+        uint256 aliceBalanceAfter = USDT.balanceOf(alice);
         assertEq(
             aliceBalanceAfter,
-            aliceBalanceBefore + 400e18,
+            aliceBalanceBefore + 400e6,
             "Alice should have received the payout"
         );
     }

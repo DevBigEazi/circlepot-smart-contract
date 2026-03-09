@@ -25,8 +25,8 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         // WithdrawCollateral is allowed
 
         // SCENARIO 1: Bob withdraws first. This triggers bulk release and sets state to DEAD.
-        uint256 bobBalBefore = USDm.balanceOf(bob);
-        uint256 aliceBalBefore = USDm.balanceOf(alice);
+        uint256 bobBalBefore = USDT.balanceOf(bob);
+        uint256 aliceBalBefore = USDT.balanceOf(alice);
 
         (CircleSavings.Member memory mVal, , ) = circleSavings.getMemberInfo(
             cid,
@@ -37,8 +37,8 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         vm.prank(bob);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 bobBalAfter = USDm.balanceOf(bob);
-        uint256 aliceBalAfter = USDm.balanceOf(alice);
+        uint256 bobBalAfter = USDT.balanceOf(bob);
+        uint256 aliceBalAfter = USDT.balanceOf(alice);
 
         // Bob should get full collateral back (no fee for non-creator)
         assertGt(bobBalAfter, bobBalBefore);
@@ -64,7 +64,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         vm.expectRevert(CircleSavings.NotActiveMember.selector);
         circleSavings.WithdrawCollateral(cid);
 
-        // Verify specifically if possible (PUBLIC fee is usually 2e18 or something set in contract)
+        // Verify specifically if possible (PUBLIC fee is usually 2e6 or something set in contract)
         // From context, if it subtracts fee, it works.
     }
 
@@ -80,7 +80,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         // State is CREATED (not DEAD yet)
         // Fee condition (isCreator && DEAD) is false.
 
-        uint256 aliceBalBefore = USDm.balanceOf(alice);
+        uint256 aliceBalBefore = USDT.balanceOf(alice);
         (CircleSavings.Member memory mVal, , ) = circleSavings.getMemberInfo(
             cid,
             alice
@@ -90,7 +90,7 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
         vm.prank(alice);
         circleSavings.WithdrawCollateral(cid);
 
-        uint256 aliceBalAfter = USDm.balanceOf(alice);
+        uint256 aliceBalAfter = USDT.balanceOf(alice);
 
         // Fee SHOULD be deducted
         assertLt(
@@ -115,13 +115,11 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
             .CreateCircleParams({
                 title: "Test Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
-                enableYield: true,
-                token: address(USDm),
-                yieldAPY: 0
+                token: address(USDT)
             });
         uint256 cid = circleSavings.createCircle(params);
 
@@ -196,13 +194,11 @@ contract CircleSavingsDeadFeeTests is CircleSavingsSetup {
             .CreateCircleParams({
                 title: "Partial Circle",
                 description: "Test Description",
-                contributionAmount: 100e18,
+                contributionAmount: 100e6,
                 frequency: CircleSavings.Frequency.WEEKLY,
                 maxMembers: 5,
                 visibility: CircleSavings.Visibility.PUBLIC,
-                enableYield: true,
-                token: address(USDm),
-                yieldAPY: 0
+                token: address(USDT)
             });
         uint256 cid = circleSavings.createCircle(params);
 

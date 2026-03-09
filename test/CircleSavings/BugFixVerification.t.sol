@@ -117,7 +117,7 @@ contract BugFixVerificationTest is CircleSavingsSetup {
         (CircleSavings.Member memory eveAfter, , ) = circleSavings
             .getMemberInfo(cid, eve);
 
-        uint256 expectedDeduction = 100e18 + (100e18 * 100) / 10000;
+        uint256 expectedDeduction = 100e6 + (100e6 * 100) / 10000;
 
         assertEq(
             charlieBefore.collateralLocked - charlieAfter.collateralLocked,

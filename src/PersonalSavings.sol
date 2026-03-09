@@ -18,7 +18,7 @@ import {
     SafeERC20
 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IReputation} from "./interfaces/IReputation.sol";
-import {IUserProfile} from "./interfaces/IUserProfile.sol";
+import {IReferralRewards} from "./interfaces/IReferralRewards.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /**
@@ -72,7 +72,7 @@ contract PersonalSavings is
 
     // ============ Storage ============
     IReputation public reputationContract;
-    IUserProfile public userProfileContract; // UserProfile contract reference
+    IReferralRewards public referralRewardsContract; // ReferralRewards contract reference
 
     address public treasury;
     uint256 public goalCounter;
@@ -205,14 +205,15 @@ contract PersonalSavings is
     }
 
     /**
-     * @dev Sets the UserProfile contract address (admin only)
-     * @param _userProfileContract Address of the UserProfile contract
+     * @dev Sets the ReferralRewards contract address (admin only)
+     * @param _referralRewardsContract Address of the ReferralRewards contract
      */
-    function setUserProfileContract(
-        address _userProfileContract
+    function setReferralRewardsContract(
+        address _referralRewardsContract
     ) external onlyOwner {
-        if (_userProfileContract == address(0)) revert AddressZeroNotAllowed();
-        userProfileContract = IUserProfile(_userProfileContract);
+        if (_referralRewardsContract == address(0))
+            revert AddressZeroNotAllowed();
+        referralRewardsContract = IReferralRewards(_referralRewardsContract);
     }
 
     /**
@@ -283,7 +284,7 @@ contract PersonalSavings is
     function createPersonalGoal(
         CreateGoalParams calldata params
     ) external nonReentrant returns (uint256) {
-        if (params.targetAmount < 10e18 || params.targetAmount > 50000e18) {
+        if (params.targetAmount < 10e6 || params.targetAmount > 50000e6) {
             revert InvalidGoalAmount();
         }
         if (params.contributionAmount == 0) revert InvalidContributionAmount();
@@ -359,9 +360,9 @@ contract PersonalSavings is
         // ============ Trigger Referral Reward ============
         // Check if this is user's FIRST goal
         if (userGoals[msg.sender].length == 1) {
-            // Call UserProfile to pay referral reward
+            // Call ReferralRewards to pay referral reward
             // This is safe even if it reverts - won't affect goal creation
-            try userProfileContract.payReferralReward(msg.sender, token) {
+            try referralRewardsContract.payReferralReward(msg.sender, token) {
                 // Success - referrer was paid (if user was referred)
             } catch {
                 // Failed - but goal creation still succeeds

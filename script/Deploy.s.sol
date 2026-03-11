@@ -96,7 +96,7 @@ contract Deploy is Script {
         );
         referralRewards.setTokenSupport(USDT, true);
         referralRewards.setBonusAmount(USDT, 100_000); // $0.1 bonus (6 decimals)
-        referralRewards.setRelayerStatus(msg.sender, true); // Admin as first relayer
+        referralRewards.setRelayerStatus(0x92d3CD8bBe0d05Bbd86DE7F3A4aD9Dd1f0032767, true); // Admin as first relayer
 
         // Link PersonalSavings to ReferralRewards
         PersonalSavings(address(personalSavingsProxy))

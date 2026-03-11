@@ -14,6 +14,9 @@ import {
     ReentrancyGuard
 } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {
+    SafeERC20
+} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title ReferralRewards
@@ -25,6 +28,8 @@ contract ReferralRewards is
     UUPSUpgradeable,
     ReentrancyGuard
 {
+    using SafeERC20 for IERC20;
+
     // ============ Constants ============
     uint256 public constant VERSION = 1;
 
@@ -57,6 +62,9 @@ contract ReferralRewards is
         address indexed referrer,
         uint256 timestamp
     );
+    event ReferralRewardsEnabledUpdated(bool enabled);
+    event ReferralBonusUpdated(address indexed token, uint256 amount);
+    event TokenSupportUpdated(address indexed token, bool status);
     event ReferralRewardPaid(
         address indexed referrer,
         address indexed referee,
@@ -134,6 +142,7 @@ contract ReferralRewards is
 
     function setTokenSupport(address _token, bool _status) external onlyOwner {
         supportedTokens[_token] = _status;
+        emit TokenSupportUpdated(_token, _status);
     }
 
     function setBonusAmount(
@@ -141,6 +150,15 @@ contract ReferralRewards is
         uint256 _amount
     ) external onlyOwner {
         referralBonusAmount[_token] = _amount;
+        emit ReferralBonusUpdated(_token, _amount);
+    }
+
+    /**
+     * @dev Toggle referral rewards on/off (Admin only)
+     */
+    function setReferralRewardsEnabled(bool _enabled) external onlyOwner {
+        referralRewardsEnabled = _enabled;
+        emit ReferralRewardsEnabledUpdated(_enabled);
     }
 
     /**
@@ -167,37 +185,29 @@ contract ReferralRewards is
         uint256 balance = IERC20(_token).balanceOf(address(this));
 
         if (balance >= amount) {
-            bool success = IERC20(_token).transfer(referrer, amount);
-            if (success) {
-                pendingRewards[referrer][_token] = 0;
-                totalRewardsPaidByToken[_token] += amount;
-                userTotalPaidRewards[referrer][_token] += amount;
-                _removeFromPendingList(_token, referrer);
-                emit ReferralRewardPaid(referrer, _referee, _token, amount);
-            } else {
-                _addToPendingList(_token, referrer, amount, _referee);
-            }
+            IERC20(_token).safeTransfer(referrer, amount);
+            pendingRewards[referrer][_token] = 0;
+            totalRewardsPaidByToken[_token] += amount;
+            userTotalPaidRewards[referrer][_token] += amount;
+            _removeFromPendingList(_token, referrer);
+            emit ReferralRewardPaid(referrer, _referee, _token, amount);
         } else {
             // Partial payment or just add to debt
             if (balance > 0) {
-                bool success = IERC20(_token).transfer(referrer, balance);
-                if (success) {
-                    uint256 paid = balance;
-                    uint256 remaining = amount - paid;
-                    pendingRewards[referrer][_token] = remaining;
-                    totalRewardsPaidByToken[_token] += paid;
-                    userTotalPaidRewards[referrer][_token] += paid;
-                    _addToPendingList(_token, referrer, 0, address(0)); // Just ensure in list
-                    emit ReferralRewardPaid(referrer, _referee, _token, paid);
-                    emit ReferralRewardPending(
-                        referrer,
-                        _referee,
-                        _token,
-                        remaining
-                    );
-                } else {
-                    _addToPendingList(_token, referrer, amount, _referee);
-                }
+                IERC20(_token).safeTransfer(referrer, balance);
+                uint256 paid = balance;
+                uint256 remaining = amount - paid;
+                pendingRewards[referrer][_token] = remaining;
+                totalRewardsPaidByToken[_token] += paid;
+                userTotalPaidRewards[referrer][_token] += paid;
+                _addToPendingList(_token, referrer, 0, address(0)); // Just ensure in list
+                emit ReferralRewardPaid(referrer, _referee, _token, paid);
+                emit ReferralRewardPending(
+                    referrer,
+                    _referee,
+                    _token,
+                    remaining
+                );
             } else {
                 pendingRewards[referrer][_token] = amount;
                 _addToPendingList(_token, referrer, 0, address(0));
@@ -258,31 +268,54 @@ contract ReferralRewards is
             }
 
             uint256 toPay = amount > balance ? balance : amount;
-            bool success = IERC20(_token).transfer(user, toPay);
-            if (success) {
-                balance -= toPay;
-                pendingRewards[user][_token] -= toPay;
-                totalRewardsPaidByToken[_token] += toPay;
-                userTotalPaidRewards[user][_token] += toPay;
+            IERC20(_token).safeTransfer(user, toPay);
+            balance -= toPay;
+            pendingRewards[user][_token] -= toPay;
+            totalRewardsPaidByToken[_token] += toPay;
+            userTotalPaidRewards[user][_token] += toPay;
 
-                emit ReferralRewardPaid(user, address(0), _token, toPay);
+            emit ReferralRewardPaid(user, address(0), _token, toPay);
 
-                if (pendingRewards[user][_token] == 0) {
-                    _removeFromPendingList(_token, user);
-                }
+            if (pendingRewards[user][_token] == 0) {
+                _removeFromPendingList(_token, user);
             }
             if (balance == 0) break;
         }
     }
 
     function withdrawFunds(address _token, uint256 _amount) external onlyOwner {
-        IERC20(_token).transfer(owner(), _amount);
+        IERC20(_token).safeTransfer(owner(), _amount);
     }
 
     function getPendingUserCount(
         address _token
     ) external view returns (uint256) {
         return tokenPendingUsers[_token].length;
+    }
+
+    /**
+     * @dev Returns comprehensive referral settings for a specific token
+     */
+    function getReferralSettings(
+        address _token
+    )
+        external
+        view
+        returns (
+            bool enabled,
+            uint256 standardBonus,
+            bool inCampaign,
+            uint256 campaignBonus,
+            uint256 campaignEndsAt
+        )
+    {
+        return (
+            referralRewardsEnabled,
+            referralBonusAmount[_token],
+            campaignMode && block.timestamp <= campaignEndTime,
+            campaignBonusAmount[_token],
+            campaignEndTime
+        );
     }
 
     // ============ Internal Functions ============

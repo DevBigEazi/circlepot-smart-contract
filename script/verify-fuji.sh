@@ -47,7 +47,7 @@ echo "======================================================"
 
 # --- Implementations (1-4 already submitted but forge will say "already verified" — safe) ---
 verify "1/9  ReferralRewards" \
-  0x33fFf7699D4871a6BF06EBD5e829111D783351a9 \
+  0xcd0661044DfD37AcD56E595cD549888e0E07EdDF \
   src/ReferralRewards.sol:ReferralRewards
 
 verify "2/9  PersonalSavings" \
@@ -55,7 +55,7 @@ verify "2/9  PersonalSavings" \
   src/PersonalSavings.sol:PersonalSavings
 
 verify "3/9  CircleSavings" \
-  0xae54b0DDEdAb9B50788b09d34eafA76486488808 \
+  0x3754319fA0Dd919D0724fa0C446eb363C9a36FF4 \
   src/CircleSavings.sol:CircleSavings
 
 verify "4/9  Reputation" \
@@ -79,7 +79,7 @@ verify "6/9  ReputationProxy" \
     0x4781070885eA1E2Ec9aE46201703172c576cDA1A)"
 
 verify "7/9  ReferralRewardsProxy" \
-  0xAB26D4ee191F25f2B73959291b19C5A3D2601b34 \
+  0x4c252089abA090FF4306c899FD07ac6A21a56e7e \
   src/proxies/ReferralRewardsProxy.sol:ReferralRewardsProxy \
   --constructor-args "$(cast abi-encode 'constructor(address,address)' \
     0x33fFf7699D4871a6BF06EBD5e829111D783351a9 \
@@ -90,7 +90,7 @@ verify "8/9  PersonalSavingsProxy" \
   src/proxies/PersonalSavingsProxy.sol:PersonalSavingsProxy
 
 verify "9/9  CircleSavingsProxy" \
-  0x37D15F3786Bb80e98e5B6174eCCEb1A456eCC6eD \
+  0x6e222b5507F7554A163B37C4DfC6d62dE3077fA8 \
   src/proxies/CircleSavingsProxy.sol:CircleSavingsProxy
 
 echo ""

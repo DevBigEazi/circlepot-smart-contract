@@ -55,7 +55,7 @@ verify "2/9  PersonalSavings" \
   src/PersonalSavings.sol:PersonalSavings
 
 verify "3/9  CircleSavings" \
-  0xae54b0DDEdAb9B50788b09d34eafA76486488808 \
+  0x3754319fA0Dd919D0724fa0C446eb363C9a36FF4 \
   src/CircleSavings.sol:CircleSavings
 
 verify "4/9  Reputation" \
@@ -90,7 +90,7 @@ verify "8/9  PersonalSavingsProxy" \
   src/proxies/PersonalSavingsProxy.sol:PersonalSavingsProxy
 
 verify "9/9  CircleSavingsProxy" \
-  0x37D15F3786Bb80e98e5B6174eCCEb1A456eCC6eD \
+  0x6e222b5507F7554A163B37C4DfC6d62dE3077fA8 \
   src/proxies/CircleSavingsProxy.sol:CircleSavingsProxy
 
 echo ""

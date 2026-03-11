@@ -47,7 +47,7 @@ echo "======================================================"
 
 # --- Implementations (1-4 already submitted but forge will say "already verified" — safe) ---
 verify "1/9  ReferralRewards" \
-  0x33fFf7699D4871a6BF06EBD5e829111D783351a9 \
+  0xd54Eb1608d46fa09Deb47FA71e15D751CfF87004 \
   src/ReferralRewards.sol:ReferralRewards
 
 verify "2/9  PersonalSavings" \
@@ -79,7 +79,7 @@ verify "6/9  ReputationProxy" \
     0x4781070885eA1E2Ec9aE46201703172c576cDA1A)"
 
 verify "7/9  ReferralRewardsProxy" \
-  0xAB26D4ee191F25f2B73959291b19C5A3D2601b34 \
+  0xe5561165700e44A7725e7BcC7c7AbC9374F1a4C9 \
   src/proxies/ReferralRewardsProxy.sol:ReferralRewardsProxy \
   --constructor-args "$(cast abi-encode 'constructor(address,address)' \
     0x33fFf7699D4871a6BF06EBD5e829111D783351a9 \

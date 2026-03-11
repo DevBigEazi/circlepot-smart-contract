@@ -62,6 +62,9 @@ contract ReferralRewards is
         address indexed referrer,
         uint256 timestamp
     );
+    event ReferralRewardsEnabledUpdated(bool enabled);
+    event ReferralBonusUpdated(address indexed token, uint256 amount);
+    event TokenSupportUpdated(address indexed token, bool status);
     event ReferralRewardPaid(
         address indexed referrer,
         address indexed referee,
@@ -139,6 +142,7 @@ contract ReferralRewards is
 
     function setTokenSupport(address _token, bool _status) external onlyOwner {
         supportedTokens[_token] = _status;
+        emit TokenSupportUpdated(_token, _status);
     }
 
     function setBonusAmount(
@@ -146,6 +150,7 @@ contract ReferralRewards is
         uint256 _amount
     ) external onlyOwner {
         referralBonusAmount[_token] = _amount;
+        emit ReferralBonusUpdated(_token, _amount);
     }
 
     /**
@@ -153,6 +158,7 @@ contract ReferralRewards is
      */
     function setReferralRewardsEnabled(bool _enabled) external onlyOwner {
         referralRewardsEnabled = _enabled;
+        emit ReferralRewardsEnabledUpdated(_enabled);
     }
 
     /**

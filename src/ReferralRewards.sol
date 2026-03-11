@@ -99,6 +99,7 @@ contract ReferralRewards is
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
         referralRewardsEnabled = true;
+        emit ReferralRewardsEnabledUpdated(true); 
     }
 
     function _authorizeUpgrade(

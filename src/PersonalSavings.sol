@@ -95,6 +95,8 @@ contract PersonalSavings is
     // goalShares maps goalId to vault shares
     mapping(uint256 => uint256) public goalShares;
 
+    bool public personalGoalCreationPaused;
+
     uint256 public constant PLATFORM_YIELD_SHARE_BPS = 1000; // 10%
     uint256 public constant COMPLETION_FEE_BPS = 10; // 0.1%
 
@@ -140,6 +142,7 @@ contract PersonalSavings is
     );
     event TokenAdded(address indexed token);
     event TokenRemoved(address indexed token);
+    event PersonalGoalCreationPausedUpdated(bool paused);
 
     // ============ Errors ============
     error InvalidTreasuryAddress();
@@ -155,6 +158,7 @@ contract PersonalSavings is
     error UnsupportedToken();
     error TokenAlreadySupported();
     error TokenNotSupported();
+    error PersonalGoalCreationPaused();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -284,6 +288,7 @@ contract PersonalSavings is
     function createPersonalGoal(
         CreateGoalParams calldata params
     ) external nonReentrant returns (uint256) {
+        if (personalGoalCreationPaused) revert PersonalGoalCreationPaused();
         if (params.targetAmount < 10e6 || params.targetAmount > 50000e6) {
             revert InvalidGoalAmount();
         }
@@ -627,6 +632,15 @@ contract PersonalSavings is
     function updateTreasury(address _new) external onlyOwner {
         if (_new == address(0)) revert InvalidTreasuryAddress();
         treasury = _new;
+    }
+
+    /**
+     * @dev Toggle the pause state for goal creation (admin only)
+     * @param _paused True to pause, false to unpause
+     */
+    function setPersonalGoalCreationPaused(bool _paused) external onlyOwner {
+        personalGoalCreationPaused = _paused;
+        emit PersonalGoalCreationPausedUpdated(_paused);
     }
 
     // ============ Helper Functions ============

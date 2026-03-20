@@ -156,6 +156,7 @@ contract CircleSavings is
     mapping(address => uint256) public platformFeesByToken;
     uint256 public platformFeeBps;
     uint256 public fixedFeeThreshold;
+    bool public circleCreationPaused;
 
     event ContractUpgraded(address indexed newImplementation, uint256 version);
     event VisibilityUpdated(
@@ -265,6 +266,7 @@ contract CircleSavings is
     event ReputationContractUpdated(address indexed newContract);
     event TokenAdded(address indexed token);
     event TokenRemoved(address indexed token);
+    event CircleCreationPausedUpdated(bool paused);
 
     // ============ Errors ============
     error InvalidContributionAmount();
@@ -298,6 +300,8 @@ contract CircleSavings is
     error UnsupportedToken();
     error TokenAlreadySupported();
     error TokenNotSupported();
+    error AlreadyInvited();
+    error CircleCreationPaused();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -425,6 +429,15 @@ contract CircleSavings is
         emit ReputationContractUpdated(_newReputationContract);
     }
 
+    /**
+     * @dev Toggle the pause state for circle creation (admin only)
+     * @param _paused True to pause, false to unpause
+     */
+    function setCircleCreationPaused(bool _paused) external onlyOwner {
+        circleCreationPaused = _paused;
+        emit CircleCreationPausedUpdated(_paused);
+    }
+
     // ============ Circle Functions ============
     /**
      * @dev Create a new saving circle
@@ -434,6 +447,7 @@ contract CircleSavings is
     function createCircle(
         CreateCircleParams calldata params
     ) external nonReentrant returns (uint256) {
+        if (circleCreationPaused) revert CircleCreationPaused();
         if (msg.sender == address(0)) revert AddressZeroNotAllowed();
         if (
             params.contributionAmount < MIN_CONTRIBUTION ||
@@ -599,11 +613,16 @@ contract CircleSavings is
         ) revert InvalidCircle();
 
         for (uint256 i = 0; i < _invitees.length; i++) {
-            circleInvitations[_circleId][_invitees[i]] = true;
+            address invitee = _invitees[i];
+            if (invitee == address(0)) revert AddressZeroNotAllowed();
+            if (circleInvitations[_circleId][invitee]) revert AlreadyInvited();
+            if (circleMembers[_circleId][invitee].isActive) revert AlreadyJoined();
+
+            circleInvitations[_circleId][invitee] = true;
             emit MemberInvited(
                 _circleId,
                 msg.sender,
-                _invitees[i],
+                invitee,
                 block.timestamp
             );
         }
@@ -1321,7 +1340,6 @@ contract CircleSavings is
      * @dev Release all collateral at circle completion
      */
     function _releaseAllCollateral(uint256 cid) private {
-        CircleConfig storage conf = circleConfigs[cid];
         address[] storage mlist = circleMemberList[cid];
         uint256 totalPrincipal = 0;
 
@@ -1452,7 +1470,6 @@ contract CircleSavings is
         uint256 fee = (amt * LATE_FEE_BPS) / 10000;
 
         address token = circleToken[cid];
-        CircleConfig storage conf = circleConfigs[cid];
         CircleStatus storage stat = circleStatus[cid];
         Member storage m = circleMembers[cid][msg.sender];
 

@@ -215,16 +215,10 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
         // Get collateral before forfeit
         (CircleSavings.Member memory aliceBefore, , ) = circleSavings
             .getMemberInfo(cid, alice);
-        (CircleSavings.Member memory charlieBefore, , ) = circleSavings
-            .getMemberInfo(cid, charlie);
-        (CircleSavings.Member memory davidBefore, , ) = circleSavings
-            .getMemberInfo(cid, david);
         (CircleSavings.Member memory eveBefore, , ) = circleSavings
             .getMemberInfo(cid, eve);
 
         uint256 aliceCollateralBefore = aliceBefore.collateralLocked;
-        uint256 charlieCollateralBefore = charlieBefore.collateralLocked;
-        uint256 davidCollateralBefore = davidBefore.collateralLocked;
         uint256 eveCollateralBefore = eveBefore.collateralLocked;
 
         // Forfeit late members (Alice is skipped, Eve is forfeited)
@@ -235,13 +229,8 @@ contract CircleSavingsForfeitTests is CircleSavingsSetup {
         vm.prank(bob);
         circleSavings.forfeitMember(cid, lateMembers);
 
-        // Check collateral was deducted for all members
         (CircleSavings.Member memory aliceAfter, , ) = circleSavings
             .getMemberInfo(cid, alice);
-        (CircleSavings.Member memory charlieAfter, , ) = circleSavings
-            .getMemberInfo(cid, charlie);
-        (CircleSavings.Member memory davidAfter, , ) = circleSavings
-            .getMemberInfo(cid, david);
         (CircleSavings.Member memory eveAfter, , ) = circleSavings
             .getMemberInfo(cid, eve);
 

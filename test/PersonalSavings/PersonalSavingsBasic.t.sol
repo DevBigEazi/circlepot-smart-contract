@@ -37,7 +37,7 @@ contract PersonalSavingsBasicTests is PersonalSavingsSetup {
             ,
             ,
             ,
-            uint256 contributionCount
+             
         ) = personalSavings.personalGoals(gid);
         assertEq(owner, alice);
         assertEq(targetAmount, 1000e6);

@@ -32,6 +32,7 @@ interface IFamCircle {
     error ContributionTooHigh(uint256 current, uint256 max);
     error GracePeriodNotExpired();
     error BadRecord();
+    error CircleCreationPaused();
 
     struct FamCircleConfig {
         uint256 circleId;
@@ -88,6 +89,7 @@ interface IFamCircle {
     event PayoutDiverted(uint256 indexed circleId, address indexed member, address indexed recipient, uint256 amount);
     event PositionSwapped(uint256 indexed circleId, address indexed member, address currentRecipient, uint256 oldPosition, uint256 newPosition);
     event FeeCollected(uint256 indexed circleId, address indexed member, FeeType feeType, uint256 amount);
+    event CircleCreationPausedUpdated(bool paused);
 
     function createCircle(CreateParams calldata params) external returns (uint256);
     function inviteMembers(uint256 circleId, address[] calldata invitees) external;
@@ -97,4 +99,5 @@ interface IFamCircle {
     function cancelCircle(uint256 circleId) external;
     function processForfeits(uint256 circleId, address[] calldata membersToForfeit) external;
     function repayCircleDebt(uint256 circleId, uint256 amount) external;
+    function setCircleCreationPaused(bool paused) external;
 }

@@ -61,6 +61,8 @@ contract FamCircle is
     mapping(address => uint256[]) public userCircles;
     mapping(address => uint256) public activeVouchCount;
 
+    bool public circleCreationPaused;
+
     // Multi-token support
     mapping(address => bool) public supportedTokens;
     address[] public supportedTokenList;
@@ -121,9 +123,15 @@ contract FamCircle is
         }
     }
 
+    function setCircleCreationPaused(bool _paused) external onlyOwner {
+        circleCreationPaused = _paused;
+        emit CircleCreationPausedUpdated(_paused);
+    }
+
     // ============ Core Lifecycle ============
 
     function createCircle(CreateParams calldata params) external override nonReentrant returns (uint256) {
+        if (circleCreationPaused) revert CircleCreationPaused();
         if (!supportedTokens[params.token]) revert TokenNotSupported();
         if (isBlacklisted[msg.sender]) revert UserIsBlacklisted();
         if (activeFamCircleCount[msg.sender] >= MAX_ACTIVE_FAM_CIRCLES) revert MaxActiveCirclesReached();
